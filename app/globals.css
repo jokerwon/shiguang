@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -10,6 +11,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: 'Bitter', 'Noto Serif SC', serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,72 +51,73 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
+  /* 温暖的奶油色调色板 */
+  --background: oklch(0.96 0.02 70);
+  --foreground: oklch(0.25 0.03 50);
+  --card: oklch(0.98 0.015 70);
+  --card-foreground: oklch(0.25 0.03 50);
+  --popover: oklch(0.98 0.015 70);
+  --popover-foreground: oklch(0.25 0.03 50);
+  --primary: oklch(0.55 0.12 40);
+  --primary-foreground: oklch(0.98 0.015 70);
+  --secondary: oklch(0.85 0.04 70);
+  --secondary-foreground: oklch(0.35 0.04 50);
+  --muted: oklch(0.90 0.02 70);
+  --muted-foreground: oklch(0.50 0.02 50);
+  --accent: oklch(0.75 0.08 80);
+  --accent-foreground: oklch(0.30 0.04 50);
+  --destructive: oklch(0.55 0.22 25);
+  --border: oklch(0.80 0.03 70);
+  --input: oklch(0.80 0.03 70);
+  --ring: oklch(0.55 0.12 40);
+  --chart-1: oklch(0.65 0.15 40);
+  --chart-2: oklch(0.60 0.12 50);
+  --chart-3: oklch(0.55 0.10 60);
+  --chart-4: oklch(0.70 0.14 70);
+  --chart-5: oklch(0.75 0.12 80);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.97 0.015 70);
+  --sidebar-foreground: oklch(0.25 0.03 50);
+  --sidebar-primary: oklch(0.55 0.12 40);
+  --sidebar-primary-foreground: oklch(0.98 0.015 70);
+  --sidebar-accent: oklch(0.90 0.02 70);
+  --sidebar-accent-foreground: oklch(0.35 0.04 50);
+  --sidebar-border: oklch(0.80 0.03 70);
+  --sidebar-ring: oklch(0.55 0.12 40);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.18 0.02 50);
+  --foreground: oklch(0.92 0.015 70);
+  --card: oklch(0.22 0.025 50);
+  --card-foreground: oklch(0.92 0.015 70);
+  --popover: oklch(0.22 0.025 50);
+  --popover-foreground: oklch(0.92 0.015 70);
+  --primary: oklch(0.70 0.14 40);
+  --primary-foreground: oklch(0.18 0.02 50);
+  --secondary: oklch(0.30 0.04 50);
+  --secondary-foreground: oklch(0.92 0.015 70);
+  --muted: oklch(0.26 0.03 50);
+  --muted-foreground: oklch(0.65 0.02 70);
+  --accent: oklch(0.45 0.10 70);
+  --accent-foreground: oklch(0.92 0.015 70);
+  --destructive: oklch(0.65 0.22 25);
+  --border: oklch(0.32 0.03 50);
+  --input: oklch(0.32 0.03 50);
+  --ring: oklch(0.70 0.14 40);
+  --chart-1: oklch(0.70 0.15 40);
+  --chart-2: oklch(0.65 0.12 50);
+  --chart-3: oklch(0.60 0.10 60);
+  --chart-4: oklch(0.75 0.14 70);
+  --chart-5: oklch(0.80 0.12 80);
+  --sidebar: oklch(0.20 0.02 50);
+  --sidebar-foreground: oklch(0.92 0.015 70);
+  --sidebar-primary: oklch(0.70 0.14 40);
+  --sidebar-primary-foreground: oklch(0.18 0.02 50);
+  --sidebar-accent: oklch(0.30 0.04 50);
+  --sidebar-accent-foreground: oklch(0.92 0.015 70);
+  --sidebar-border: oklch(0.32 0.03 50);
+  --sidebar-ring: oklch(0.70 0.14 40);
 }
 
 @layer base {
@@ -123,8 +126,170 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Noto Serif SC', serif;
   }
   html {
-    @apply font-sans;
+    @apply font-serif;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Bitter', 'Noto Serif SC', serif;
+    font-weight: 600;
+  }
+}
+
+/* 纸张纹理背景 */
+.paper-texture {
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      oklch(0.50 0.02 70 / 0.03) 2px,
+      oklch(0.50 0.02 70 / 0.03) 4px
+    );
+}
+
+/* 墨水笔触效果 */
+.ink-brush {
+  position: relative;
+}
+
+.ink-brush::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background:
+    radial-gradient(ellipse at 20% 30%, oklch(0.40 0.08 40 / 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, oklch(0.40 0.08 40 / 0.08) 0%, transparent 50%);
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* 手写便签效果 */
+.note-card {
+  background: linear-gradient(135deg,
+    oklch(0.98 0.015 70) 0%,
+    oklch(0.96 0.02 75) 100%
+  );
+  box-shadow:
+    0 1px 3px oklch(0 0 0 / 0.08),
+    0 4px 6px oklch(0 0 0 / 0.04),
+    inset 0 1px 0 oklch(1 0 0 / 0.6);
+  border: 1px solid oklch(0.75 0.03 70);
+}
+
+/* 对话气泡动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-bubble {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* 墨水滴落效果 */
+@keyframes inkDrop {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+.ink-drop {
+  animation: inkDrop 3s ease-in-out infinite;
+}
+
+/* 手工线条输入框 */
+.hand-drawn-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid oklch(0.75 0.03 70);
+  border-radius: 0;
+  transition: border-color 0.3s ease;
+}
+
+.hand-drawn-input:focus {
+  outline: none;
+  border-bottom-color: oklch(0.55 0.12 40);
+  box-shadow: 0 2px 0 -1px oklch(0.55 0.12 40 / 0.3);
+}
+
+/* 装饰性边框 */
+.decorative-border {
+  position: relative;
+  border: 2px solid oklch(0.70 0.03 70);
+}
+
+.decorative-border::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border: 1px solid oklch(0.75 0.03 70 / 0.5);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* 温暖的渐变背景 */
+.warm-gradient {
+  background: linear-gradient(
+    135deg,
+    oklch(0.96 0.02 70) 0%,
+    oklch(0.94 0.03 75) 50%,
+    oklch(0.95 0.025 80) 100%
+  );
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: oklch(0.90 0.02 70);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.55 0.12 40 / 0.3);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.55 0.12 40 / 0.5);
+}
+
+/* 页面过渡动画 */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.6s ease-out;
 }
