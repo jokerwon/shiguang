@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//////////////////////////////
+// 🥬 食材库存
+//////////////////////////////
+model Ingredient {
+  id             String  @id @default(cuid())
+  name           String // 用户原始输入（鸡蛋）
+  normalizedName String? // 归一化（egg）
+
+  quantity Float? // 数量（可选）
+  unit     String? // 单位（个 / 盒 / ml）
+
+  expireAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // 是否已消耗（简单库存控制）
+  isConsumed Boolean @default(false)
+
+  @@index([name])
+  @@index([normalizedName])
+}
+
+//////////////////////////////
+// 🍱 饮食记录
+//////////////////////////////
+model MealLog {
+  id       String @id @default(cuid())
+  mealName String // 用户描述：番茄炒蛋
+
+  // JSON 存储解析结果（MVP 不做复杂关系）
+  ingredients Json?
+
+  eatenAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([eatenAt])
+}
+
+//////////////////////////////
+// ❤️ 用户偏好（核心 AI 记忆）
+//////////////////////////////
+model PreferenceProfile {
+  id String @id @default(cuid())
+
+  // 可以是 ingredient 或 dish
+  targetType PreferenceType
+  targetName String // 鸡蛋 / 番茄炒蛋
+
+  score Float @default(0)
+
+  lastUpdatedAt DateTime @updatedAt
+
+  @@unique([targetType, targetName])
+}
+
+enum PreferenceType {
+  INGREDIENT
+  DISH
+}
+
+//////////////////////////////
+// 🧠 对话日志（用于上下文 & Debug）
+//////////////////////////////
+model ChatMessage {
+  id String @id @default(cuid())
+
+  role    MessageRole
+  content String
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}

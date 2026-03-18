@@ -23,10 +23,11 @@ import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from '@/componen
 export default function Chat() {
   const [input, setInput] = useState('')
   const { messages, sendMessage, regenerate, status } = useChat()
+  console.log(messages)
 
   // 针对饮食管理的快捷建议
   const suggestions = [
-    { text: '南京天气怎么样?', icon: UtensilsIcon },
+    { text: '今天吃什么?', icon: UtensilsIcon },
     { text: '冰箱里有什么?', icon: PackageIcon },
     { text: '这周饮食记录', icon: CalendarDaysIcon },
     { text: '推荐一道菜', icon: SparklesIcon },
