@@ -82,15 +82,15 @@ export default function Chat() {
                               <div key={`${message.id}-${i}`} className="message-bubble">
                                 <Message from={message.role}>
                                   <MessageContent>
-                                    <div
+                                    {/* <div
                                       className={`
                                       px-3 md:px-4 py-2 md:py-3 rounded-2xl max-w-[90%] md:max-w-[75%]
                                       ${message.role === 'user' ? 'bg-primary text-primary-foreground ml-auto' : 'bg-secondary/50 text-secondary-foreground'}
                                       font-serif leading-relaxed text-sm md:text-base
                                     `}
-                                    >
-                                      <MessageResponse>{part.text}</MessageResponse>
-                                    </div>
+                                    > */}
+                                    <MessageResponse>{part.text}</MessageResponse>
+                                    {/* </div> */}
                                   </MessageContent>
                                 </Message>
                                 {message.role === 'assistant' && isLastMessage && (
