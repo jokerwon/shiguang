@@ -18,6 +18,7 @@ import {
 // import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion'
 import { useChat } from '@ai-sdk/react'
 import { CopyIcon, RefreshCcwIcon, UtensilsIcon, PackageIcon, CalendarDaysIcon, SparklesIcon } from 'lucide-react'
+import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from '@/components/ai-elements/tool'
 
 export default function Chat() {
   const [input, setInput] = useState('')
@@ -25,7 +26,7 @@ export default function Chat() {
 
   // 针对饮食管理的快捷建议
   const suggestions = [
-    { text: '今天吃了什么?', icon: UtensilsIcon },
+    { text: '南京天气怎么样?', icon: UtensilsIcon },
     { text: '冰箱里有什么?', icon: PackageIcon },
     { text: '这周饮食记录', icon: CalendarDaysIcon },
     { text: '推荐一道菜', icon: SparklesIcon },
@@ -106,6 +107,16 @@ export default function Chat() {
                                   </div>
                                 )}
                               </div>
+                            )
+                          case 'tool-weather':
+                            return (
+                              <Tool>
+                                <ToolHeader type="tool-weather" state={part.state} />
+                                <ToolContent>
+                                  <ToolInput input={part.input || ''} />
+                                  <ToolOutput output={<MessageResponse>{JSON.stringify(part.output)}</MessageResponse>} errorText={part.errorText} />
+                                </ToolContent>
+                              </Tool>
                             )
                           default:
                             return null

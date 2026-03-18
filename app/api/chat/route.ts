@@ -1,34 +1,15 @@
-import { streamText, UIMessage, convertToModelMessages, tool } from 'ai'
-import { createAlibaba } from '@ai-sdk/alibaba'
-import z from 'zod'
-
-const alibaba = createAlibaba({
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: process.env.OPENAI_BASE_URL,
-})
+import { streamText, UIMessage, convertToModelMessages, stepCountIs } from 'ai'
+import { model } from '@/lib/ai/model'
+import { tools } from '@/tools'
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json()
 
   const result = streamText({
-    model: alibaba(process.env.MODEL_NAME || 'qwen-coder-turbo'),
+    model,
+    tools,
     messages: await convertToModelMessages(messages),
-    tools: {
-      weather: tool({
-        description: 'Get the weather in a location (fahrenheit)',
-        inputSchema: z.object({
-          location: z.string().describe('The location to get the weather for'),
-        }),
-        execute: async ({ location }) => {
-          const temperature = Math.round(Math.random() * (90 - 32) + 32)
-          return {
-            location,
-            temperature,
-          }
-        },
-      }),
-    },
+    stopWhen: stepCountIs(5),
   })
-
   return result.toUIMessageStreamResponse()
 }
