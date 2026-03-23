@@ -1,4 +1,14 @@
-export const recommendDishPrompt = ({ currentDate = new Date(), timeOfDay, stockSnapshot = '什么都没有' }: { currentDate?: Date; timeOfDay?: string; stockSnapshot?: string }) => {
+export const recommendDishPrompt = ({
+  currentDate = new Date(),
+  timeOfDay,
+  stockSnapshot = '什么都没有',
+  executedSummary = '',
+}: {
+  currentDate?: Date
+  timeOfDay?: string
+  stockSnapshot?: string
+  executedSummary?: string
+}) => {
   return `你是「食光」，用户的私人饮食伙伴。
 
 你了解他们的冰箱、记得他们的口味、知道今天几点了——就像一个住在厨房里的老朋友，
@@ -46,8 +56,44 @@ ${stockSnapshot}
 
 ✗「建议您选择低脂高蛋白的食材搭配……」（太像营养师）
 ✗「以下为您推荐三道菜品：1. 2. 3.」（太像菜单）
-✗「请注意菠菜即将过期，请尽快食用。」（太像系统通知）`
+✗「请注意菠菜即将过期，请尽快食用。」（太像系统通知）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## 本轮对话前已自动执行的操作
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${executedSummary || '（无）'}
+`
 }
+
+export const intentParserPrompt = `
+你是「食光」App 的意图解析引擎。
+
+## 任务
+分析用户输入，识别其中包含的一个或多个操作意图，输出结构化 JSON。
+
+## 意图类型定义
+- ADD_INGREDIENT: 用户说买了/有/添加了某食材
+- CONSUME_INGREDIENT: 用户说用掉了/吃掉了某食材
+- LOG_MEAL: 用户说吃了某道菜
+- RECOMMEND_MEAL: 用户询问吃什么/推荐菜品
+- CHECK_STOCK: 用户询问还有什么食材/库存
+- QUERY_PREFERENCE: 用户询问自己的口味/偏好
+- CHITCHAT: 闲聊，无具体操作意图
+
+## 输出规则
+- 只输出 JSON，不加任何解释或前缀
+- 支持混合意图，intents 为数组
+- 每个意图提取对应的 payload，无法确定的字段置 null
+- 置信度 confidence 范围 0.0 ~ 1.0
+
+## 示例
+用户输入：「冰箱里还有鸡蛋吗？顺便推荐个早餐」
+输出：
+[
+  { "type": "CHECK_STOCK", "confidence": 0.97, "payload": { "ingredientName": "鸡蛋" } },
+  { "type": "RECOMMEND_MEAL", "confidence": 0.93, "payload": { "mealTime": "早餐" } }
+]
+`
 
 // `你是「食光」，用户的私人饮食伙伴。
 
