@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { RecipeCard } from '@/components/recipe-card'
 import { useFilters, type Filters } from '@/lib/use-filters'
@@ -9,8 +10,16 @@ import { useFavorites } from '@/lib/use-favorites'
 import { CUISINES, PREFS, RECIPES, TIMES, type Recipe } from '@/lib/recipes'
 import { cn } from '@/lib/utils'
 
+type CuisineKey = 'home' | 'western' | 'japanese' | 'sichuan' | 'light'
+type PrefKey = 'vegetarian' | 'high-protein' | 'low-cal' | 'low-carb' | 'quick' | 'rice-friendly' | 'comforting'
+type TimeKey = 'le15' | 'le30' | 'any'
+
 export default function FilterScreen() {
   const router = useRouter()
+  const t = useTranslations('Filter')
+  const tc = useTranslations('Cuisine')
+  const tp = useTranslations('Pref')
+  const tt = useTranslations('Time')
   const { filters, setFilters } = useFilters()
   const { saved, toggleSave } = useFavorites()
   const [applied, setApplied] = React.useState<Filters>(filters)
@@ -37,8 +46,8 @@ export default function FilterScreen() {
   const predicate = (r: Recipe) => {
     if (applied.cuisine.length && !applied.cuisine.includes(r.cuisine)) return false
     if (applied.pref.length && !applied.pref.every((p) => r.tags.includes(p))) return false
-    if (applied.time === '≤15分钟' && r.time > 15) return false
-    if (applied.time === '≤30分钟' && r.time > 30) return false
+    if (applied.time === 'le15' && r.time > 15) return false
+    if (applied.time === 'le30' && r.time > 30) return false
     return true
   }
   const res = RECIPES.filter(predicate)
@@ -47,46 +56,46 @@ export default function FilterScreen() {
     <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200">
       <div className="px-4 pb-4 pt-6">
         <span className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
-          偏好 · 菜系
+          {t('eyebrow')}
         </span>
         <h2 className="mt-1 text-[clamp(22px,2.8vw,30px)] font-bold tracking-tight">
-          按你的口味筛选
+          {t('title')}
         </h2>
       </div>
 
       <div className="flex flex-col gap-6 p-4">
-        <FilterGroup title="菜系">
+        <FilterGroup title={t('groupCuisine')}>
           {CUISINES.map((c) => (
             <Chip
               key={c}
               on={applied.cuisine.includes(c)}
               onClick={() => tog('cuisine', c)}
             >
-              {c}
+              {tc(c as CuisineKey)}
             </Chip>
           ))}
         </FilterGroup>
-        <FilterGroup title="饮食偏好 / 忌口">
+        <FilterGroup title={t('groupPref')}>
           {PREFS.map((p) => (
             <Chip key={p} on={applied.pref.includes(p)} onClick={() => tog('pref', p)}>
-              {p}
+              {tp(p as PrefKey)}
             </Chip>
           ))}
         </FilterGroup>
-        <FilterGroup title="烹饪时间">
+        <FilterGroup title={t('groupTime')}>
           {TIMES.map((t) => (
             <Chip key={t} on={applied.time === t} onClick={() => setTime(t)}>
-              {t}
+              {tt(t as TimeKey)}
             </Chip>
           ))}
         </FilterGroup>
         <Button onClick={apply} className="w-full">
-          应用筛选
+          {t('apply')}
         </Button>
       </div>
 
       <div className="flex items-baseline justify-between px-4 pt-4 pb-3">
-        <h2 className="text-[19px] font-bold tracking-tight">筛选结果</h2>
+        <h2 className="text-[19px] font-bold tracking-tight">{t('resultTitle')}</h2>
       </div>
       {res.length ? (
         <div className="grid grid-cols-2 gap-4 px-4 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
@@ -102,7 +111,7 @@ export default function FilterScreen() {
         </div>
       ) : (
         <div className="px-4 pb-16 pt-6 text-center text-sm text-muted-foreground">
-          <p>没有匹配的菜谱，试试放宽筛选条件。</p>
+          <p>{t('empty')}</p>
         </div>
       )}
     </section>

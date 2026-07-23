@@ -1,8 +1,10 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter } from 'next/navigation'
 import { ChevronLeft, Clock, Calendar, Bookmark } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
+import type { Locale } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { usePantry } from '@/lib/use-pantry'
 import { useFavorites } from '@/lib/use-favorites'
@@ -10,8 +12,14 @@ import { matchScore, RECIPES } from '@/lib/recipes'
 import { cn } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 
+const pick = (l: { zh: string; en: string }, locale: Locale) =>
+  locale === 'en' ? l.en : l.zh
+
 export default function DetailScreen({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const locale = useLocale()
+  const t = useTranslations('Recipe')
+  const tc = useTranslations('Cuisine')
   const { pantry } = usePantry()
   const { saved, toggleSave } = useFavorites()
   const [tab, setTab] = React.useState<'steps' | 'ings'>('steps')
@@ -23,6 +31,7 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
 
   const m = matchScore(r, pantry)
   const isSaved = saved.has(r.id)
+  const name = pick(r.name, locale)
 
   return (
     <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200 pb-28">
@@ -32,19 +41,19 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={r.img}
-            alt={r.name}
+            alt={name}
             onError={() => setImgErr(true)}
             className="aspect-4/3 w-full object-cover md:aspect-21/9"
           />
         ) : (
           <div className="grid aspect-4/3 w-full place-items-center bg-[linear-gradient(135deg,var(--primary-soft),color-mix(in_oklch,var(--foreground)_6%,transparent))] font-mono text-sm text-muted-foreground md:aspect-21/9">
-            {r.name}
+            {name}
           </div>
         )}
         <button
           type="button"
           onClick={() => router.back()}
-          aria-label="返回"
+          aria-label={t('backAria')}
           className="absolute top-3 left-3 grid size-11 place-items-center rounded-full border border-border bg-[color-mix(in_oklch,var(--background)_85%,transparent)] backdrop-blur-sm md:top-4 md:left-4"
         >
           <ChevronLeft size={18} />
@@ -55,32 +64,32 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
       <div className="md:mx-auto md:max-w-3xl md:px-4">
         <div className="p-4">
           <h1 className="text-[clamp(30px,4.4vw,46px)] leading-[1.1] font-bold tracking-tight">
-            {r.name}
+            {name}
           </h1>
           <div className="mt-3 flex gap-6 text-[13px] text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Clock size={15} />
-              <span className="font-mono">{r.time}分钟</span>
+              <span className="font-mono">{t('timeUnit', { time: r.time })}</span>
             </span>
             <span className="flex items-center gap-1.5">
               <Calendar size={15} />
               <span className="font-mono">{r.kcal}kcal</span>
             </span>
-            <span>{r.cuisine}</span>
+            <span>{tc(r.cuisine as 'home' | 'western' | 'japanese' | 'sichuan' | 'light')}</span>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">{r.desc}</p>
+          <p className="mt-3 text-sm text-muted-foreground">{pick(r.desc, locale)}</p>
 
           {pantry.length > 0 && (
             <div className="mt-4 rounded-lg border border-border bg-muted p-4">
               <div className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
-                食材匹配 · {m.score}%
+                {t('matchSection', { score: m.score })}
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {r.ingredients.map((i) => {
-                  const got = m.have.includes(i)
+                  const got = m.have.includes(i.zh)
                   return (
                     <span
-                      key={i}
+                      key={i.zh}
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs',
                         got
@@ -88,8 +97,8 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
                           : 'border-border bg-background text-muted-foreground',
                       )}
                     >
-                      {got ? '✓ ' : ''}
-                      {i}
+                      {got ? t('haveMark') : ''}
+                      {pick(i, locale)}
                     </span>
                   )
                 })}
@@ -101,8 +110,8 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
           <div className="mt-6 flex gap-1 border-b border-border">
             {(
               [
-                ['steps', '做法'],
-                ['ings', '食材清单'],
+                ['steps', t('tabSteps')],
+                ['ings', t('tabIngs')],
               ] as const
             ).map(([key, label]) => (
               <button
@@ -131,7 +140,7 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
                   <div className="grid size-6.5 shrink-0 place-items-center rounded-full bg-foreground font-mono text-[13px] font-bold text-background">
                     {i + 1}
                   </div>
-                  <div className="pt-0.5 text-sm leading-relaxed">{s}</div>
+                  <div className="pt-0.5 text-sm leading-relaxed">{pick(s, locale)}</div>
                 </div>
               ))}
             </div>
@@ -139,11 +148,11 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
             <ul className="flex flex-col pt-4">
               {r.ingredients.map((i) => (
                 <li
-                  key={i}
+                  key={i.zh}
                   className="flex justify-between border-b border-border py-2.5 text-sm last:border-b-0"
                 >
-                  <span>{i}</span>
-                  <span className="font-mono text-muted-foreground">适量</span>
+                  <span>{pick(i, locale)}</span>
+                  <span className="font-mono text-muted-foreground">{t('amount')}</span>
                 </li>
               ))}
             </ul>
@@ -160,9 +169,9 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
           onClick={() => toggleSave(r.id)}
         >
           <Bookmark size={18} fill={isSaved ? 'currentColor' : 'none'} />
-          {isSaved ? '已收藏' : '收藏'}
+          {isSaved ? t('saved') : t('save')}
         </Button>
-        <Button className="flex-2">开始烹饪</Button>
+        <Button className="flex-2">{t('startCooking')}</Button>
       </div>
     </section>
   )

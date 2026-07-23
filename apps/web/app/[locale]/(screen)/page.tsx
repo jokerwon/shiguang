@@ -1,8 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Search, User, ChevronRight } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { Link, useRouter } from '@/i18n/navigation'
 import { CUISINES, RECIPES } from '@/lib/recipes'
 import { useFavorites } from '@/lib/use-favorites'
 import { useFilters } from '@/lib/use-filters'
@@ -10,6 +10,8 @@ import { RecipeCard } from '@/components/recipe-card'
 
 export default function DiscoveryScreen() {
   const router = useRouter()
+  const t = useTranslations('Home')
+  const tc = useTranslations('Cuisine')
   const { saved, toggleSave } = useFavorites()
   const { setFilters } = useFilters()
 
@@ -18,7 +20,7 @@ export default function DiscoveryScreen() {
   const openDetail = (id: string) => router.push(`/recipe/${id}`)
 
   const filterByCuisine = (c: string) => {
-    setFilters({ cuisine: [c], pref: [], time: '不限' })
+    setFilters({ cuisine: [c], pref: [], time: 'any' })
     router.push('/filter')
   }
 
@@ -26,15 +28,15 @@ export default function DiscoveryScreen() {
     <section className="pb-4 animate-in fade-in slide-in-from-bottom-1.5 duration-200">
       <div className="gap-y-2 p-4 md:grid md:grid-cols-[1.1fr_0.9fr] md:gap-x-10 md:px-0 md:pt-10">
         <div>
-          <h1 className="text-[26px] leading-[1.15] font-bold tracking-tight md:text-[clamp(28px,3.2vw,40px)]">今天想做点什么？</h1>
-          <p className="mt-1.5 text-[17px] text-muted-foreground md:mt-0">告诉我手边有什么，我来给你挑一道。</p>
+          <h1 className="text-[26px] leading-[1.15] font-bold tracking-tight md:text-[clamp(28px,3.2vw,40px)]">{t('title')}</h1>
+          <p className="mt-1.5 text-[17px] text-muted-foreground md:mt-0">{t('subtitle')}</p>
           <Link
             href="/pantry"
-            aria-label="搜索菜名，或按食材匹配"
+            aria-label={t('searchAria')}
             className="mt-4 flex w-full items-center gap-2.5 rounded-lg border border-border bg-muted px-3.5 py-3 text-left text-[15px] transition-colors hover:border-foreground md:max-w-md"
           >
             <Search size={18} className="text-muted-foreground" />
-            <span className="text-muted-foreground">搜索菜名，或按食材匹配…</span>
+            <span className="text-muted-foreground">{t('searchPlaceholder')}</span>
           </Link>
         </div>
 
@@ -46,16 +48,16 @@ export default function DiscoveryScreen() {
             <User size={22} />
           </span>
           <span className="flex-1">
-            <b className="text-[15px]">和食光 Agent 聊聊</b>
-            <span className="mt-0.5 block text-xs opacity-70">“冰箱里有鸡蛋和西红柿” → 立刻出方案</span>
+            <b className="text-[15px]">{t('agentTitle')}</b>
+            <span className="mt-0.5 block text-xs opacity-70">{t('agentSubtitle')}</span>
           </span>
           <ChevronRight size={20} className="opacity-60" />
         </Link>
       </div>
 
-      <RowTitle title="今日推荐">
+      <RowTitle title={t('todayTitle')}>
         <Link href="/filter" className="text-[13px] text-muted-foreground hover:text-foreground">
-          筛选
+          {t('filter')}
         </Link>
       </RowTitle>
       <RecipeGrid>
@@ -64,7 +66,7 @@ export default function DiscoveryScreen() {
         ))}
       </RecipeGrid>
 
-      <RowTitle title="按菜系探索" />
+      <RowTitle title={t('cuisineTitle')} />
       <div className="flex gap-2 overflow-x-auto px-4 pb-2 md:flex-wrap md:overflow-visible">
         {CUISINES.map((c) => (
           <button
@@ -73,14 +75,14 @@ export default function DiscoveryScreen() {
             onClick={() => filterByCuisine(c)}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3.5 py-2 text-[13px] font-medium transition-colors hover:border-foreground"
           >
-            {c}
+            {tc(c as 'home' | 'western' | 'japanese' | 'sichuan' | 'light')}
           </button>
         ))}
       </div>
 
-      <RowTitle title="15 分钟快手">
+      <RowTitle title={t('quickTitle')}>
         <Link href="/filter" className="text-[13px] text-muted-foreground hover:text-foreground">
-          更多
+          {t('more')}
         </Link>
       </RowTitle>
       <RecipeGrid>

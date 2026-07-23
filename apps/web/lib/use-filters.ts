@@ -8,7 +8,7 @@ export interface Filters {
   time: string
 }
 
-export const DEFAULT_FILTERS: Filters = { cuisine: [], pref: [], time: '不限' }
+export const DEFAULT_FILTERS: Filters = { cuisine: [], pref: [], time: 'any' }
 
 const STORAGE_KEY = 'shiguang:filters'
 
@@ -30,10 +30,13 @@ function write(f: Filters) {
 
 /** 跨页面共享的筛选条件（菜系 / 偏好 / 时间）。 */
 export function useFilters() {
-  const [filters, setFilters] = React.useState<Filters>(() => read())
+  // 初始用空值，保证 SSR 与客户端首次 hydration 一致；
+  // 真实数据在 effect 挂载后从 localStorage 读取，避免 hydration mismatch。
+  const [filters, setFilters] = React.useState<Filters>(DEFAULT_FILTERS)
 
   React.useEffect(() => {
     const sync = () => setFilters(read())
+    sync()
     window.addEventListener('storage', sync)
     window.addEventListener('shiguang:filters-change', sync)
     return () => {

@@ -1,0 +1,116 @@
+{
+  "Meta": {
+    "title": "食光",
+    "description": "懂你的胃"
+  },
+  "Nav": {
+    "brand": "食光",
+    "discover": "发现",
+    "pantry": "食材",
+    "chat": "对话",
+    "favorite": "收藏"
+  },
+  "Home": {
+    "title": "今天想做点什么？",
+    "subtitle": "告诉我手边有什么，我来给你挑一道。",
+    "searchAria": "搜索菜名，或按食材匹配",
+    "searchPlaceholder": "搜索菜名，或按食材匹配…",
+    "agentTitle": "和食光 Agent 聊聊",
+    "agentSubtitle": "“冰箱里有鸡蛋和西红柿” → 立刻出方案",
+    "todayTitle": "今日推荐",
+    "filter": "筛选",
+    "cuisineTitle": "按菜系探索",
+    "quickTitle": "15 分钟快手",
+    "more": "更多"
+  },
+  "Pantry": {
+    "eyebrow": "智能匹配 · 食材优先",
+    "title": "手边有什么？",
+    "inputPlaceholder": "输入食材，回车添加（如 西红柿）",
+    "add": "添加",
+    "mineTitle": "我的食材",
+    "mineCount": "· {count} 种",
+    "empty": "还没有添加食材，点上方输入框或下方常见食材。",
+    "removeAria": "移除 {name}",
+    "suggestTitle": "常见食材，点选添加",
+    "matchTitle": "食材匹配度",
+    "matchStat": "{count} 道可做 · 平均 {avg}%",
+    "resultTitle": "为你匹配",
+    "clear": "清空",
+    "resultEmpty": "添加食材后，这里会出现你能做的菜。"
+  },
+  "Chat": {
+    "botName": "食光",
+    "me": "我",
+    "greeting": "你好，我是食光 👋。告诉我手边有什么食材、想吃什么，或今晚有多少时间，我来帮你挑一道菜。",
+    "placeholder": "告诉食光你想吃什么…",
+    "sendAria": "发送",
+    "quick1Label": "鸡蛋+西红柿",
+    "quick1Query": "冰箱里有鸡蛋和西红柿，能做什么？",
+    "quick2Label": "15分钟晚餐",
+    "quick2Query": "15分钟内能搞定的晚餐",
+    "quick3Label": "想吃日料",
+    "quick3Query": "今晚想吃日料",
+    "quick4Label": "素食高蛋白",
+    "quick4Query": "素食，高蛋白",
+    "replyMentioned": "检测到你提到的食材：{ings}。这道最合适——",
+    "replyQuick": "15 分钟内能搞定的，推荐这道——{name}。",
+    "replyCuisine": "想吃{cuisine}？来这道——",
+    "replyPref": "符合「{pref}」的，这道不错——",
+    "replyPantry": "根据你已添加的 {count} 种食材，匹配度最高的是——",
+    "replyFallback": "告诉我你冰箱里有什么、想吃什么口味、或有多少时间，我给你挑一道。你也可以试试下面的快捷提问。",
+    "recipeMeta": "{cuisine} · {time}分钟 · {kcal}kcal"
+  },
+  "Favorite": {
+    "eyebrow": "收藏夹",
+    "title": "想做的菜",
+    "empty1": "还没有收藏的菜谱。",
+    "empty2": "看到喜欢的，点心形保存。"
+  },
+  "Filter": {
+    "eyebrow": "偏好 · 菜系",
+    "title": "按你的口味筛选",
+    "groupCuisine": "菜系",
+    "groupPref": "饮食偏好 / 忌口",
+    "groupTime": "烹饪时间",
+    "apply": "应用筛选",
+    "resultTitle": "筛选结果",
+    "empty": "没有匹配的菜谱，试试放宽筛选条件。"
+  },
+  "Recipe": {
+    "matchLabel": "{score}% 匹配",
+    "saveAriaOn": "取消收藏：{name}",
+    "saveAriaOff": "收藏：{name}",
+    "timeUnit": "{time}分钟",
+    "matchSection": "食材匹配 · {score}%",
+    "haveMark": "✓ ",
+    "tabSteps": "做法",
+    "tabIngs": "食材清单",
+    "backAria": "返回",
+    "amount": "适量",
+    "saved": "已收藏",
+    "save": "收藏",
+    "startCooking": "开始烹饪"
+  },
+  "Cuisine": {
+    "home": "家常",
+    "western": "西餐",
+    "japanese": "日料",
+    "sichuan": "川菜",
+    "light": "轻食"
+  },
+  "Pref": {
+    "vegetarian": "素食",
+    "high-protein": "高蛋白",
+    "low-cal": "低卡",
+    "low-carb": "低碳",
+    "quick": "快手",
+    "rice-friendly": "下饭",
+    "comforting": "治愈系"
+  },
+  "Time": {
+    "le15": "≤15分钟",
+    "le30": "≤30分钟",
+    "any": "不限"
+  }
+}

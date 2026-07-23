@@ -1,0 +1,116 @@
+{
+  "Meta": {
+    "title": "Shiguang",
+    "description": "Knows your appetite"
+  },
+  "Nav": {
+    "brand": "Shiguang",
+    "discover": "Discover",
+    "pantry": "Pantry",
+    "chat": "Chat",
+    "favorite": "Saved"
+  },
+  "Home": {
+    "title": "What do you feel like cooking today?",
+    "subtitle": "Tell me what’s on hand and I’ll pick a dish for you.",
+    "searchAria": "Search recipes, or match by ingredient",
+    "searchPlaceholder": "Search recipes, or match by ingredient…",
+    "agentTitle": "Chat with Shiguang Agent",
+    "agentSubtitle": "“I have eggs and tomatoes in the fridge” → instant ideas",
+    "todayTitle": "Today’s picks",
+    "filter": "Filter",
+    "cuisineTitle": "Explore by cuisine",
+    "quickTitle": "15-min quick fixes",
+    "more": "More"
+  },
+  "Pantry": {
+    "eyebrow": "Smart match · Ingredient first",
+    "title": "What’s on hand?",
+    "inputPlaceholder": "Type an ingredient, press Enter (e.g. Tomato)",
+    "add": "Add",
+    "mineTitle": "My ingredients",
+    "mineCount": "· {count} items",
+    "empty": "No ingredients yet—use the box above or tap common ones below.",
+    "removeAria": "Remove {name}",
+    "suggestTitle": "Common ingredients, tap to add",
+    "matchTitle": "Ingredient match",
+    "matchStat": "{count} doable · avg {avg}%",
+    "resultTitle": "Matched for you",
+    "clear": "Clear",
+    "resultEmpty": "Add ingredients and the dishes you can cook will show up here."
+  },
+  "Chat": {
+    "botName": "Shiguang",
+    "me": "Me",
+    "greeting": "Hi, I’m Shiguang 👋. Tell me what ingredients you have, what you’re craving, or how much time you’ve got tonight—I’ll pick a dish.",
+    "placeholder": "Tell Shiguang what you want to eat…",
+    "sendAria": "Send",
+    "quick1Label": "Egg + Tomato",
+    "quick1Query": "I have eggs and tomatoes in the fridge, what can I make?",
+    "quick2Label": "15-min dinner",
+    "quick2Query": "A dinner I can make in 15 minutes",
+    "quick3Label": "Craving Japanese",
+    "quick3Query": "I want Japanese food tonight",
+    "quick4Label": "Veggie high-protein",
+    "quick4Query": "Vegetarian, high protein",
+    "replyMentioned": "Spotted ingredients you mentioned: {ings}. This one fits best—",
+    "replyQuick": "Doable in 15 minutes—I’d go with {name}.",
+    "replyCuisine": "Craving {cuisine}? Try this—",
+    "replyPref": "Matching “{pref}”—this one’s good—",
+    "replyPantry": "Based on your {count} ingredients, the best match is—",
+    "replyFallback": "Tell me what’s in your fridge, what you’re craving, or how much time you have, and I’ll pick a dish. Or try the quick prompts below.",
+    "recipeMeta": "{cuisine} · {time} min · {kcal} kcal"
+  },
+  "Favorite": {
+    "eyebrow": "Favorites",
+    "title": "Dishes to try",
+    "empty1": "No saved recipes yet.",
+    "empty2": "Tap the bookmark on any you like to save it."
+  },
+  "Filter": {
+    "eyebrow": "Preferences · Cuisines",
+    "title": "Filter by your taste",
+    "groupCuisine": "Cuisine",
+    "groupPref": "Diet / restrictions",
+    "groupTime": "Cook time",
+    "apply": "Apply filters",
+    "resultTitle": "Results",
+    "empty": "No matching recipes—try loosening the filters."
+  },
+  "Recipe": {
+    "matchLabel": "{score}% match",
+    "saveAriaOn": "Unsave: {name}",
+    "saveAriaOff": "Save: {name}",
+    "timeUnit": "{time} min",
+    "matchSection": "Ingredient match · {score}%",
+    "haveMark": "✓ ",
+    "tabSteps": "Steps",
+    "tabIngs": "Ingredients",
+    "backAria": "Back",
+    "amount": "to taste",
+    "saved": "Saved",
+    "save": "Save",
+    "startCooking": "Start cooking"
+  },
+  "Cuisine": {
+    "home": "Home-style",
+    "western": "Western",
+    "japanese": "Japanese",
+    "sichuan": "Sichuan",
+    "light": "Light"
+  },
+  "Pref": {
+    "vegetarian": "Vegetarian",
+    "high-protein": "High protein",
+    "low-cal": "Low calorie",
+    "low-carb": "Low carb",
+    "quick": "Quick",
+    "rice-friendly": "Rice-friendly",
+    "comforting": "Comforting"
+  },
+  "Time": {
+    "le15": "≤15 min",
+    "le30": "≤30 min",
+    "any": "Any"
+  }
+}

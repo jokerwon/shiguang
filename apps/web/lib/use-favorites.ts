@@ -25,10 +25,13 @@ function write(ids: Set<string>) {
  * 发现页与收藏页通过同一份 storage 保持同步。
  */
 export function useFavorites() {
-  const [saved, setSaved] = React.useState<Set<string>>(() => read())
+  // 初始用空值，保证 SSR 与客户端首次 hydration 一致；
+  // 真实数据在 effect 挂载后从 localStorage 读取，避免 hydration mismatch。
+  const [saved, setSaved] = React.useState<Set<string>>(new Set())
 
   React.useEffect(() => {
     const sync = () => setSaved(read())
+    sync()
     window.addEventListener('storage', sync)
     window.addEventListener('shiguang:favorites-change', sync)
     return () => {

@@ -25,10 +25,13 @@ function write(ings: string[]) {
  * 食材页写入、详情页读取匹配度。
  */
 export function usePantry() {
-  const [pantry, setPantry] = React.useState<string[]>(() => read())
+  // 初始用空值，保证 SSR 与客户端首次 hydration 一致；
+  // 真实数据在 effect 挂载后从 localStorage 读取，避免 hydration mismatch。
+  const [pantry, setPantry] = React.useState<string[]>([])
 
   React.useEffect(() => {
     const sync = () => setPantry(read())
+    sync()
     window.addEventListener('storage', sync)
     window.addEventListener('shiguang:pantry-change', sync)
     return () => {
