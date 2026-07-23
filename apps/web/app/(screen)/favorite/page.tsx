@@ -12,7 +12,7 @@ export default function FavoriteScreen() {
   const items = RECIPES.filter((r) => saved.has(r.id))
 
   return (
-    <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200">
+    <section className="pb-4 animate-in fade-in slide-in-from-bottom-1.5 duration-200">
       <div className="px-4 pb-4 pt-6">
         <span className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
           收藏夹

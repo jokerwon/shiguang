@@ -53,7 +53,7 @@ export function Tabbar() {
             key={link.href}
             href={link.href}
             aria-current={active ? 'page' : undefined}
-            className={cn('relative flex flex-1 flex-col items-center justify-center gap-0.5 text-xs text-muted-foreground transition-colors', active && 'text-foreground')}
+            className={cn('relative flex flex-1 flex-col items-center justify-center gap-0.75 text-xs text-muted-foreground transition-colors', active && 'text-foreground')}
           >
             <Icon size={20} className={cn('transition-transform', active && 'scale-110')} />
             <span>{link.label}</span>

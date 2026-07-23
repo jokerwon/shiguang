@@ -33,7 +33,7 @@ export default function PantryScreen() {
   }
 
   return (
-    <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200">
+    <section className="pb-4 animate-in fade-in slide-in-from-bottom-1.5 duration-200">
       <div className="px-4 pb-4 pt-6">
         <span className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">智能匹配 · 食材优先</span>
         <h2 className="mt-1 text-[clamp(22px,2.8vw,30px)] font-bold tracking-tight">手边有什么？</h2>

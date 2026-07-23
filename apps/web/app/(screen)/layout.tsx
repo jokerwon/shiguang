@@ -27,7 +27,7 @@ export default function ScreenLayout({
       </header>
 
       <main>
-        <section className="pt-(--nav-h) px-0 pb-24 md:max-w-(--shell-w) md:m-auto md:pb-14">{children}</section>
+        <section className="pt-(--nav-h) px-0 pb-(--nav-h) md:max-w-(--shell-w) md:m-auto md:pb-14">{children}</section>
       </main>
 
       <Tabbar />

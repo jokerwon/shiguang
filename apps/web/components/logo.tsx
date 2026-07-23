@@ -7,7 +7,7 @@ export function LogoIcon({ className, background = false, style, ...props }: Rea
       viewBox="0 0 128 128"
       role="img"
       aria-label="食光 Shiguang"
-      className={cn('size-5', className)}
+      className={cn('size-6', className)}
       style={
         {
           '--logo-bg': '#000300',

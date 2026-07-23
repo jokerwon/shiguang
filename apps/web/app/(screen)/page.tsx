@@ -23,16 +23,11 @@ export default function DiscoveryScreen() {
   }
 
   return (
-    <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200">
-      {/* 问候区 */}
+    <section className="pb-4 animate-in fade-in slide-in-from-bottom-1.5 duration-200">
       <div className="gap-y-2 p-4 md:grid md:grid-cols-[1.1fr_0.9fr] md:gap-x-10 md:px-0 md:pt-10">
         <div>
-          <h1 className="text-[26px] leading-[1.15] font-bold tracking-tight md:text-[clamp(28px,3.2vw,40px)]">
-            今天想做点什么？
-          </h1>
-          <p className="mt-1.5 text-[17px] text-muted-foreground md:mt-0">
-            告诉我手边有什么，我来给你挑一道。
-          </p>
+          <h1 className="text-[26px] leading-[1.15] font-bold tracking-tight md:text-[clamp(28px,3.2vw,40px)]">今天想做点什么？</h1>
+          <p className="mt-1.5 text-[17px] text-muted-foreground md:mt-0">告诉我手边有什么，我来给你挑一道。</p>
           <Link
             href="/pantry"
             aria-label="搜索菜名，或按食材匹配"
@@ -52,15 +47,12 @@ export default function DiscoveryScreen() {
           </span>
           <span className="flex-1">
             <b className="text-[15px]">和食光 Agent 聊聊</b>
-            <span className="mt-0.5 block text-xs opacity-70">
-              “冰箱里有鸡蛋和西红柿” → 立刻出方案
-            </span>
+            <span className="mt-0.5 block text-xs opacity-70">“冰箱里有鸡蛋和西红柿” → 立刻出方案</span>
           </span>
           <ChevronRight size={20} className="opacity-60" />
         </Link>
       </div>
 
-      {/* 今日推荐 */}
       <RowTitle title="今日推荐">
         <Link href="/filter" className="text-[13px] text-muted-foreground hover:text-foreground">
           筛选
@@ -68,17 +60,10 @@ export default function DiscoveryScreen() {
       </RowTitle>
       <RecipeGrid>
         {today.map((r) => (
-          <RecipeCard
-            key={r.id}
-            r={r}
-            saved={saved.has(r.id)}
-            onOpen={() => openDetail(r.id)}
-            onToggle={() => toggleSave(r.id)}
-          />
+          <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onOpen={() => openDetail(r.id)} onToggle={() => toggleSave(r.id)} />
         ))}
       </RecipeGrid>
 
-      {/* 按菜系探索 */}
       <RowTitle title="按菜系探索" />
       <div className="flex gap-2 overflow-x-auto px-4 pb-2 md:flex-wrap md:overflow-visible">
         {CUISINES.map((c) => (
@@ -93,7 +78,6 @@ export default function DiscoveryScreen() {
         ))}
       </div>
 
-      {/* 15 分钟快手 */}
       <RowTitle title="15 分钟快手">
         <Link href="/filter" className="text-[13px] text-muted-foreground hover:text-foreground">
           更多
@@ -101,13 +85,7 @@ export default function DiscoveryScreen() {
       </RowTitle>
       <RecipeGrid>
         {quick.map((r) => (
-          <RecipeCard
-            key={r.id}
-            r={r}
-            saved={saved.has(r.id)}
-            onOpen={() => openDetail(r.id)}
-            onToggle={() => toggleSave(r.id)}
-          />
+          <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onOpen={() => openDetail(r.id)} onToggle={() => toggleSave(r.id)} />
         ))}
       </RecipeGrid>
     </section>
@@ -124,9 +102,5 @@ function RowTitle({ title, children }: { title: string; children?: React.ReactNo
 }
 
 function RecipeGrid({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-2 gap-4 px-4 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
-      {children}
-    </div>
-  )
+  return <div className="grid grid-cols-2 gap-4 px-4 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">{children}</div>
 }
