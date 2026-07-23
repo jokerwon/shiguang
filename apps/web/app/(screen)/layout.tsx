@@ -1,5 +1,7 @@
+import Link from 'next/link'
+import { MessageCircle } from 'lucide-react'
 import Logo from '@/components/logo'
-import { MainNav } from '@/components/main-nav'
+import { Navbar, Tabbar } from '@/components/app-nav'
 
 export default function ScreenLayout({
   children,
@@ -16,12 +18,19 @@ export default function ScreenLayout({
           <Logo background />
           食光
         </div>
-        <MainNav />
-        <div style={{ display: 'flex', gap: 8 }}></div>
+
+        <Navbar />
+
+        <Link href="/chat">
+          <MessageCircle className="cursor-pointer" size={18} />
+        </Link>
       </header>
+
       <main>
         <section className="pt-(--nav-h) px-0 pb-24 md:max-w-(--shell-w) md:m-auto md:pb-14">{children}</section>
       </main>
+
+      <Tabbar />
     </div>
   )
 }
