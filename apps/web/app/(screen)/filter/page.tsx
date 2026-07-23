@@ -1,0 +1,145 @@
+'use client'
+
+import * as React from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { RecipeCard } from '@/components/recipe-card'
+import { useFilters, type Filters } from '@/lib/use-filters'
+import { useFavorites } from '@/lib/use-favorites'
+import { CUISINES, PREFS, RECIPES, TIMES, type Recipe } from '@/lib/recipes'
+import { cn } from '@/lib/utils'
+
+export default function FilterScreen() {
+  const router = useRouter()
+  const { filters, setFilters } = useFilters()
+  const { saved, toggleSave } = useFavorites()
+  const [applied, setApplied] = React.useState<Filters>(filters)
+  const [lastSynced, setLastSynced] = React.useState<Filters>(filters)
+
+  // 当外部 filters 变化（如从发现页跳入并预选菜系）时，重置本地草稿。
+  // 用「渲染期间调整 state」模式，避免在 effect 里同步 setState。
+  if (
+    filters !== lastSynced &&
+    JSON.stringify(filters) !== JSON.stringify(lastSynced)
+  ) {
+    setApplied(filters)
+    setLastSynced(filters)
+  }
+
+  const tog = (k: 'cuisine' | 'pref', v: string) =>
+    setApplied((prev) => {
+      const arr = prev[k]
+      return { ...prev, [k]: arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v] }
+    })
+  const setTime = (t: string) => setApplied((prev) => ({ ...prev, time: t }))
+  const apply = () => setFilters(applied)
+
+  const predicate = (r: Recipe) => {
+    if (applied.cuisine.length && !applied.cuisine.includes(r.cuisine)) return false
+    if (applied.pref.length && !applied.pref.every((p) => r.tags.includes(p))) return false
+    if (applied.time === '≤15分钟' && r.time > 15) return false
+    if (applied.time === '≤30分钟' && r.time > 30) return false
+    return true
+  }
+  const res = RECIPES.filter(predicate)
+
+  return (
+    <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200">
+      <div className="px-4 pb-4 pt-6">
+        <span className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
+          偏好 · 菜系
+        </span>
+        <h2 className="mt-1 text-[clamp(22px,2.8vw,30px)] font-bold tracking-tight">
+          按你的口味筛选
+        </h2>
+      </div>
+
+      <div className="flex flex-col gap-6 p-4">
+        <FilterGroup title="菜系">
+          {CUISINES.map((c) => (
+            <Chip
+              key={c}
+              on={applied.cuisine.includes(c)}
+              onClick={() => tog('cuisine', c)}
+            >
+              {c}
+            </Chip>
+          ))}
+        </FilterGroup>
+        <FilterGroup title="饮食偏好 / 忌口">
+          {PREFS.map((p) => (
+            <Chip key={p} on={applied.pref.includes(p)} onClick={() => tog('pref', p)}>
+              {p}
+            </Chip>
+          ))}
+        </FilterGroup>
+        <FilterGroup title="烹饪时间">
+          {TIMES.map((t) => (
+            <Chip key={t} on={applied.time === t} onClick={() => setTime(t)}>
+              {t}
+            </Chip>
+          ))}
+        </FilterGroup>
+        <Button onClick={apply} className="w-full">
+          应用筛选
+        </Button>
+      </div>
+
+      <div className="flex items-baseline justify-between px-4 pt-4 pb-3">
+        <h2 className="text-[19px] font-bold tracking-tight">筛选结果</h2>
+      </div>
+      {res.length ? (
+        <div className="grid grid-cols-2 gap-4 px-4 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
+          {res.map((r) => (
+            <RecipeCard
+              key={r.id}
+              r={r}
+              saved={saved.has(r.id)}
+              onOpen={() => router.push(`/recipe/${r.id}`)}
+              onToggle={() => toggleSave(r.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="px-4 pb-16 pt-6 text-center text-sm text-muted-foreground">
+          <p>没有匹配的菜谱，试试放宽筛选条件。</p>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h3 className="mb-2.5 text-[15px] font-semibold">{title}</h3>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  )
+}
+
+function Chip({
+  on,
+  onClick,
+  children,
+}: {
+  on: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={cn(
+        'rounded-full border px-3.5 py-2 text-[13px] font-medium transition-colors',
+        on
+          ? 'border-foreground bg-foreground text-background'
+          : 'border-border bg-background hover:border-foreground',
+      )}
+    >
+      {children}
+    </button>
+  )
+}

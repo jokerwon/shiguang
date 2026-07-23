@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 344 96" role="img" aria-label="食光 Shiguang 横排组合标识">
+  <!-- 食光 Shiguang · horizontal lockup · v1.0 · 浅色底用
+       图形标:表盘圆 + 双筷指针 10:10 + 荧光绿光点
+       字标:Inter Bold / 系统黑体;英文 SHIGUANG 等宽大写 -->
+  <g fill="none" stroke="#000300" stroke-width="6.5" stroke-linecap="round">
+    <circle cx="48" cy="48" r="30"/>
+    <path d="M48 48 L67 37"/>
+    <path d="M48 48 L34.6 40.3"/>
+  </g>
+  <circle cx="48" cy="48" r="6" fill="#c1fe03"/>
+  <text x="96" y="63" font-family="Inter, 'PingFang SC', 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="44" font-weight="700" letter-spacing="2" fill="#000300">食光</text>
+  <text x="98" y="86" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="13" letter-spacing="5" fill="#6b7280">SHIGUANG</text>
+</svg>

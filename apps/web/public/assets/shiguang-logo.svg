@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="食光 Shiguang 应用图标">
+  <!-- 食光 Shiguang · app icon · v1.0
+       概念:圆盘即表盘,双针即筷子,停在 10:10;轴心光点 = 被夹起的那一口。
+       色板:#000300 砖底 / #c1fe03 主强调 / #ffe700 次级强调 -->
+  <rect width="128" height="128" rx="26" fill="#000300"/>
+  <circle cx="64" cy="64" r="33" fill="none" stroke="#c1fe03" stroke-width="7"/>
+  <path d="M64 64 L84.8 52" fill="none" stroke="#c1fe03" stroke-width="7" stroke-linecap="round"/>
+  <path d="M64 64 L49.3 55.5" fill="none" stroke="#c1fe03" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="64" cy="64" r="6.5" fill="#ffe700"/>
+</svg>

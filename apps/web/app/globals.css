@@ -46,6 +46,12 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --gap-xs: var(--gap-xs);
+  --gap-sm: var(--gap-sm);
+  --gap-md: var(--gap-md);
+  --gap-lg: var(--gap-lg);
+  --gap-xl: var(--gap-xl);
+  --animate-blink: blink 1.2s infinite;
 }
 
 :root {
@@ -57,12 +63,14 @@
   --popover: oklch(1 0 0);
   --popover-foreground: var(--foreground);
   --primary: oklch(0.9215 0.2322 125.33);
+  --primary-soft: color-mix(in oklch, var(--primary) 22%, transparent);
   --primary-foreground: var(--foreground);
   --secondary: oklch(0.9789 0.0029 264.54);
   --secondary-foreground: var(--foreground);
   --muted: oklch(0.9789 0.0029 264.54);
   --muted-foreground: oklch(0.551 0.0234 264.36);
   --accent: oklch(0.9188 0.1922 101.78);
+  --accent-soft: color-mix(in oklch, var(--accent2) 30%, transparent);
   --accent-foreground: var(--foreground);
   --destructive: oklch(0.6368 0.2078 25.33);
   --border: oklch(0.8994 0.0134 262.38);
@@ -85,28 +93,6 @@
 
   --nav-h: 62px;
   --shell-w: 1120px;
-  --bg: #ffffff;
-  --surface: #f7f8fa;
-  --fg: #000300;
-  --muted: #6b7280;
-  --border: #d9dee7;
-  --accent: #c1fe03;
-  --accent2: #ffe700;
-
-  --accent-soft: color-mix(in oklch, var(--accent) 22%, transparent);
-  --accent2-soft: color-mix(in oklch, var(--accent2) 30%, transparent);
-  --fg-soft: color-mix(in oklch, var(--fg) 6%, transparent);
-
-  --font-display: Inter, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-body: Inter, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-
-  --fs-h1: clamp(30px, 4.4vw, 46px);
-  --fs-h2: clamp(22px, 2.8vw, 30px);
-  --fs-h3: 17px;
-  --fs-lead: 17px;
-  --fs-body: 15px;
-  --fs-meta: 13px;
 
   --gap-xs: 8px;
   --gap-sm: 12px;
@@ -124,5 +110,16 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@keyframes blink {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
   }
 }
