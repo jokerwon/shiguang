@@ -1,9 +1,12 @@
 'use client'
 
 import * as React from 'react'
-import { Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Input } from '@/components/ui/input'
+import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation'
+import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message'
+import { PromptInput, type PromptInputMessage, PromptInputTextarea, PromptInputSubmit } from '@/components/ai-elements/prompt-input'
+import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
+import { Shimmer } from '@/components/ai-elements/shimmer'
 import { usePantry } from '@/lib/use-pantry'
 import { useAllRecipes } from '@/lib/use-swr-recipes'
 import {
@@ -14,15 +17,8 @@ import {
   PREFS,
   type Recipe,
 } from '@/lib/recipes'
-import { cn } from '@/lib/utils'
 
-type Msg =
-  | { who: 'me' | 'bot'; text: string; recipe?: Recipe; id: string; typing?: false }
-  | { who: 'bot'; typing: true; id: string }
-
-function isTyping(m: Msg): m is Extract<Msg, { typing: true }> {
-  return 'typing' in m && m.typing === true
-}
+type Msg = { who: 'me' | 'bot'; text: string; recipe?: Recipe; id: string }
 
 const QUICK_PROMPTS: { label: string; query: string }[] = [
   { label: '鸡蛋+西红柿', query: '冰箱里有鸡蛋和西红柿，能做什么？' },
@@ -45,22 +41,15 @@ export default function ChatScreen() {
   ])
   const [field, setField] = React.useState('')
   const [sending, setSending] = React.useState(false)
-  const logRef = React.useRef<HTMLDivElement>(null)
-
-  const scrollToBottom = () => {
-    const el = logRef.current
-    if (el) el.scrollTop = el.scrollHeight
-  }
-  React.useEffect(scrollToBottom, [msgs])
+  const [isBotTyping, setIsBotTyping] = React.useState(false)
 
   const pushMsg = (who: 'me' | 'bot', text: string, recipe?: Recipe) =>
     setMsgs((m) => [...m, { who, text, recipe, id: crypto.randomUUID() }])
 
-  const botReply = (text: string, recipe?: Recipe) =>
-    setMsgs((m) => [
-      ...m.filter((x) => !('typing' in x && x.typing)),
-      { who: 'bot', text, recipe, id: crypto.randomUUID() },
-    ])
+  const botReply = (text: string, recipe?: Recipe) => {
+    setIsBotTyping(false)
+    pushMsg('bot', text, recipe)
+  }
 
   const agentRespond = (input: string) => {
     const q = input.toLowerCase()
@@ -112,10 +101,7 @@ export default function ChatScreen() {
       botReply('告诉我你冰箱里有什么、想吃什么口味、或有多少时间，我给你挑一道。你也可以试试下面的快捷提问。')
     }
 
-    setMsgs((m) => [
-      ...m.filter((x) => !('typing' in x && x.typing)),
-      { who: 'bot', typing: true, id: 'typing' },
-    ])
+    setIsBotTyping(true)
     setTimeout(reply, 700)
   }
 
@@ -129,113 +115,89 @@ export default function ChatScreen() {
     setTimeout(() => setSending(false), 700)
   }
 
+  const handleSubmit = (message: PromptInputMessage) => {
+    send(message.text)
+  }
+
   return (
     <section className="flex h-[calc(100dvh-2*var(--nav-h))] flex-col md:mx-auto md:h-[calc(100dvh-var(--nav-h)-3.5rem)] md:max-w-3xl md:border-x md:border-border">
-      <div
-        ref={logRef}
-        aria-live="polite"
-        className="flex flex-1 flex-col gap-4 overflow-y-auto p-4"
-      >
-        {msgs.map((m) =>
-          isTyping(m) ? (
-            <div className="msg bot self-start max-w-[84%] rounded-lg rounded-bl-sm border border-border bg-muted p-3" key={m.id}>
-              <div className="mb-1 font-mono text-[11px] text-muted-foreground">食光</div>
-              <div className="flex items-center gap-1">
-                {[0, 0.2, 0.4].map((d) => (
-                  <span
-                    key={d}
-                    className="size-1.5 animate-blink rounded-full bg-muted-foreground"
-                    style={{ animationDelay: `${d}s` }}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div
-              className={cn(
-                'msg max-w-[84%] rounded-lg p-3 text-sm leading-relaxed md:max-w-[72%]',
-                m.who === 'me'
-                  ? 'self-end rounded-br-sm bg-foreground text-background'
-                  : 'self-start rounded-bl-sm border border-border bg-muted',
-              )}
-              key={m.id}
-            >
-              <div
-                className={cn(
-                  'mb-1 font-mono text-[11px]',
-                  m.who === 'me'
-                    ? 'text-[color-mix(in_oklch,var(--background)_60%,transparent)]'
-                    : 'text-muted-foreground',
-                )}
-              >
-                {m.who === 'me' ? '我' : '食光'}
-              </div>
-              {m.text}
-              {m.recipe ? (
-                <button
-                  type="button"
-                  onClick={() => router.push(`/recipe/${m.recipe!.id}`)}
-                  className="mt-2.5 flex w-full items-center gap-2.5 rounded-lg border border-border bg-background p-2 text-left transition-colors hover:border-foreground"
-                >
-                  {m.recipe.img ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.recipe.img}
-                      alt=""
-                      className="size-12 shrink-0 rounded-md object-cover"
-                      onError={(e) => {
-                        ;(e.target as HTMLImageElement).style.display = 'none'
-                      }}
-                    />
-                  ) : (
-                    <span className="size-12 shrink-0 rounded-md bg-muted" />
-                  )}
-                  <span className="min-w-0">
-                    <b className="block text-[13px]">{m.recipe.name}</b>
-                    <span className="block text-[11px] text-muted-foreground">
-                      {`${CUISINE_LABELS[m.recipe.cuisine]} · ${m.recipe.time}分钟 · ${m.recipe.kcal}kcal`}
+      <Conversation className="flex-1 min-h-0">
+        <ConversationContent className="px-4 py-4">
+          {msgs.map((m) => (
+            <Message from={m.who === 'me' ? 'user' : 'assistant'} key={m.id}>
+              <MessageContent>
+                <MessageResponse>{m.text}</MessageResponse>
+                {m.recipe ? (
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/recipe/${m.recipe!.id}`)}
+                    className="mt-2.5 flex w-full items-center gap-2.5 rounded-lg border border-border bg-background p-2 text-left transition-colors hover:border-foreground"
+                  >
+                    {m.recipe.img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={m.recipe.img}
+                        alt=""
+                        className="size-12 shrink-0 rounded-md object-cover"
+                        onError={(e) => {
+                          ;(e.target as HTMLImageElement).style.display = 'none'
+                        }}
+                      />
+                    ) : (
+                      <span className="size-12 shrink-0 rounded-md bg-muted" />
+                    )}
+                    <span className="min-w-0">
+                      <b className="block text-[13px]">{m.recipe.name}</b>
+                      <span className="block text-[11px] text-muted-foreground">
+                        {`${CUISINE_LABELS[m.recipe.cuisine]} · ${m.recipe.time}分钟 · ${m.recipe.kcal}kcal`}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              ) : null}
-            </div>
-          ),
-        )}
-      </div>
+                  </button>
+                ) : null}
+              </MessageContent>
+            </Message>
+          ))}
 
-      <div className="flex flex-wrap gap-2 px-4 pb-4">
+          {isBotTyping && (
+            <Message from="assistant">
+              <MessageContent>
+                <Shimmer>思考中…</Shimmer>
+              </MessageContent>
+            </Message>
+          )}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
+
+      <Suggestions className="flex-wrap gap-2 px-4 pb-4">
         {QUICK_PROMPTS.map((p) => (
-          <button
+          <Suggestion
             key={p.label}
-            type="button"
-            onClick={() => send(p.query)}
-            className="rounded-full border border-border bg-background px-3 py-2 text-[13px] hover:border-foreground"
-          >
-            {p.label}
-          </button>
+            suggestion={p.query}
+            onClick={(s) => send(s)}
+          />
         ))}
-      </div>
+      </Suggestions>
 
-      <div className="flex gap-2 border-t border-border bg-background p-4">
-        <Input
-          placeholder="告诉食光你想吃什么…"
-          value={field}
-          onChange={(e) => setField(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') send()
-          }}
-          disabled={sending}
-          className="rounded-full bg-muted"
-        />
-        <button
-          type="button"
-          onClick={() => send()}
-          aria-label="发送"
-          disabled={!field.trim() || sending}
-          className="grid size-11 shrink-0 place-items-center rounded-full bg-foreground text-background disabled:opacity-45"
-        >
-          <Send size={20} />
-        </button>
+      <div className="border-t border-border bg-background px-4 py-4">
+        <PromptInput onSubmit={handleSubmit}>
+          <PromptInputTextarea
+            value={field}
+            placeholder="告诉食光你想吃什么…"
+            onChange={(e) => setField(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                send()
+              }
+            }}
+            disabled={sending}
+          />
+          <PromptInputSubmit
+            status={sending ? 'submitted' : 'ready'}
+            disabled={!field.trim() || sending}
+          />
+        </PromptInput>
       </div>
     </section>
   )
