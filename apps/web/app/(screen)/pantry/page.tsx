@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Ham, Loader2 } from 'lucide-react'
+import { Ham } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { RecipeCard } from '@/components/recipe-card'
 import { usePantry } from '@/lib/use-pantry'
 import { useFavorites } from '@/lib/use-favorites'
-import { useRecipes } from '@/lib/use-recipes'
+import { useAllRecipes } from '@/lib/use-swr-recipes'
 import { matchRecipes, resolveIng, SUGGEST_INGS } from '@/lib/recipes'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +16,7 @@ export default function PantryScreen() {
   const router = useRouter()
   const { pantry, addIng, removeAt, toggleSuggest, clear } = usePantry()
   const { saved, toggleSave } = useFavorites()
-  const { recipes, loading: recipesLoading, error: recipesError } = useRecipes()
+  const { recipes } = useAllRecipes()
   const openDetail = (id: string) => router.push(`/recipe/${id}`)
   const [field, setField] = useState('')
   const [barW, setBarW] = useState(0)

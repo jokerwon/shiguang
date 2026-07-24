@@ -8,7 +8,8 @@ import { RecipeCard } from '@/components/recipe-card'
 import { useFilters, type Filters } from '@/lib/use-filters'
 import { useFavorites } from '@/lib/use-favorites'
 import { CUISINE_LABELS, CUISINES, PREF_LABELS, PREFS, TIME_LABELS, TIMES } from '@/lib/recipes'
-import { fetchRecipes, type PaginatedRecipes } from '@/lib/api'
+import { useRecipesFilter } from '@/lib/use-swr-recipes'
+import type { RecipeQuery } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 export default function FilterScreen() {
@@ -27,9 +28,13 @@ export default function FilterScreen() {
     setLastSynced(filters)
   }
 
-  const [results, setResults] = React.useState<PaginatedRecipes | null>(null)
-  const [loading, setLoading] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
+  // SWR 管理的数据获取
+  const [activeQuery, setActiveQuery] = React.useState<RecipeQuery | null>(null)
+  const {
+    data: results,
+    error,
+    isValidating,
+  } = useRecipesFilter(activeQuery)
 
   const tog = (k: 'cuisine' | 'pref', v: string) =>
     setApplied((prev) => {
@@ -38,26 +43,18 @@ export default function FilterScreen() {
     })
   const setTime = (t: string) => setApplied((prev) => ({ ...prev, time: t }))
 
+  const buildQuery = (f: Filters): RecipeQuery => {
+    const query: RecipeQuery = {}
+    if (f.cuisine.length) query.cuisine = f.cuisine.join(',')
+    if (f.pref.length) query.tags = f.pref.join(',')
+    if (f.time === 'le15') query.maxTime = 15
+    if (f.time === 'le30') query.maxTime = 30
+    return query
+  }
+
   const apply = () => {
     setFilters(applied)
-    setLoading(true)
-    setError(null)
-
-    const query: Record<string, string> = {}
-    if (applied.cuisine.length) query.cuisine = applied.cuisine.join(',')
-    if (applied.pref.length) query.tags = applied.pref.join(',')
-    if (applied.time === 'le15') query.maxTime = '15'
-    if (applied.time === 'le30') query.maxTime = '30'
-
-    fetchRecipes(query)
-      .then((res) => {
-        setResults(res)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError((err as Error).message)
-        setLoading(false)
-      })
+    setActiveQuery(buildQuery(applied))
   }
 
   // 首次进入时自动应用当前筛选条件
@@ -65,12 +62,13 @@ export default function FilterScreen() {
   React.useEffect(() => {
     if (!didApply.current) {
       didApply.current = true
-      apply()
+      setActiveQuery(buildQuery(applied))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const recipes = results?.data ?? []
+  const loading = isValidating
 
   return (
     <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200">
@@ -125,7 +123,7 @@ export default function FilterScreen() {
 
       {error && (
         <div className="px-4 pb-16 pt-6 text-center text-sm text-muted-foreground">
-          <p>{error}</p>
+          <p>{error.message}</p>
         </div>
       )}
 

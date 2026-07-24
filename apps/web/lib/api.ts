@@ -9,7 +9,7 @@ function getToken(): string | null {
   return localStorage.getItem('shiguang_token');
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',

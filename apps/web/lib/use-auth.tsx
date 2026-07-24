@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSWRConfig } from 'swr';
 import { loginApi, registerApi, type AuthUser } from '@/lib/auth';
 
 interface AuthState {
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { mutate } = useSWRConfig();
 
   // 启动时从 localStorage 恢复会话
   useEffect(() => {
@@ -62,8 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       const data = await loginApi({ email, password });
       persist(data.token, data.user);
+      // 登录后清空所有 SWR 缓存，迫使以新用户身份重新获取
+      mutate(() => true, undefined, { revalidate: false });
     },
-    [persist],
+    [persist, mutate],
   );
 
   const register = useCallback(
@@ -79,8 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(USER_KEY);
     setToken(null);
     setUser(null);
+    // 登出时清空所有 SWR 缓存
+    mutate(() => true, undefined, { revalidate: false });
     router.push('/login');
-  }, [router]);
+  }, [router, mutate]);
 
   return (
     <AuthContext value={{ user, token, loading, login, register, logout }}>

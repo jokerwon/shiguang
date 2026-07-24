@@ -5,7 +5,7 @@ import { Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { usePantry } from '@/lib/use-pantry'
-import { useRecipes } from '@/lib/use-recipes'
+import { useAllRecipes } from '@/lib/use-swr-recipes'
 import {
   CUISINE_LABELS,
   CUISINES,
@@ -35,7 +35,7 @@ export default function ChatScreen() {
   const router = useRouter()
 
   const { pantry } = usePantry()
-  const { recipes } = useRecipes()
+  const { recipes } = useAllRecipes()
   const [msgs, setMsgs] = React.useState<Msg[]>([
     {
       who: 'bot',
