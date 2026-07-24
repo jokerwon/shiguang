@@ -1,7 +1,7 @@
 'use client'
 
-import { SyntheticEvent, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { SyntheticEvent, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CircleX, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,8 @@ import { Alert, AlertTitle } from '@/components/ui/alert'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login, register } = useAuth()
+  const searchParams = useSearchParams()
+  const { user, loading, login, register } = useAuth()
 
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
@@ -20,6 +21,15 @@ export default function LoginPage() {
   const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  const redirectTo = searchParams.get('redirect') ?? '/'
+
+  // 已登录用户直接跳转
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(redirectTo)
+    }
+  }, [loading, user, router, redirectTo])
 
   const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault()
@@ -32,12 +42,26 @@ export default function LoginPage() {
       } else {
         await register(email, password, displayName || undefined)
       }
-      router.push('/')
+      router.push(redirectTo)
     } catch (err) {
       setError(err instanceof Error ? err.message : '操作失败，请稍后重试')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // 会话恢复中 — 显示 loading
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 size={32} className="animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  // 已登录 — 空白，等待重定向
+  if (user) {
+    return null
   }
 
   const toggleMode = () => {

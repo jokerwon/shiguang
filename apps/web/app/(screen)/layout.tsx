@@ -2,6 +2,7 @@ import { MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import Logo from '@/components/logo'
 import { Navbar, Tabbar } from '@/components/app-nav'
+import { AuthGuard } from '@/components/auth-guard'
 
 export default function ScreenLayout({
   children,
@@ -9,7 +10,8 @@ export default function ScreenLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div className="min-h-full">
+    <AuthGuard>
+      <div className="min-h-full">
       <header
         className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between h-(--nav-h) bg-background backdrop-blur-md border-b border-border"
         style={{ paddingInline: 'max(var(--gap-md), calc((100vw - var(--shell-w)) / 2 + var(--gap-md)))' }}
@@ -31,6 +33,7 @@ export default function ScreenLayout({
       </main>
 
       <Tabbar />
-    </div>
+      </div>
+    </AuthGuard>
   )
 }
