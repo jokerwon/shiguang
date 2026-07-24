@@ -2,24 +2,16 @@
 
 import * as React from 'react'
 import { ChevronLeft, Clock, Calendar, Bookmark } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
-import type { Locale } from 'next-intl'
-import { useRouter } from '@/i18n/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { usePantry } from '@/lib/use-pantry'
 import { useFavorites } from '@/lib/use-favorites'
-import { matchScore, RECIPES } from '@/lib/recipes'
+import { CUISINE_LABELS, matchScore, RECIPES } from '@/lib/recipes'
 import { cn } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 
-const pick = (l: { zh: string; en: string }, locale: Locale) =>
-  locale === 'en' ? l.en : l.zh
-
 export default function DetailScreen({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const locale = useLocale()
-  const t = useTranslations('Recipe')
-  const tc = useTranslations('Cuisine')
   const { pantry } = usePantry()
   const { saved, toggleSave } = useFavorites()
   const [tab, setTab] = React.useState<'steps' | 'ings'>('steps')
@@ -31,7 +23,7 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
 
   const m = matchScore(r, pantry)
   const isSaved = saved.has(r.id)
-  const name = pick(r.name, locale)
+  const name = r.name
 
   return (
     <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200 pb-28">
@@ -53,7 +45,7 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
         <button
           type="button"
           onClick={() => router.back()}
-          aria-label={t('backAria')}
+          aria-label="返回"
           className="absolute top-3 left-3 grid size-11 place-items-center rounded-full border border-border bg-[color-mix(in_oklch,var(--background)_85%,transparent)] backdrop-blur-sm md:top-4 md:left-4"
         >
           <ChevronLeft size={18} />
@@ -69,27 +61,27 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
           <div className="mt-3 flex gap-6 text-[13px] text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Clock size={15} />
-              <span className="font-mono">{t('timeUnit', { time: r.time })}</span>
+              <span className="font-mono">{r.time}分钟</span>
             </span>
             <span className="flex items-center gap-1.5">
               <Calendar size={15} />
               <span className="font-mono">{r.kcal}kcal</span>
             </span>
-            <span>{tc(r.cuisine as 'home' | 'western' | 'japanese' | 'sichuan' | 'light')}</span>
+            <span>{CUISINE_LABELS[r.cuisine]}</span>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">{pick(r.desc, locale)}</p>
+          <p className="mt-3 text-sm text-muted-foreground">{r.desc}</p>
 
           {pantry.length > 0 && (
             <div className="mt-4 rounded-lg border border-border bg-muted p-4">
               <div className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
-                {t('matchSection', { score: m.score })}
+                {`食材匹配 · ${m.score}%`}
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {r.ingredients.map((i) => {
-                  const got = m.have.includes(i.zh)
+                  const got = m.have.includes(i)
                   return (
                     <span
-                      key={i.zh}
+                      key={i}
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs',
                         got
@@ -97,8 +89,8 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
                           : 'border-border bg-background text-muted-foreground',
                       )}
                     >
-                      {got ? t('haveMark') : ''}
-                      {pick(i, locale)}
+                      {got ? '✓ ' : ''}
+                      {i}
                     </span>
                   )
                 })}
@@ -110,8 +102,8 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
           <div className="mt-6 flex gap-1 border-b border-border">
             {(
               [
-                ['steps', t('tabSteps')],
-                ['ings', t('tabIngs')],
+                ['steps', '做法'],
+                ['ings', '食材清单'],
               ] as const
             ).map(([key, label]) => (
               <button
@@ -140,7 +132,7 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
                   <div className="grid size-6.5 shrink-0 place-items-center rounded-full bg-foreground font-mono text-[13px] font-bold text-background">
                     {i + 1}
                   </div>
-                  <div className="pt-0.5 text-sm leading-relaxed">{pick(s, locale)}</div>
+                  <div className="pt-0.5 text-sm leading-relaxed">{s}</div>
                 </div>
               ))}
             </div>
@@ -148,11 +140,11 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
             <ul className="flex flex-col pt-4">
               {r.ingredients.map((i) => (
                 <li
-                  key={i.zh}
+                  key={i}
                   className="flex justify-between border-b border-border py-2.5 text-sm last:border-b-0"
                 >
-                  <span>{pick(i, locale)}</span>
-                  <span className="font-mono text-muted-foreground">{t('amount')}</span>
+                  <span>{i}</span>
+                  <span className="font-mono text-muted-foreground">适量</span>
                 </li>
               ))}
             </ul>
@@ -169,9 +161,9 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
           onClick={() => toggleSave(r.id)}
         >
           <Bookmark size={18} fill={isSaved ? 'currentColor' : 'none'} />
-          {isSaved ? t('saved') : t('save')}
+          {isSaved ? '已收藏' : '收藏'}
         </Button>
-        <Button className="flex-2">{t('startCooking')}</Button>
+        <Button className="flex-2">开始烹饪</Button>
       </div>
     </section>
   )

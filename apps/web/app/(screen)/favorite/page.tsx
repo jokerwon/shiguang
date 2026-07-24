@@ -1,15 +1,13 @@
 'use client'
 
 import { Bookmark } from 'lucide-react'
-import { useTranslations } from 'next-intl'
-import { useRouter } from '@/i18n/navigation'
+import { useRouter } from 'next/navigation'
 import { RecipeCard } from '@/components/recipe-card'
 import { useFavorites } from '@/lib/use-favorites'
 import { RECIPES } from '@/lib/recipes'
 
 export default function FavoriteScreen() {
   const router = useRouter()
-  const t = useTranslations('Favorite')
   const { saved, toggleSave } = useFavorites()
   const items = RECIPES.filter((r) => saved.has(r.id))
 
@@ -17,10 +15,10 @@ export default function FavoriteScreen() {
     <section className="pb-4 animate-in fade-in slide-in-from-bottom-1.5 duration-200">
       <div className="px-4 pb-4 pt-6">
         <span className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
-          {t('eyebrow')}
+          收藏夹
         </span>
         <h2 className="mt-1 text-[clamp(22px,2.8vw,30px)] font-bold tracking-tight">
-          {t('title')}
+          想做的菜
         </h2>
       </div>
 
@@ -28,9 +26,9 @@ export default function FavoriteScreen() {
         <div className="px-4 pt-10 pb-16 text-center text-muted-foreground">
           <Bookmark className="mx-auto mb-4 size-10 text-border" />
           <p>
-            {t('empty1')}
+            还没有收藏的菜谱。
             <br />
-            {t('empty2')}
+            看到喜欢的，点心形保存。
           </p>
         </div>
       ) : (

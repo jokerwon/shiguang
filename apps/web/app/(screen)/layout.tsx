@@ -1,6 +1,5 @@
 import { MessageCircle } from 'lucide-react'
-import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/navigation'
+import Link from 'next/link'
 import Logo from '@/components/logo'
 import { Navbar, Tabbar } from '@/components/app-nav'
 
@@ -9,7 +8,6 @@ export default function ScreenLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const t = useTranslations('Nav')
   return (
     <div className="min-h-full">
       <header
@@ -18,7 +16,7 @@ export default function ScreenLayout({
       >
         <div className="flex items-center gap-2 text-lg font-bold">
           <Logo background />
-          {t('brand')}
+          食光
         </div>
 
         <Navbar />

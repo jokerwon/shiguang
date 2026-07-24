@@ -1,196 +1,178 @@
-/** 双语文本：zh 为 canonical（匹配逻辑基于 zh），en 为英文展示。 */
-export interface L {
-  zh: string
-  en: string
-}
-
 export interface Recipe {
   id: string
-  name: L
-  /** 菜系 key，对应 messages 的 Cuisine 命名空间 */
+  name: string
+  /** 菜系 key，对应 CUISINE_LABELS */
   cuisine: string
   time: number
   kcal: number
   img: string
-  /** 标签 key 数组，对应 messages 的 Pref 命名空间 */
+  /** 标签 key 数组，对应 PREF_LABELS */
   tags: string[]
-  ingredients: L[]
-  steps: L[]
-  desc: L
+  ingredients: string[]
+  steps: string[]
+  desc: string
+}
+
+export const CUISINES = ['home', 'western', 'japanese', 'sichuan', 'light']
+export const PREFS = ['vegetarian', 'high-protein', 'low-cal', 'low-carb', 'quick', 'rice-friendly', 'comforting']
+export const TIMES = ['le15', 'le30', 'any']
+
+/** 菜系 key → 中文展示 */
+export const CUISINE_LABELS: Record<string, string> = {
+  home: '家常',
+  western: '西餐',
+  japanese: '日料',
+  sichuan: '川菜',
+  light: '轻食',
+}
+
+/** 偏好/标签 key → 中文展示 */
+export const PREF_LABELS: Record<string, string> = {
+  vegetarian: '素食',
+  'high-protein': '高蛋白',
+  'low-cal': '低卡',
+  'low-carb': '低碳',
+  quick: '快手',
+  'rice-friendly': '下饭',
+  comforting: '治愈系',
+}
+
+/** 烹饪时间 key → 中文展示 */
+export const TIME_LABELS: Record<string, string> = {
+  le15: '≤15分钟',
+  le30: '≤30分钟',
+  any: '不限',
 }
 
 export const RECIPES: Recipe[] = [
-  { id: 'r1', name: { zh: '番茄罗勒意面', en: 'Tomato Basil Pasta' }, cuisine: 'western', time: 25, kcal: 520, img: '/assets/pasta.png',
-    tags: ['vegetarian', 'quick'], ingredients: [
-      { zh: '意面', en: 'Pasta' }, { zh: '番茄', en: 'Tomato' }, { zh: '罗勒', en: 'Basil' },
-      { zh: '大蒜', en: 'Garlic' }, { zh: '橄榄油', en: 'Olive oil' }, { zh: '盐', en: 'Salt' }, { zh: '黑胡椒', en: 'Black pepper' },
-    ],
+  { id: 'r1', name: '番茄罗勒意面', cuisine: 'western', time: 25, kcal: 520, img: '/assets/pasta.png',
+    tags: ['vegetarian', 'quick'], ingredients: ['意面', '番茄', '罗勒', '大蒜', '橄榄油', '盐', '黑胡椒'],
     steps: [
-      { zh: '烧一锅水加盐煮意面至弹牙', en: 'Boil salted water and cook pasta until al dente' },
-      { zh: '同时热橄榄油爆香蒜片', en: 'Meanwhile, heat olive oil and sauté sliced garlic' },
-      { zh: '下番茄丁炒至出汁', en: 'Add diced tomatoes and cook until juicy' },
-      { zh: '拌入煮好的意面与罗勒', en: 'Toss in cooked pasta and basil' },
-      { zh: '撒盐与黑胡椒调味', en: 'Season with salt and black pepper' },
+      '烧一锅水加盐煮意面至弹牙',
+      '同时热橄榄油爆香蒜片',
+      '下番茄丁炒至出汁',
+      '拌入煮好的意面与罗勒',
+      '撒盐与黑胡椒调味',
     ],
-    desc: { zh: '最经典的意面之一，番茄与罗勒的组合永远不出错。', en: 'A pasta classic—tomato and basil never miss.' } },
-  { id: 'r2', name: { zh: '香煎三文鱼配时蔬', en: 'Pan-Seared Salmon with Veggies' }, cuisine: 'western', time: 20, kcal: 480, img: '/assets/salmon.jpg',
-    tags: ['high-protein', 'low-carb'], ingredients: [
-      { zh: '三文鱼', en: 'Salmon' }, { zh: '芦笋', en: 'Asparagus' }, { zh: '柠檬', en: 'Lemon' },
-      { zh: '橄榄油', en: 'Olive oil' }, { zh: '盐', en: 'Salt' }, { zh: '黑胡椒', en: 'Black pepper' },
-    ],
+    desc: '最经典的意面之一，番茄与罗勒的组合永远不出错。' },
+  { id: 'r2', name: '香煎三文鱼配时蔬', cuisine: 'western', time: 20, kcal: 480, img: '/assets/salmon.jpg',
+    tags: ['high-protein', 'low-carb'], ingredients: ['三文鱼', '芦笋', '柠檬', '橄榄油', '盐', '黑胡椒'],
     steps: [
-      { zh: '三文鱼擦干、两面撒盐黑胡椒', en: 'Pat salmon dry, season both sides with salt and pepper' },
-      { zh: '热锅少油鱼皮朝下煎脆', en: 'Sear skin-side down in a hot pan until crispy' },
-      { zh: '翻面煎至中心半熟', en: 'Flip and cook until center is medium' },
-      { zh: '芦笋另锅快炒至断生', en: 'Quick-char asparagus in another pan' },
-      { zh: '挤柠檬汁装盘', en: 'Squeeze lemon juice and plate' },
+      '三文鱼擦干、两面撒盐黑胡椒',
+      '热锅少油鱼皮朝下煎脆',
+      '翻面煎至中心半熟',
+      '芦笋另锅快炒至断生',
+      '挤柠檬汁装盘',
     ],
-    desc: { zh: '高蛋白低碳的一餐，鱼皮煎脆是关键。', en: 'High-protein, low-carb; crispy skin is the key.' } },
-  { id: 'r3', name: { zh: '日式咖喱鸡饭', en: 'Japanese Chicken Curry Rice' }, cuisine: 'japanese', time: 35, kcal: 640, img: '/assets/curry.jpg',
-    tags: ['comforting'], ingredients: [
-      { zh: '鸡腿肉', en: 'Chicken thigh' }, { zh: '土豆', en: 'Potato' }, { zh: '胡萝卜', en: 'Carrot' },
-      { zh: '洋葱', en: 'Onion' }, { zh: '咖喱块', en: 'Curry roux' }, { zh: '米饭', en: 'Rice' },
-    ],
+    desc: '高蛋白低碳的一餐，鱼皮煎脆是关键。' },
+  { id: 'r3', name: '日式咖喱鸡饭', cuisine: 'japanese', time: 35, kcal: 640, img: '/assets/curry.jpg',
+    tags: ['comforting'], ingredients: ['鸡腿肉', '土豆', '胡萝卜', '洋葱', '咖喱块', '米饭'],
     steps: [
-      { zh: '鸡肉切块焯水去腥', en: 'Cut chicken and blanch to remove scum' },
-      { zh: '洋葱炒香至透明', en: 'Sauté onion until translucent' },
-      { zh: '下土豆胡萝卜翻炒', en: 'Add potato and carrot and stir-fry' },
-      { zh: '加水煮至蔬菜软烂', en: 'Add water and cook until veggies are tender' },
-      { zh: '关火放入咖喱块融化，浇在米饭上', en: 'Off heat, stir in curry roux; serve over rice' },
+      '鸡肉切块焯水去腥',
+      '洋葱炒香至透明',
+      '下土豆胡萝卜翻炒',
+      '加水煮至蔬菜软烂',
+      '关火放入咖喱块融化，浇在米饭上',
     ],
-    desc: { zh: '浓郁暖胃，剩一锅第二天更入味。', en: 'Rich and warming; even better the next day.' } },
-  { id: 'r4', name: { zh: '藜麦牛油果碗', en: 'Quinoa Avocado Bowl' }, cuisine: 'light', time: 15, kcal: 410, img: '/assets/bowl.jpg',
-    tags: ['vegetarian', 'high-protein', 'low-cal'], ingredients: [
-      { zh: '藜麦', en: 'Quinoa' }, { zh: '牛油果', en: 'Avocado' }, { zh: '鹰嘴豆', en: 'Chickpea' },
-      { zh: '菠菜', en: 'Spinach' }, { zh: '柠檬', en: 'Lemon' }, { zh: '橄榄油', en: 'Olive oil' },
-    ],
+    desc: '浓郁暖胃，剩一锅第二天更入味。' },
+  { id: 'r4', name: '藜麦牛油果碗', cuisine: 'light', time: 15, kcal: 410, img: '/assets/bowl.jpg',
+    tags: ['vegetarian', 'high-protein', 'low-cal'], ingredients: ['藜麦', '牛油果', '鹰嘴豆', '菠菜', '柠檬', '橄榄油'],
     steps: [
-      { zh: '藜麦煮熟沥干', en: 'Cook quinoa and drain' },
-      { zh: '鹰嘴豆与菠菜快速焯烫', en: 'Quick-blanch chickpeas and spinach' },
-      { zh: '所有食材码入碗中', en: 'Arrange ingredients in a bowl' },
-      { zh: '牛油果切片摆上', en: 'Top with sliced avocado' },
-      { zh: '淋柠檬汁与橄榄油', en: 'Drizzle with lemon juice and olive oil' },
+      '藜麦煮熟沥干',
+      '鹰嘴豆与菠菜快速焯烫',
+      '所有食材码入碗中',
+      '牛油果切片摆上',
+      '淋柠檬汁与橄榄油',
     ],
-    desc: { zh: '一碗补齐碳水、蛋白与健康脂肪。', en: 'Carbs, protein and healthy fats in one bowl.' } },
-  { id: 'r5', name: { zh: '西红柿炒鸡蛋', en: 'Tomato and Egg Stir-fry' }, cuisine: 'home', time: 10, kcal: 300, img: '',
-    tags: ['quick', 'home'], ingredients: [
-      { zh: '番茄', en: 'Tomato' }, { zh: '鸡蛋', en: 'Egg' }, { zh: '葱', en: 'Scallion' },
-      { zh: '盐', en: 'Salt' }, { zh: '糖', en: 'Sugar' }, { zh: '食用油', en: 'Cooking oil' },
-    ],
+    desc: '一碗补齐碳水、蛋白与健康脂肪。' },
+  { id: 'r5', name: '西红柿炒鸡蛋', cuisine: 'home', time: 10, kcal: 300, img: '',
+    tags: ['quick', 'home'], ingredients: ['番茄', '鸡蛋', '葱', '盐', '糖', '食用油'],
     steps: [
-      { zh: '鸡蛋打散炒熟盛出', en: 'Beat eggs, scramble and set aside' },
-      { zh: '西红柿切块下锅炒至出汁', en: 'Add chopped tomato and cook until juicy' },
-      { zh: '加少许糖提鲜', en: 'Add a pinch of sugar to brighten' },
-      { zh: '倒回鸡蛋翻炒均匀', en: 'Return eggs and toss' },
-      { zh: '撒葱花出锅', en: 'Scatter scallions and plate' },
+      '鸡蛋打散炒熟盛出',
+      '西红柿切块下锅炒至出汁',
+      '加少许糖提鲜',
+      '倒回鸡蛋翻炒均匀',
+      '撒葱花出锅',
     ],
-    desc: { zh: '国民下饭菜，十分钟搞定。', en: 'A national comfort dish done in ten minutes.' } },
-  { id: 'r6', name: { zh: '蒜蓉蒸豆腐', en: 'Steamed Tofu with Garlic' }, cuisine: 'home', time: 18, kcal: 220, img: '',
-    tags: ['vegetarian', 'low-cal'], ingredients: [
-      { zh: '嫩豆腐', en: 'Soft tofu' }, { zh: '大蒜', en: 'Garlic' }, { zh: '葱花', en: 'Scallion' },
-      { zh: '酱油', en: 'Soy sauce' }, { zh: '香油', en: 'Sesame oil' },
-    ],
+    desc: '国民下饭菜，十分钟搞定。' },
+  { id: 'r6', name: '蒜蓉蒸豆腐', cuisine: 'home', time: 18, kcal: 220, img: '',
+    tags: ['vegetarian', 'low-cal'], ingredients: ['嫩豆腐', '大蒜', '葱花', '酱油', '香油'],
     steps: [
-      { zh: '豆腐切块装盘入锅蒸8分钟', en: 'Steam tofu for 8 minutes' },
-      { zh: '蒜蓉用热油泼香', en: 'Pour hot oil over minced garlic' },
-      { zh: '淋酱油与香油', en: 'Drizzle soy and sesame oil' },
-      { zh: '撒葱花', en: 'Scatter scallions' },
+      '豆腐切块装盘入锅蒸8分钟',
+      '蒜蓉用热油泼香',
+      '淋酱油与香油',
+      '撒葱花',
     ],
-    desc: { zh: '清淡鲜嫩，减脂期友好。', en: 'Light and tender; diet-friendly.' } },
-  { id: 'r7', name: { zh: '照烧鸡腿饭', en: 'Teriyaki Chicken Rice Bowl' }, cuisine: 'japanese', time: 25, kcal: 560, img: '',
-    tags: ['high-protein'], ingredients: [
-      { zh: '鸡腿肉', en: 'Chicken thigh' }, { zh: '酱油', en: 'Soy sauce' }, { zh: '味醂', en: 'Mirin' },
-      { zh: '糖', en: 'Sugar' }, { zh: '米饭', en: 'Rice' }, { zh: '姜', en: 'Ginger' },
-    ],
+    desc: '清淡鲜嫩，减脂期友好。' },
+  { id: 'r7', name: '照烧鸡腿饭', cuisine: 'japanese', time: 25, kcal: 560, img: '',
+    tags: ['high-protein'], ingredients: ['鸡腿肉', '酱油', '味醂', '糖', '米饭', '姜'],
     steps: [
-      { zh: '鸡腿去骨擦干', en: 'Bone and pat dry the chicken thigh' },
-      { zh: '皮朝下煎至金黄', en: 'Sear skin-side down until golden' },
-      { zh: '翻面煎熟', en: 'Flip and cook through' },
-      { zh: '酱油味醂糖调汁收浓', en: 'Reduce soy, mirin and sugar into a glaze' },
-      { zh: '切块盖在米饭上', en: 'Slice and serve over rice' },
+      '鸡腿去骨擦干',
+      '皮朝下煎至金黄',
+      '翻面煎熟',
+      '酱油味醂糖调汁收浓',
+      '切块盖在米饭上',
     ],
-    desc: { zh: '甜咸适口，便当党最爱。', en: 'Sweet-savory; a bento favorite.' } },
-  { id: 'r8', name: { zh: '凯撒沙拉', en: 'Caesar Salad' }, cuisine: 'western', time: 15, kcal: 380, img: '',
-    tags: ['low-cal', 'quick'], ingredients: [
-      { zh: '罗马生菜', en: 'Romaine' }, { zh: '面包丁', en: 'Croutons' }, { zh: '帕玛森芝士', en: 'Parmesan' },
-      { zh: '凯撒酱', en: 'Caesar dressing' }, { zh: '柠檬', en: 'Lemon' },
-    ],
+    desc: '甜咸适口，便当党最爱。' },
+  { id: 'r8', name: '凯撒沙拉', cuisine: 'western', time: 15, kcal: 380, img: '',
+    tags: ['low-cal', 'quick'], ingredients: ['罗马生菜', '面包丁', '帕玛森芝士', '凯撒酱', '柠檬'],
     steps: [
-      { zh: '生菜洗净沥干撕成小块', en: 'Wash, dry and tear romaine into bites' },
-      { zh: '面包切丁烤脆', en: 'Toast bread cubes until crisp' },
-      { zh: '生菜拌凯撒酱', en: 'Toss lettuce with Caesar dressing' },
-      { zh: '撒面包丁与芝士碎', en: 'Top with croutons and shaved parmesan' },
-      { zh: '挤柠檬汁', en: 'Squeeze lemon' },
+      '生菜洗净沥干撕成小块',
+      '面包切丁烤脆',
+      '生菜拌凯撒酱',
+      '撒面包丁与芝士碎',
+      '挤柠檬汁',
     ],
-    desc: { zh: '清爽开胃，主食前的小仪式。', en: 'Crisp and appetizing—a pre-meal ritual.' } },
-  { id: 'r9', name: { zh: '麻婆豆腐', en: 'Mapo Tofu' }, cuisine: 'sichuan', time: 20, kcal: 340, img: '',
-    tags: ['rice-friendly'], ingredients: [
-      { zh: '嫩豆腐', en: 'Soft tofu' }, { zh: '猪肉末', en: 'Pork mince' }, { zh: '豆瓣酱', en: 'Doubanjiang' },
-      { zh: '花椒', en: 'Sichuan peppercorn' }, { zh: '葱花', en: 'Scallion' }, { zh: '蒜', en: 'Garlic' },
-    ],
+    desc: '清爽开胃，主食前的小仪式。' },
+  { id: 'r9', name: '麻婆豆腐', cuisine: 'sichuan', time: 20, kcal: 340, img: '',
+    tags: ['rice-friendly'], ingredients: ['嫩豆腐', '猪肉末', '豆瓣酱', '花椒', '葱花', '蒜'],
     steps: [
-      { zh: '豆腐切块焯水定型', en: 'Blanch tofu cubes to set' },
-      { zh: '肉末炒至变色', en: 'Brown the pork mince' },
-      { zh: '下豆瓣酱炒出红油', en: 'Add doubanjiang and fry until oil turns red' },
-      { zh: '加豆腐炖煮入味', en: 'Add tofu and simmer to absorb flavor' },
-      { zh: '勾芡撒花椒面葱花', en: 'Thicken, dust with pepper and scallion' },
+      '豆腐切块焯水定型',
+      '肉末炒至变色',
+      '下豆瓣酱炒出红油',
+      '加豆腐炖煮入味',
+      '勾芡撒花椒面葱花',
     ],
-    desc: { zh: '麻辣鲜香烫，一碗饭不够。', en: 'Numbing, spicy and hot—one bowl isn’t enough.' } },
-  { id: 'r10', name: { zh: '味噌汤', en: 'Miso Soup' }, cuisine: 'japanese', time: 12, kcal: 120, img: '',
-    tags: ['low-cal', 'quick'], ingredients: [
-      { zh: '味噌', en: 'Miso' }, { zh: '豆腐', en: 'Tofu' }, { zh: '海带', en: 'Kelp' },
-      { zh: '葱花', en: 'Scallion' }, { zh: '裙带菜', en: 'Wakame' },
-    ],
+    desc: '麻辣鲜香烫，一碗饭不够。' },
+  { id: 'r10', name: '味噌汤', cuisine: 'japanese', time: 12, kcal: 120, img: '',
+    tags: ['low-cal', 'quick'], ingredients: ['味噌', '豆腐', '海带', '葱花', '裙带菜'],
     steps: [
-      { zh: '水烧开下裙带菜与豆腐', en: 'Boil water, add wakame and tofu' },
-      { zh: '味噌用少量汤化开倒入', en: 'Dissolve miso in a ladle of broth, then stir in' },
-      { zh: '小火不再煮沸', en: 'Keep on low heat; do not re-boil' },
-      { zh: '撒葱花', en: 'Scatter scallions' },
+      '水烧开下裙带菜与豆腐',
+      '味噌用少量汤化开倒入',
+      '小火不再煮沸',
+      '撒葱花',
     ],
-    desc: { zh: '日料餐桌的暖场，三分钟。', en: 'A three-minute opener for any Japanese meal.' } },
-  { id: 'r11', name: { zh: '土豆炖牛肉', en: 'Beef and Potato Stew' }, cuisine: 'home', time: 45, kcal: 520, img: '',
-    tags: ['high-protein', 'comforting'], ingredients: [
-      { zh: '牛腩', en: 'Beef brisket' }, { zh: '土豆', en: 'Potato' }, { zh: '胡萝卜', en: 'Carrot' },
-      { zh: '洋葱', en: 'Onion' }, { zh: '酱油', en: 'Soy sauce' }, { zh: '八角', en: 'Star anise' },
-    ],
+    desc: '日料餐桌的暖场，三分钟。' },
+  { id: 'r11', name: '土豆炖牛肉', cuisine: 'home', time: 45, kcal: 520, img: '',
+    tags: ['high-protein', 'comforting'], ingredients: ['牛腩', '土豆', '胡萝卜', '洋葱', '酱油', '八角'],
     steps: [
-      { zh: '牛腩切块焯水', en: 'Cut and blanch the brisket' },
-      { zh: '炒香洋葱下牛肉', en: 'Sauté onion, add beef' },
-      { zh: '加酱油与水炖40分钟', en: 'Add soy and water; simmer 40 min' },
-      { zh: '下土豆胡萝卜炖至软烂', en: 'Add potato and carrot; cook until tender' },
-      { zh: '收汁', en: 'Reduce the sauce' },
+      '牛腩切块焯水',
+      '炒香洋葱下牛肉',
+      '加酱油与水炖40分钟',
+      '下土豆胡萝卜炖至软烂',
+      '收汁',
     ],
-    desc: { zh: '慢炖出味，冬天的一锅满足。', en: 'Slow-stewed comfort for winter.' } },
-  { id: 'r12', name: { zh: '凉拌黄瓜', en: 'Smashed Cucumber Salad' }, cuisine: 'sichuan', time: 8, kcal: 80, img: '',
-    tags: ['low-cal', 'quick', 'vegetarian'], ingredients: [
-      { zh: '黄瓜', en: 'Cucumber' }, { zh: '大蒜', en: 'Garlic' }, { zh: '醋', en: 'Vinegar' },
-      { zh: '辣椒油', en: 'Chili oil' }, { zh: '盐', en: 'Salt' },
-    ],
+    desc: '慢炖出味，冬天的一锅满足。' },
+  { id: 'r12', name: '凉拌黄瓜', cuisine: 'sichuan', time: 8, kcal: 80, img: '',
+    tags: ['low-cal', 'quick', 'vegetarian'], ingredients: ['黄瓜', '大蒜', '醋', '辣椒油', '盐'],
     steps: [
-      { zh: '黄瓜拍裂切段', en: 'Smash and cut cucumber' },
-      { zh: '蒜蓉与调料调汁', en: 'Mix garlic and seasonings into a dressing' },
-      { zh: '拌匀冷藏10分钟更入味', en: 'Toss and chill 10 min for more flavor' },
+      '黄瓜拍裂切段',
+      '蒜蓉与调料调汁',
+      '拌匀冷藏10分钟更入味',
     ],
-    desc: { zh: '开胃凉菜，酸辣脆爽。', en: 'A tangy, spicy, crisp appetizer.' } },
+    desc: '开胃凉菜，酸辣脆爽。' },
 ]
 
-/** 菜系 key 列表 */
-export const CUISINES = ['home', 'western', 'japanese', 'sichuan', 'light']
-/** 偏好/标签 key 列表 */
-export const PREFS = ['vegetarian', 'high-protein', 'low-cal', 'low-carb', 'quick', 'rice-friendly', 'comforting']
-/** 烹饪时间 key 列表（值由 messages 决定，匹配按 key） */
-export const TIMES = ['le15', 'le30', 'any']
-
-/** 常见食材（点选添加到 pantry）。canonical 为 zh，匹配逻辑基于 zh。 */
-export const SUGGEST_INGS: L[] = [
-  { zh: '西红柿', en: 'Tomato' },
-  { zh: '鸡蛋', en: 'Egg' },
-  { zh: '鸡肉', en: 'Chicken' },
-  { zh: '豆腐', en: 'Tofu' },
-  { zh: '土豆', en: 'Potato' },
-  { zh: '三文鱼', en: 'Salmon' },
-  { zh: '意面', en: 'Pasta' },
-  { zh: '牛油果', en: 'Avocado' },
+/** 常见食材（点选添加到 pantry） */
+export const SUGGEST_INGS: string[] = [
+  '西红柿',
+  '鸡蛋',
+  '鸡肉',
+  '豆腐',
+  '土豆',
+  '三文鱼',
+  '意面',
+  '牛油果',
 ]
 
 export type ScreenId = 'home' | 'pantry' | 'chat' | 'saved' | 'filter' | 'detail'
@@ -200,20 +182,20 @@ export function norm(s: string) {
 }
 
 /**
- * 将用户输入的食材文本归一到 canonical（zh）。
- * 优先匹配 SUGGEST_INGS 的 zh/en，匹配不到则原样返回。
+ * 将用户输入的食材文本归一到 canonical。
+ * 优先匹配 SUGGEST_INGS，匹配不到则原样返回。
  */
 export function resolveIng(text: string): string {
   const t = norm(text)
-  const hit = SUGGEST_INGS.find((s) => norm(s.zh) === t || norm(s.en) === t)
-  return hit ? hit.zh : text.trim()
+  const hit = SUGGEST_INGS.find((s) => norm(s) === t)
+  return hit ?? text.trim()
 }
 
 export function matchScore(recipe: Recipe, pantry: string[]) {
   if (pantry.length === 0) return { score: 0, have: [] as string[] }
   const have = recipe.ingredients.filter((i) =>
-    pantry.some((p) => norm(i.zh).includes(norm(p)) || norm(p).includes(norm(i.zh))),
-  ).map((i) => i.zh)
+    pantry.some((p) => norm(i).includes(norm(p)) || norm(p).includes(norm(i))),
+  )
   return { score: Math.round((have.length / recipe.ingredients.length) * 100), have }
 }
 

@@ -1,25 +1,16 @@
 'use client'
 
 import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import { useRouter } from '@/i18n/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { RecipeCard } from '@/components/recipe-card'
 import { useFilters, type Filters } from '@/lib/use-filters'
 import { useFavorites } from '@/lib/use-favorites'
-import { CUISINES, PREFS, RECIPES, TIMES, type Recipe } from '@/lib/recipes'
+import { CUISINE_LABELS, CUISINES, PREF_LABELS, PREFS, RECIPES, TIME_LABELS, TIMES, type Recipe } from '@/lib/recipes'
 import { cn } from '@/lib/utils'
-
-type CuisineKey = 'home' | 'western' | 'japanese' | 'sichuan' | 'light'
-type PrefKey = 'vegetarian' | 'high-protein' | 'low-cal' | 'low-carb' | 'quick' | 'rice-friendly' | 'comforting'
-type TimeKey = 'le15' | 'le30' | 'any'
 
 export default function FilterScreen() {
   const router = useRouter()
-  const t = useTranslations('Filter')
-  const tc = useTranslations('Cuisine')
-  const tp = useTranslations('Pref')
-  const tt = useTranslations('Time')
   const { filters, setFilters } = useFilters()
   const { saved, toggleSave } = useFavorites()
   const [applied, setApplied] = React.useState<Filters>(filters)
@@ -56,46 +47,46 @@ export default function FilterScreen() {
     <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200">
       <div className="px-4 pb-4 pt-6">
         <span className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
-          {t('eyebrow')}
+          偏好 · 菜系
         </span>
         <h2 className="mt-1 text-[clamp(22px,2.8vw,30px)] font-bold tracking-tight">
-          {t('title')}
+          按你的口味筛选
         </h2>
       </div>
 
       <div className="flex flex-col gap-6 p-4">
-        <FilterGroup title={t('groupCuisine')}>
+        <FilterGroup title="菜系">
           {CUISINES.map((c) => (
             <Chip
               key={c}
               on={applied.cuisine.includes(c)}
               onClick={() => tog('cuisine', c)}
             >
-              {tc(c as CuisineKey)}
+              {CUISINE_LABELS[c]}
             </Chip>
           ))}
         </FilterGroup>
-        <FilterGroup title={t('groupPref')}>
+        <FilterGroup title="饮食偏好 / 忌口">
           {PREFS.map((p) => (
             <Chip key={p} on={applied.pref.includes(p)} onClick={() => tog('pref', p)}>
-              {tp(p as PrefKey)}
+              {PREF_LABELS[p]}
             </Chip>
           ))}
         </FilterGroup>
-        <FilterGroup title={t('groupTime')}>
+        <FilterGroup title="烹饪时间">
           {TIMES.map((t) => (
             <Chip key={t} on={applied.time === t} onClick={() => setTime(t)}>
-              {tt(t as TimeKey)}
+              {TIME_LABELS[t]}
             </Chip>
           ))}
         </FilterGroup>
         <Button onClick={apply} className="w-full">
-          {t('apply')}
+          应用筛选
         </Button>
       </div>
 
       <div className="flex items-baseline justify-between px-4 pt-4 pb-3">
-        <h2 className="text-[19px] font-bold tracking-tight">{t('resultTitle')}</h2>
+        <h2 className="text-[19px] font-bold tracking-tight">筛选结果</h2>
       </div>
       {res.length ? (
         <div className="grid grid-cols-2 gap-4 px-4 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
@@ -111,7 +102,7 @@ export default function FilterScreen() {
         </div>
       ) : (
         <div className="px-4 pb-16 pt-6 text-center text-sm text-muted-foreground">
-          <p>{t('empty')}</p>
+          <p>没有匹配的菜谱，试试放宽筛选条件。</p>
         </div>
       )}
     </section>
