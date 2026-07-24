@@ -1,15 +1,35 @@
 'use client'
 
-import { Bookmark } from 'lucide-react'
+import { Bookmark, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { RecipeCard } from '@/components/recipe-card'
 import { useFavorites } from '@/lib/use-favorites'
-import { RECIPES } from '@/lib/recipes'
+import { useRecipes } from '@/lib/use-recipes'
 
 export default function FavoriteScreen() {
   const router = useRouter()
   const { saved, toggleSave } = useFavorites()
-  const items = RECIPES.filter((r) => saved.has(r.id))
+  const { recipes, loading, error } = useRecipes()
+  const items = recipes.filter((r) => saved.has(r.id))
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 size={32} className="animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 px-4 text-center">
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <button onClick={() => window.location.reload()} className="text-[13px] underline">
+          重新加载
+        </button>
+      </div>
+    )
+  }
 
   return (
     <section className="pb-4 animate-in fade-in slide-in-from-bottom-1.5 duration-200">

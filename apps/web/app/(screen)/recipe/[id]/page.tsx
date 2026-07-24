@@ -1,12 +1,13 @@
 'use client'
 
 import * as React from 'react'
-import { ChevronLeft, Clock, Calendar, Bookmark } from 'lucide-react'
+import { ChevronLeft, Clock, Calendar, Bookmark, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { usePantry } from '@/lib/use-pantry'
 import { useFavorites } from '@/lib/use-favorites'
-import { CUISINE_LABELS, matchScore, RECIPES } from '@/lib/recipes'
+import { CUISINE_LABELS, matchScore, type Recipe } from '@/lib/recipes'
+import { fetchRecipeById } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 
@@ -18,9 +19,54 @@ export default function DetailScreen({ params }: { params: Promise<{ id: string 
   const [imgErr, setImgErr] = React.useState(false)
 
   const { id } = React.use(params)
-  const r = RECIPES.find((x) => x.id === id)
-  if (!r) notFound()
+  const [recipe, setRecipe] = React.useState<Recipe | null>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
 
+  React.useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    fetchRecipeById(id)
+      .then((r) => {
+        if (!cancelled) {
+          setRecipe(r)
+          setLoading(false)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          const msg = (err as Error).message
+          setError(msg === '菜谱不存在' ? '404' : msg)
+          setLoading(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 size={32} className="animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error === '404' || (!loading && !recipe)) {
+    notFound()
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <button onClick={() => router.back()} className="text-[13px] underline">
+          返回
+        </button>
+      </div>
+    )
+  }
+
+  const r = recipe!
   const m = matchScore(r, pantry)
   const isSaved = saved.has(r.id)
   const name = r.name

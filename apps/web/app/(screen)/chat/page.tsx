@@ -5,13 +5,13 @@ import { Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { usePantry } from '@/lib/use-pantry'
+import { useRecipes } from '@/lib/use-recipes'
 import {
   CUISINE_LABELS,
   CUISINES,
   matchRecipes,
   PREF_LABELS,
   PREFS,
-  RECIPES,
   type Recipe,
 } from '@/lib/recipes'
 import { cn } from '@/lib/utils'
@@ -35,6 +35,7 @@ export default function ChatScreen() {
   const router = useRouter()
 
   const { pantry } = usePantry()
+  const { recipes } = useRecipes()
   const [msgs, setMsgs] = React.useState<Msg[]>([
     {
       who: 'bot',
@@ -63,16 +64,16 @@ export default function ChatScreen() {
 
   const agentRespond = (input: string) => {
     const q = input.toLowerCase()
-    const foundIng = pantry.length > 0 ? matchRecipes(pantry) : []
+    const foundIng = pantry.length > 0 ? matchRecipes(recipes, pantry) : []
 
     // 检测用户提到的食材，归一到 canonical
-    const mentioned = RECIPES.flatMap((r) => r.ingredients).filter((i) =>
+    const mentioned = recipes.flatMap((r) => r.ingredients).filter((i) =>
       q.includes(i.toLowerCase()),
     )
 
     const reply = () => {
       if (mentioned.length) {
-        const matches = RECIPES.map((r) => ({
+        const matches = recipes.map((r) => ({
           r,
           have: r.ingredients.filter((i) => mentioned.includes(i)),
         }))
@@ -85,7 +86,7 @@ export default function ChatScreen() {
         return
       }
       if (q.includes('15') || q.includes('快')) {
-        const pool = RECIPES.filter((x) => x.time <= 15)
+        const pool = recipes.filter((x) => x.time <= 15)
         const r = pool[Math.floor(Math.random() * Math.min(3, pool.length))]
         botReply(`15 分钟内能搞定的，推荐这道——${r.name}。`, r)
         return
@@ -93,14 +94,14 @@ export default function ChatScreen() {
       for (const c of CUISINES) {
         const label = CUISINE_LABELS[c]
         if (q.includes(label.toLowerCase()) || (c === 'japanese' && q.includes('日'))) {
-          const r = RECIPES.filter((x) => x.cuisine === c)[0]
+          const r = recipes.filter((x) => x.cuisine === c)[0]
           botReply(`想吃${label}？来这道——`, r)
           return
         }
       }
       if (PREFS.some((p) => q.includes(PREF_LABELS[p].toLowerCase()))) {
         const want = PREFS.find((p) => q.includes(PREF_LABELS[p].toLowerCase()))!
-        const r = RECIPES.find((x) => x.tags.includes(want))!
+        const r = recipes.find((x) => x.tags.includes(want))!
         botReply(`符合「${PREF_LABELS[want]}」的，这道不错——`, r)
         return
       }

@@ -1,11 +1,13 @@
 'use client'
 
-import { Search, User, ChevronRight } from 'lucide-react'
+import * as React from 'react'
+import { Search, User, ChevronRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CUISINE_LABELS, CUISINES, RECIPES } from '@/lib/recipes'
+import { CUISINE_LABELS, CUISINES } from '@/lib/recipes'
 import { useFavorites } from '@/lib/use-favorites'
 import { useFilters } from '@/lib/use-filters'
+import { fetchRecommended, type RecommendedResponse } from '@/lib/api'
 import { RecipeCard } from '@/components/recipe-card'
 
 export default function DiscoveryScreen() {
@@ -13,14 +15,45 @@ export default function DiscoveryScreen() {
   const { saved, toggleSave } = useFavorites()
   const { setFilters } = useFilters()
 
-  const today = [RECIPES[0], RECIPES[3], RECIPES[8], RECIPES[6]]
-  const quick = RECIPES.filter((r) => r.time <= 15).slice(0, 4)
+  const [data, setData] = React.useState<RecommendedResponse | null>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    fetchRecommended()
+      .then(setData)
+      .catch((err) => setError((err as Error).message))
+      .finally(() => setLoading(false))
+  }, [])
+
   const openDetail = (id: string) => router.push(`/recipe/${id}`)
 
   const filterByCuisine = (c: string) => {
     setFilters({ cuisine: [c], pref: [], time: 'any' })
     router.push('/filter')
   }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 size={32} className="animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 px-4 text-center">
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <button onClick={() => window.location.reload()} className="text-[13px] underline">
+          重新加载
+        </button>
+      </div>
+    )
+  }
+
+  const today = data?.today ?? []
+  const quick = data?.quick ?? []
 
   return (
     <section className="pb-4 animate-in fade-in slide-in-from-bottom-1.5 duration-200">
@@ -47,7 +80,7 @@ export default function DiscoveryScreen() {
           </span>
           <span className="flex-1">
             <b className="text-[15px]">和食光 Agent 聊聊</b>
-            <span className="mt-0.5 block text-xs opacity-70">“冰箱里有鸡蛋和西红柿” → 立刻出方案</span>
+            <span className="mt-0.5 block text-xs opacity-70">"冰箱里有鸡蛋和西红柿" → 立刻出方案</span>
           </span>
           <ChevronRight size={20} className="opacity-60" />
         </Link>

@@ -2,11 +2,13 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { RecipeCard } from '@/components/recipe-card'
 import { useFilters, type Filters } from '@/lib/use-filters'
 import { useFavorites } from '@/lib/use-favorites'
-import { CUISINE_LABELS, CUISINES, PREF_LABELS, PREFS, RECIPES, TIME_LABELS, TIMES, type Recipe } from '@/lib/recipes'
+import { CUISINE_LABELS, CUISINES, PREF_LABELS, PREFS, TIME_LABELS, TIMES } from '@/lib/recipes'
+import { fetchRecipes, type PaginatedRecipes } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 export default function FilterScreen() {
@@ -17,7 +19,6 @@ export default function FilterScreen() {
   const [lastSynced, setLastSynced] = React.useState<Filters>(filters)
 
   // 当外部 filters 变化（如从发现页跳入并预选菜系）时，重置本地草稿。
-  // 用「渲染期间调整 state」模式，避免在 effect 里同步 setState。
   if (
     filters !== lastSynced &&
     JSON.stringify(filters) !== JSON.stringify(lastSynced)
@@ -26,22 +27,50 @@ export default function FilterScreen() {
     setLastSynced(filters)
   }
 
+  const [results, setResults] = React.useState<PaginatedRecipes | null>(null)
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
   const tog = (k: 'cuisine' | 'pref', v: string) =>
     setApplied((prev) => {
       const arr = prev[k]
       return { ...prev, [k]: arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v] }
     })
   const setTime = (t: string) => setApplied((prev) => ({ ...prev, time: t }))
-  const apply = () => setFilters(applied)
 
-  const predicate = (r: Recipe) => {
-    if (applied.cuisine.length && !applied.cuisine.includes(r.cuisine)) return false
-    if (applied.pref.length && !applied.pref.every((p) => r.tags.includes(p))) return false
-    if (applied.time === 'le15' && r.time > 15) return false
-    if (applied.time === 'le30' && r.time > 30) return false
-    return true
+  const apply = () => {
+    setFilters(applied)
+    setLoading(true)
+    setError(null)
+
+    const query: Record<string, string> = {}
+    if (applied.cuisine.length) query.cuisine = applied.cuisine.join(',')
+    if (applied.pref.length) query.tags = applied.pref.join(',')
+    if (applied.time === 'le15') query.maxTime = '15'
+    if (applied.time === 'le30') query.maxTime = '30'
+
+    fetchRecipes(query)
+      .then((res) => {
+        setResults(res)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError((err as Error).message)
+        setLoading(false)
+      })
   }
-  const res = RECIPES.filter(predicate)
+
+  // 首次进入时自动应用当前筛选条件
+  const didApply = React.useRef(false)
+  React.useEffect(() => {
+    if (!didApply.current) {
+      didApply.current = true
+      apply()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const recipes = results?.data ?? []
 
   return (
     <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200">
@@ -80,17 +109,35 @@ export default function FilterScreen() {
             </Chip>
           ))}
         </FilterGroup>
-        <Button onClick={apply} className="w-full">
-          应用筛选
+        <Button onClick={apply} className="w-full" disabled={loading}>
+          {loading ? '筛选中...' : '应用筛选'}
         </Button>
       </div>
 
       <div className="flex items-baseline justify-between px-4 pt-4 pb-3">
         <h2 className="text-[19px] font-bold tracking-tight">筛选结果</h2>
+        {results && (
+          <span className="text-[13px] text-muted-foreground">
+            {results.meta.total} 道
+          </span>
+        )}
       </div>
-      {res.length ? (
+
+      {error && (
+        <div className="px-4 pb-16 pt-6 text-center text-sm text-muted-foreground">
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!error && loading && (
+        <div className="flex min-h-[30vh] items-center justify-center">
+          <Loader2 size={32} className="animate-spin text-muted-foreground" />
+        </div>
+      )}
+
+      {!error && !loading && recipes.length > 0 && (
         <div className="grid grid-cols-2 gap-4 px-4 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
-          {res.map((r) => (
+          {recipes.map((r) => (
             <RecipeCard
               key={r.id}
               r={r}
@@ -100,7 +147,9 @@ export default function FilterScreen() {
             />
           ))}
         </div>
-      ) : (
+      )}
+
+      {!error && !loading && recipes.length === 0 && (
         <div className="px-4 pb-16 pt-6 text-center text-sm text-muted-foreground">
           <p>没有匹配的菜谱，试试放宽筛选条件。</p>
         </div>
