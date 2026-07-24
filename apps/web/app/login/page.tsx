@@ -1,6 +1,6 @@
 'use client'
 
-import { SyntheticEvent, useEffect, useState } from 'react'
+import { SyntheticEvent, Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CircleX, Loader2 } from 'lucide-react'
@@ -11,6 +11,20 @@ import LogoIcon from '@/components/logo'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 size={32} className="animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading, login, register } = useAuth()
