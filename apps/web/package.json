@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/react": "^4.0.40",
     "@base-ui/react": "^1.6.0",
     "@streamdown/cjk": "^1.0.3",
     "@streamdown/code": "^1.1.1",
