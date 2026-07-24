@@ -1,0 +1,61 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Recipe {
+  id          String   @id
+  name        String   @unique
+  desc        String
+  cuisine     Cuisine
+  time        Int
+  kcal        Int
+  img         String   @default("")
+  tags        Tag[]
+  ingredients Json
+  steps       Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  @@index([cuisine])
+  @@index([time])
+}
+
+model User {
+  id           String   @id
+  email        String   @unique
+  passwordHash String
+  displayName  String?
+  avatarUrl    String?
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+}
+
+enum Cuisine {
+  HOME
+  WESTERN
+  JAPANESE
+  SICHUAN
+  LIGHT
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Tag {
+  VEGETARIAN
+  HIGH_PROTEIN
+  LOW_CAL
+  LOW_CARB
+  QUICK
+  RICE_FRIENDLY
+  COMFORTING
+}

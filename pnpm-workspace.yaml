@@ -1,6 +1,10 @@
 packages:
   - 'apps/*'
 
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@swc/core'
+
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
