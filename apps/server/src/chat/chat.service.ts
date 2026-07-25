@@ -37,6 +37,31 @@ export class ChatService {
       },
     );
 
-    return toUIMessageStream(lgStream as AsyncIterable<AIMessageChunk>);
+    // 本服务编译为 CJS：`require('langchain')` 加载 CJS 版 @langchain/core，
+    // 而 ESM-only 的 @ai-sdk/langchain 内部 import 的是 ESM 版 @langchain/core。
+    // 两份类实例导致其 AIMessageChunk.isInstance 恒为 false，chunk 被静默丢弃。
+    // 因此先把 chunk 序列化为 plain object（适配器显式支持该形态）再传入。
+    const stream = lgStream as AsyncIterable<[string, unknown]>;
+    async function* serialized(): AsyncIterable<[string, unknown]> {
+      for await (const [mode, data] of stream) {
+        if (mode === 'messages' && Array.isArray(data)) {
+          const [chunk, metadata] = data as [
+            { toJSON?: () => unknown },
+            unknown,
+          ];
+          yield [
+            mode,
+            [
+              typeof chunk?.toJSON === 'function' ? chunk.toJSON() : chunk,
+              metadata,
+            ],
+          ];
+        } else {
+          yield [mode, data];
+        }
+      }
+    }
+
+    return toUIMessageStream(serialized() as AsyncIterable<AIMessageChunk>);
   }
 }
