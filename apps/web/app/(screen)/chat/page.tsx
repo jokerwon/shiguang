@@ -5,7 +5,7 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation'
 import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message'
-import { PromptInput, type PromptInputMessage, PromptInputTextarea, PromptInputSubmit } from '@/components/ai-elements/prompt-input'
+import { PromptInput, type PromptInputMessage, PromptInputTextarea, PromptInputSubmit, PromptInputBody, PromptInputFooter } from '@/components/ai-elements/prompt-input'
 import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
 import { Shimmer } from '@/components/ai-elements/shimmer'
 
@@ -61,67 +61,68 @@ export default function ChatScreen() {
   }
 
   return (
-    <section className="flex h-[calc(100dvh-2*var(--nav-h))] flex-col md:mx-auto md:h-[calc(100dvh-var(--nav-h)-3.5rem)] md:max-w-3xl md:border-x md:border-border">
-      <Conversation className="flex-1 min-h-0">
-        <ConversationContent className="px-4 py-4">
-          {/* 初始欢迎消息 */}
-          {messages.length === 0 && (
-            <Message from="assistant" key="init">
-              <MessageContent>
-                <MessageResponse>{INITIAL_MESSAGE}</MessageResponse>
-              </MessageContent>
-            </Message>
-          )}
+    <div className="flex h-[calc(100dvh-2*var(--nav-h))] flex-col md:h-[calc(100dvh-var(--nav-h)-3.5rem)] md:px-4 md:py-6">
+      <section className="flex min-h-0 flex-1 flex-col md:mx-auto md:w-full md:max-w-3xl md:overflow-hidden md:rounded-2xl md:border md:border-border md:bg-background md:shadow-sm">
+        <Conversation className="flex-1 min-h-0">
+          <ConversationContent className="px-4 py-4">
+            {/* 初始欢迎消息 */}
+            {messages.length === 0 && (
+              <Message from="assistant" key="init">
+                <MessageContent>
+                  <MessageResponse>{INITIAL_MESSAGE}</MessageResponse>
+                </MessageContent>
+              </Message>
+            )}
 
-          {messages.map((m) => (
-            <Message from={m.role === 'user' ? 'user' : 'assistant'} key={m.id}>
-              <MessageContent>
-                <MessageResponse>{getMessageText(m.parts)}</MessageResponse>
-              </MessageContent>
-            </Message>
+            {messages.map((m) => (
+              <Message from={m.role === 'user' ? 'user' : 'assistant'} key={m.id}>
+                <MessageContent>
+                  <MessageResponse>{getMessageText(m.parts)}</MessageResponse>
+                </MessageContent>
+              </Message>
+            ))}
+
+            {isStreaming && (
+              <Message from="assistant">
+                <MessageContent>
+                  <Shimmer>思考中…</Shimmer>
+                </MessageContent>
+              </Message>
+            )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+
+        <Suggestions className="flex-wrap gap-2 px-4 pb-4">
+          {QUICK_PROMPTS.map((p) => (
+            <Suggestion key={p.label} suggestion={p.query} onClick={(s) => handleSend(s)} />
           ))}
+        </Suggestions>
 
-          {isStreaming && (
-            <Message from="assistant">
-              <MessageContent>
-                <Shimmer>思考中…</Shimmer>
-              </MessageContent>
-            </Message>
-          )}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
+        <div className="border-t border-border bg-background px-4 py-4">
+          <PromptInput onSubmit={handleSubmit}>
+            <PromptInputBody>
+              <PromptInputTextarea
+                value={field}
+                placeholder="告诉食光你想吃什么…"
+                onChange={(e) => setField(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend(field)
+                  }
+                }}
+                disabled={isStreaming}
+              />
+            </PromptInputBody>
 
-      <Suggestions className="flex-wrap gap-2 px-4 pb-4">
-        {QUICK_PROMPTS.map((p) => (
-          <Suggestion
-            key={p.label}
-            suggestion={p.query}
-            onClick={(s) => handleSend(s)}
-          />
-        ))}
-      </Suggestions>
-
-      <div className="border-t border-border bg-background px-4 py-4">
-        <PromptInput onSubmit={handleSubmit}>
-          <PromptInputTextarea
-            value={field}
-            placeholder="告诉食光你想吃什么…"
-            onChange={(e) => setField(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSend(field)
-              }
-            }}
-            disabled={isStreaming}
-          />
-          <PromptInputSubmit
-            status={isStreaming ? 'submitted' : 'ready'}
-            disabled={!field.trim() || isStreaming}
-          />
-        </PromptInput>
-      </div>
-    </section>
+            <PromptInputFooter>
+              <div />
+              <PromptInputSubmit status={isStreaming ? 'submitted' : 'ready'} disabled={!field.trim() || isStreaming} />
+            </PromptInputFooter>
+          </PromptInput>
+        </div>
+      </section>
+    </div>
   )
 }
