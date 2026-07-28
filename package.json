@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "pnpm run --filter @shiguang/web dev"
+    "dev": "pnpm --parallel --filter @shiguang/web --filter @shiguang/server run dev"
   },
   "keywords": [],
   "author": "",

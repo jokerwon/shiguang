@@ -28,12 +28,11 @@ shiguang/
 ## 根目录命令
 
 ```bash
-pnpm dev                        # 启动前端开发服务器 (等同于 --filter @shiguang/web dev)
-pnpm --filter @shiguang/server start:dev   # 启动后端开发服务器
+pnpm dev # 同时启动前端 (3000) 和后端 (3001) 开发服务器
+pnpm --filter @shiguang/web dev # 仅启动前端
+pnpm --filter @shiguang/server start:dev # 仅启动后端
 pnpm --filter @shiguang/server db:generate # 生成 Prisma Client
 ```
-
-注意：根目录 `pnpm dev` 只启动前端。开发时需要分别在两个终端启动 `web` 和 `server`。
 
 ## 开发环境要求
 
