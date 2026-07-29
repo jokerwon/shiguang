@@ -1,13 +1,7 @@
 import type { Recipe } from './recipes';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { API_BASE, getToken } from './constants';
 
 /* ---- 共享 fetch 封装 ---- */
-
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('shiguang_token');
-}
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();

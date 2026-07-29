@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useSWRConfig } from 'swr';
 import { loginApi, registerApi, type AuthUser } from '@/lib/auth';
+import { TOKEN_KEY, USER_KEY } from '@/lib/constants';
 
 interface AuthState {
   user: AuthUser | null;
@@ -26,9 +27,6 @@ interface AuthState {
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
-
-const TOKEN_KEY = 'shiguang_token';
-const USER_KEY = 'shiguang_user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);

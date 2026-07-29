@@ -8,13 +8,7 @@ import { Message, MessageContent, MessageResponse } from '@/components/ai-elemen
 import { PromptInput, type PromptInputMessage, PromptInputTextarea, PromptInputSubmit, PromptInputBody, PromptInputFooter } from '@/components/ai-elements/prompt-input'
 import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
 import { Shimmer } from '@/components/ai-elements/shimmer'
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem('shiguang_token')
-}
+import { API_BASE, getToken } from '@/lib/constants'
 
 /** 从 UIMessage.parts 中提取纯文本内容 */
 function getMessageText(parts: { type: string; text?: string }[]): string {
