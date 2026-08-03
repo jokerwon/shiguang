@@ -1,6 +1,6 @@
 'use client'
 
-import { Bookmark } from 'lucide-react'
+import { Bookmark, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { RecipeCard } from '@/components/recipe-card'
 import { useFavorites } from '@/lib/use-favorites'
@@ -8,7 +8,7 @@ import type { Recipe } from '@/lib/recipes'
 
 export function FavoriteClient({ recipes }: { recipes: Recipe[] }) {
   const router = useRouter()
-  const { saved, toggleSave } = useFavorites()
+  const { saved, toggleSave, isLoading } = useFavorites()
   const items = recipes.filter((r) => saved.has(r.id))
 
   return (
@@ -22,7 +22,11 @@ export function FavoriteClient({ recipes }: { recipes: Recipe[] }) {
         </h2>
       </div>
 
-      {!items.length ? (
+      {isLoading ? (
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <Loader2 size={28} className="animate-spin text-muted-foreground" />
+        </div>
+      ) : !items.length ? (
         <div className="px-4 pt-10 pb-16 text-center text-muted-foreground">
           <Bookmark className="mx-auto mb-4 size-10 text-border" />
           <p>

@@ -1,54 +1,32 @@
 'use client'
 
 import * as React from 'react'
-
-const STORAGE_KEY = 'shiguang:favorites'
-
-function read(): Set<string> {
-  if (typeof window === 'undefined') return new Set()
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    return new Set(raw ? (JSON.parse(raw) as string[]) : [])
-  } catch {
-    return new Set()
-  }
-}
-
-function write(ids: Set<string>) {
-  if (typeof window === 'undefined') return
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]))
-  window.dispatchEvent(new CustomEvent('shiguang:favorites-change'))
-}
+import useSWR from 'swr'
+import { toggleFavorite } from './api'
 
 /**
- * 跨页面共享的收藏状态（持久化到 localStorage）。
- * 发现页与收藏页通过同一份 storage 保持同步。
+ * 收藏状态(服务端持久化,ADR-0004)。
+ * 数据源 useSWR('/favorites'),返回 recipeId 列表。
+ * 保持返回签名 { saved: Set<string>, toggleSave },
+ * saved 由返回的 id 数组构造,消费方 saved.has(r.id) 零改动。
  */
 export function useFavorites() {
-  // 初始用空值，保证 SSR 与客户端首次 hydration 一致；
-  // 真实数据在 effect 挂载后从 localStorage 读取，避免 hydration mismatch。
-  const [saved, setSaved] = React.useState<Set<string>>(new Set())
+  const { data, mutate, isLoading } = useSWR<string[]>('/favorites')
+  const saved = React.useMemo(() => new Set<string>(data ?? []), [data])
 
-  React.useEffect(() => {
-    const sync = () => setSaved(read())
-    sync()
-    window.addEventListener('storage', sync)
-    window.addEventListener('shiguang:favorites-change', sync)
-    return () => {
-      window.removeEventListener('storage', sync)
-      window.removeEventListener('shiguang:favorites-change', sync)
-    }
-  }, [])
+  const toggleSave = React.useCallback(
+    async (id: string) => {
+      const cur = data ?? []
+      const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]
+      // 乐观更新:先展示 next,请求成功用返回值替换,失败回滚
+      await mutate(toggleFavorite(id), {
+        optimisticData: next,
+        revalidate: false,
+        rollbackOnError: true,
+      })
+    },
+    [data, mutate],
+  )
 
-  const toggleSave = React.useCallback((id: string) => {
-    setSaved((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      write(next)
-      return next
-    })
-  }, [])
-
-  return { saved, toggleSave }
+  return { saved, toggleSave, isLoading }
 }

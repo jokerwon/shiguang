@@ -59,8 +59,8 @@ export function RecipeCard({ r, score, saved, onOpen, onToggle }: { r: Recipe; s
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {r.ingredients.slice(0, 3).map((i) => (
-            <span key={i} className="rounded-full border border-border px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
-              {i}
+            <span key={i.name} className="rounded-full border border-border px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+              {i.name}
             </span>
           ))}
         </div>

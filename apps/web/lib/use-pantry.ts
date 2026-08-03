@@ -1,79 +1,57 @@
 'use client'
 
 import * as React from 'react'
-
-const STORAGE_KEY = 'shiguang:pantry'
-
-function read(): string[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as string[]) : []
-  } catch {
-    return []
-  }
-}
-
-function write(ings: string[]) {
-  if (typeof window === 'undefined') return
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ings))
-  window.dispatchEvent(new CustomEvent('shiguang:pantry-change'))
-}
+import useSWR from 'swr'
+import { replacePantry } from './api'
 
 /**
- * 跨页面共享的食材清单（持久化到 localStorage）。
- * 食材页写入、详情页读取匹配度。
+ * 食材清单(服务端持久化,ADR-0004)。
+ * 数据源 useSWR('/pantry'),写操作乐观更新 + 失败回滚。
+ * 保持返回签名 { pantry, setPantry, addIng, removeAt, toggleSuggest, clear },
+ * 消费方零改动(loading 期 pantry 为空,与空清单视觉一致)。
  */
 export function usePantry() {
-  // 初始用空值，保证 SSR 与客户端首次 hydration 一致；
-  // 真实数据在 effect 挂载后从 localStorage 读取，避免 hydration mismatch。
-  const [pantry, setPantry] = React.useState<string[]>([])
+  const { data, mutate, isLoading } = useSWR<string[]>('/pantry')
+  const pantry = data ?? []
 
-  React.useEffect(() => {
-    const sync = () => setPantry(read())
-    sync()
-    window.addEventListener('storage', sync)
-    window.addEventListener('shiguang:pantry-change', sync)
-    return () => {
-      window.removeEventListener('storage', sync)
-      window.removeEventListener('shiguang:pantry-change', sync)
-    }
-  }, [])
-
-  const setPantrySynced = React.useCallback(
-    (next: string[] | ((prev: string[]) => string[])) => {
-      setPantry((prev) => {
-        const value = typeof next === 'function' ? next(prev) : next
-        write(value)
-        return value
+  const setPantry = React.useCallback(
+    async (next: string[] | ((prev: string[]) => string[])) => {
+      const newVal = typeof next === 'function' ? next(data ?? []) : next
+      // 乐观更新:先展示 newVal,请求成功用返回值替换,失败回滚到原 data
+      await mutate(replacePantry(newVal), {
+        optimisticData: newVal,
+        revalidate: false,
+        rollbackOnError: true,
       })
     },
-    [],
+    [data, mutate],
   )
 
   const addIng = React.useCallback(
     (ing: string) => {
       const v = ing.trim()
       if (!v) return
-      setPantrySynced((prev) => (prev.includes(v) ? prev : [...prev, v]))
+      const cur = data ?? []
+      if (cur.includes(v)) return
+      setPantry((prev) => [...prev, v])
     },
-    [setPantrySynced],
+    [data, setPantry],
   )
 
   const removeAt = React.useCallback(
-    (idx: number) => setPantrySynced((prev) => prev.filter((_, x) => x !== idx)),
-    [setPantrySynced],
+    (idx: number) => setPantry((prev) => prev.filter((_, x) => x !== idx)),
+    [setPantry],
   )
 
   const toggleSuggest = React.useCallback(
     (ing: string) =>
-      setPantrySynced((prev) =>
+      setPantry((prev) =>
         prev.includes(ing) ? prev.filter((x) => x !== ing) : [...prev, ing],
       ),
-    [setPantrySynced],
+    [setPantry],
   )
 
-  const clear = React.useCallback(() => setPantrySynced([]), [setPantrySynced])
+  const clear = React.useCallback(() => setPantry([]), [setPantry])
 
-  return { pantry, setPantry: setPantrySynced, addIng, removeAt, toggleSuggest, clear }
+  return { pantry, setPantry, addIng, removeAt, toggleSuggest, clear, isLoading }
 }

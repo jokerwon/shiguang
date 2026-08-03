@@ -46,6 +46,11 @@ const TAG_UP: Record<string, Tag> = {
 
 /* ---- 响应类型 ---- */
 
+export interface RecipeIngredient {
+  name: string;
+  amount: string;
+}
+
 export interface RecipeResponse {
   id: string;
   name: string;
@@ -53,9 +58,12 @@ export interface RecipeResponse {
   cuisine: string;
   time: number;
   kcal: number;
+  protein: number;
+  carb: number;
+  fat: number;
   img: string;
   tags: string[];
-  ingredients: string[];
+  ingredients: RecipeIngredient[];
   steps: string[];
 }
 
@@ -193,9 +201,12 @@ export class RecipeService {
       cuisine: CUISINE_DOWN[recipe.cuisine],
       time: recipe.time,
       kcal: recipe.kcal,
+      protein: recipe.protein,
+      carb: recipe.carb,
+      fat: recipe.fat,
       img: recipe.img,
       tags: recipe.tags.map((t) => TAG_DOWN[t]),
-      ingredients: recipe.ingredients as string[],
+      ingredients: recipe.ingredients as unknown as RecipeIngredient[],
       steps: recipe.steps as string[],
     };
   }

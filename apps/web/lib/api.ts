@@ -76,3 +76,57 @@ export function fetchRecommended(): Promise<RecommendedResponse> {
 export function fetchRecipeById(id: string): Promise<Recipe> {
   return request<Recipe>(`/recipes/${id}`);
 }
+
+/* ---- Pantry API ---- */
+
+export function fetchPantry(): Promise<string[]> {
+  return request<string[]>('/pantry');
+}
+
+/** 整体替换当前用户的食材清单 */
+export function replacePantry(names: string[]): Promise<string[]> {
+  return request<string[]>('/pantry', {
+    method: 'PUT',
+    body: JSON.stringify(names),
+  });
+}
+
+/* ---- Favorites API ---- */
+
+export function fetchFavorites(): Promise<string[]> {
+  return request<string[]>('/favorites');
+}
+
+/** toggle 收藏,返回最新收藏 id 列表 */
+export function toggleFavorite(recipeId: string): Promise<string[]> {
+  return request<string[]>(`/favorites/${recipeId}`, { method: 'POST' });
+}
+
+/* ---- Preferences API ---- */
+
+export type HealthGoal = 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
+
+export interface PreferenceInput {
+  dislikedIngredients?: string[];
+  allergens?: string[];
+  healthGoal?: HealthGoal;
+}
+
+export interface PreferenceResponse {
+  dislikedIngredients: string[];
+  allergens: string[];
+  healthGoal: HealthGoal;
+}
+
+export function fetchPreferences(): Promise<PreferenceResponse> {
+  return request<PreferenceResponse>('/preferences');
+}
+
+export function updatePreferences(
+  input: PreferenceInput,
+): Promise<PreferenceResponse> {
+  return request<PreferenceResponse>('/preferences', {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+}

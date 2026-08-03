@@ -1,3 +1,8 @@
+export interface Ingredient {
+  name: string
+  amount: string
+}
+
 export interface Recipe {
   id: string
   name: string
@@ -5,10 +10,13 @@ export interface Recipe {
   cuisine: string
   time: number
   kcal: number
+  protein: number
+  carb: number
+  fat: number
   img: string
   /** 标签 key 数组，对应 PREF_LABELS */
   tags: string[]
-  ingredients: string[]
+  ingredients: Ingredient[]
   steps: string[]
   desc: string
 }
@@ -76,9 +84,11 @@ export function resolveIng(text: string): string {
 
 export function matchScore(recipe: Recipe, pantry: string[]) {
   if (pantry.length === 0) return { score: 0, have: [] as string[] }
-  const have = recipe.ingredients.filter((i) =>
-    pantry.some((p) => norm(i).includes(norm(p)) || norm(p).includes(norm(i))),
-  )
+  const have = recipe.ingredients
+    .filter((i) =>
+      pantry.some((p) => norm(i.name).includes(norm(p)) || norm(p).includes(norm(i.name))),
+    )
+    .map((i) => i.name)
   return { score: Math.round((have.length / recipe.ingredients.length) * 100), have }
 }
 

@@ -4,15 +4,20 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, Cuisine, Tag } from '../generated/prisma/client';
 
+type SeedIngredient = { name: string; amount: string };
+
 type SeedRecipe = {
   name: string;
   desc: string;
   cuisine: Cuisine;
   time: number;
   kcal: number;
+  protein: number;
+  carb: number;
+  fat: number;
   img: string;
   tags: Tag[];
-  ingredients: string[];
+  ingredients: SeedIngredient[];
   steps: string[];
 };
 
@@ -24,9 +29,20 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.WESTERN,
     time: 25,
     kcal: 520,
+    protein: 14,
+    carb: 78,
+    fat: 16,
     img: '/assets/pasta.png',
     tags: [Tag.VEGETARIAN, Tag.QUICK],
-    ingredients: ['意面', '番茄', '罗勒', '大蒜', '橄榄油', '盐', '黑胡椒'],
+    ingredients: [
+      { name: '意面', amount: '200g' },
+      { name: '番茄', amount: '3个' },
+      { name: '罗勒', amount: '一小把' },
+      { name: '大蒜', amount: '2瓣' },
+      { name: '橄榄油', amount: '2汤匙' },
+      { name: '盐', amount: '适量' },
+      { name: '黑胡椒', amount: '适量' },
+    ],
     steps: [
       '烧一锅水加盐煮意面至弹牙',
       '同时热橄榄油爆香蒜片',
@@ -41,9 +57,19 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.WESTERN,
     time: 20,
     kcal: 480,
+    protein: 42,
+    carb: 8,
+    fat: 30,
     img: '/assets/salmon.jpg',
     tags: [Tag.HIGH_PROTEIN, Tag.LOW_CARB],
-    ingredients: ['三文鱼', '芦笋', '柠檬', '橄榄油', '盐', '黑胡椒'],
+    ingredients: [
+      { name: '三文鱼', amount: '1块(约150g)' },
+      { name: '芦笋', amount: '一把' },
+      { name: '柠檬', amount: '半个' },
+      { name: '橄榄油', amount: '1汤匙' },
+      { name: '盐', amount: '适量' },
+      { name: '黑胡椒', amount: '适量' },
+    ],
     steps: [
       '三文鱼擦干、两面撒盐黑胡椒',
       '热锅少油鱼皮朝下煎脆',
@@ -58,9 +84,19 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.JAPANESE,
     time: 35,
     kcal: 640,
+    protein: 28,
+    carb: 85,
+    fat: 22,
     img: '/assets/curry.jpg',
     tags: [Tag.COMFORTING],
-    ingredients: ['鸡腿肉', '土豆', '胡萝卜', '洋葱', '咖喱块', '米饭'],
+    ingredients: [
+      { name: '鸡腿肉', amount: '2只' },
+      { name: '土豆', amount: '1个' },
+      { name: '胡萝卜', amount: '1根' },
+      { name: '洋葱', amount: '1个' },
+      { name: '咖喱块', amount: '半盒(约100g)' },
+      { name: '米饭', amount: '2碗' },
+    ],
     steps: [
       '鸡肉切块焯水去腥',
       '洋葱炒香至透明',
@@ -75,9 +111,19 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.LIGHT,
     time: 15,
     kcal: 410,
+    protein: 14,
+    carb: 45,
+    fat: 20,
     img: '/assets/bowl.jpg',
     tags: [Tag.VEGETARIAN, Tag.HIGH_PROTEIN, Tag.LOW_CAL],
-    ingredients: ['藜麦', '牛油果', '鹰嘴豆', '菠菜', '柠檬', '橄榄油'],
+    ingredients: [
+      { name: '藜麦', amount: '1杯' },
+      { name: '牛油果', amount: '1个' },
+      { name: '鹰嘴豆', amount: '半杯' },
+      { name: '菠菜', amount: '一把' },
+      { name: '柠檬', amount: '半个' },
+      { name: '橄榄油', amount: '1汤匙' },
+    ],
     steps: [
       '藜麦煮熟沥干',
       '鹰嘴豆与菠菜快速焯烫',
@@ -92,9 +138,19 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.HOME,
     time: 10,
     kcal: 300,
+    protein: 14,
+    carb: 12,
+    fat: 22,
     img: '',
     tags: [Tag.QUICK],
-    ingredients: ['番茄', '鸡蛋', '葱', '盐', '糖', '食用油'],
+    ingredients: [
+      { name: '番茄', amount: '2个' },
+      { name: '鸡蛋', amount: '3个' },
+      { name: '葱', amount: '2根' },
+      { name: '盐', amount: '适量' },
+      { name: '糖', amount: '少许' },
+      { name: '食用油', amount: '2汤匙' },
+    ],
     steps: [
       '鸡蛋打散炒熟盛出',
       '西红柿切块下锅炒至出汁',
@@ -109,9 +165,18 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.HOME,
     time: 18,
     kcal: 220,
+    protein: 14,
+    carb: 10,
+    fat: 14,
     img: '',
     tags: [Tag.VEGETARIAN, Tag.LOW_CAL],
-    ingredients: ['嫩豆腐', '大蒜', '葱花', '酱油', '香油'],
+    ingredients: [
+      { name: '嫩豆腐', amount: '1块' },
+      { name: '大蒜', amount: '4瓣' },
+      { name: '葱花', amount: '适量' },
+      { name: '酱油', amount: '2汤匙' },
+      { name: '香油', amount: '1茶匙' },
+    ],
     steps: [
       '豆腐切块装盘入锅蒸8分钟',
       '蒜蓉用热油泼香',
@@ -125,9 +190,19 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.JAPANESE,
     time: 25,
     kcal: 560,
+    protein: 32,
+    carb: 65,
+    fat: 18,
     img: '',
     tags: [Tag.HIGH_PROTEIN],
-    ingredients: ['鸡腿肉', '酱油', '味醂', '糖', '米饭', '姜'],
+    ingredients: [
+      { name: '鸡腿肉', amount: '1只' },
+      { name: '酱油', amount: '3汤匙' },
+      { name: '味醂', amount: '3汤匙' },
+      { name: '糖', amount: '1汤匙' },
+      { name: '米饭', amount: '1碗' },
+      { name: '姜', amount: '2片' },
+    ],
     steps: [
       '鸡腿去骨擦干',
       '皮朝下煎至金黄',
@@ -142,9 +217,18 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.WESTERN,
     time: 15,
     kcal: 380,
+    protein: 10,
+    carb: 22,
+    fat: 28,
     img: '',
     tags: [Tag.LOW_CAL, Tag.QUICK],
-    ingredients: ['罗马生菜', '面包丁', '帕玛森芝士', '凯撒酱', '柠檬'],
+    ingredients: [
+      { name: '罗马生菜', amount: '1棵' },
+      { name: '面包丁', amount: '1把' },
+      { name: '帕玛森芝士', amount: '适量' },
+      { name: '凯撒酱', amount: '3汤匙' },
+      { name: '柠檬', amount: '半个' },
+    ],
     steps: [
       '生菜洗净沥干撕成小块',
       '面包切丁烤脆',
@@ -159,9 +243,19 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.SICHUAN,
     time: 20,
     kcal: 340,
+    protein: 16,
+    carb: 14,
+    fat: 24,
     img: '',
     tags: [Tag.RICE_FRIENDLY],
-    ingredients: ['嫩豆腐', '猪肉末', '豆瓣酱', '花椒', '葱花', '蒜'],
+    ingredients: [
+      { name: '嫩豆腐', amount: '1块' },
+      { name: '猪肉末', amount: '150g' },
+      { name: '豆瓣酱', amount: '1.5汤匙' },
+      { name: '花椒', amount: '1茶匙' },
+      { name: '葱花', amount: '适量' },
+      { name: '蒜', amount: '2瓣' },
+    ],
     steps: [
       '豆腐切块焯水定型',
       '肉末炒至变色',
@@ -176,9 +270,18 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.JAPANESE,
     time: 12,
     kcal: 120,
+    protein: 8,
+    carb: 10,
+    fat: 4,
     img: '',
     tags: [Tag.LOW_CAL, Tag.QUICK],
-    ingredients: ['味噌', '豆腐', '海带', '葱花', '裙带菜'],
+    ingredients: [
+      { name: '味噌', amount: '2汤匙' },
+      { name: '豆腐', amount: '半块' },
+      { name: '海带', amount: '1片' },
+      { name: '葱花', amount: '适量' },
+      { name: '裙带菜', amount: '1把' },
+    ],
     steps: [
       '水烧开下裙带菜与豆腐',
       '味噌用少量汤化开倒入',
@@ -192,9 +295,19 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.HOME,
     time: 45,
     kcal: 520,
+    protein: 35,
+    carb: 30,
+    fat: 28,
     img: '',
     tags: [Tag.HIGH_PROTEIN, Tag.COMFORTING],
-    ingredients: ['牛腩', '土豆', '胡萝卜', '洋葱', '酱油', '八角'],
+    ingredients: [
+      { name: '牛腩', amount: '400g' },
+      { name: '土豆', amount: '2个' },
+      { name: '胡萝卜', amount: '1根' },
+      { name: '洋葱', amount: '1个' },
+      { name: '酱油', amount: '3汤匙' },
+      { name: '八角', amount: '2颗' },
+    ],
     steps: [
       '牛腩切块焯水',
       '炒香洋葱下牛肉',
@@ -209,9 +322,18 @@ const RECIPES: SeedRecipe[] = [
     cuisine: Cuisine.SICHUAN,
     time: 8,
     kcal: 80,
+    protein: 2,
+    carb: 8,
+    fat: 5,
     img: '',
     tags: [Tag.LOW_CAL, Tag.QUICK, Tag.VEGETARIAN],
-    ingredients: ['黄瓜', '大蒜', '醋', '辣椒油', '盐'],
+    ingredients: [
+      { name: '黄瓜', amount: '2根' },
+      { name: '大蒜', amount: '3瓣' },
+      { name: '醋', amount: '2汤匙' },
+      { name: '辣椒油', amount: '1汤匙' },
+      { name: '盐', amount: '适量' },
+    ],
     steps: ['黄瓜拍裂切段', '蒜蓉与调料调汁', '拌匀冷藏10分钟更入味'],
   },
 ];
@@ -224,6 +346,7 @@ async function main() {
 
   try {
     // 幂等：按 name upsert，避免重复 seed 堆叠
+    // update 与 create 分支字段保持一致，确保老库数据被覆盖为新结构
     for (const r of RECIPES) {
       await prisma.recipe.upsert({
         where: { name: r.name },
@@ -232,6 +355,9 @@ async function main() {
           cuisine: r.cuisine,
           time: r.time,
           kcal: r.kcal,
+          protein: r.protein,
+          carb: r.carb,
+          fat: r.fat,
           img: r.img,
           tags: r.tags,
           ingredients: r.ingredients,
@@ -243,6 +369,9 @@ async function main() {
           cuisine: r.cuisine,
           time: r.time,
           kcal: r.kcal,
+          protein: r.protein,
+          carb: r.carb,
+          fat: r.fat,
           img: r.img,
           tags: r.tags,
           ingredients: r.ingredients,

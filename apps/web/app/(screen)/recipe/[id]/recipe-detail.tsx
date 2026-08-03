@@ -74,10 +74,10 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {r.ingredients.map((i) => {
-                  const got = m.have.includes(i)
+                  const got = m.have.includes(i.name)
                   return (
                     <span
-                      key={i}
+                      key={i.name}
                       className={cn(
                         'rounded-full border px-2.5 py-1 text-xs',
                         got
@@ -86,7 +86,7 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
                       )}
                     >
                       {got ? '✓ ' : ''}
-                      {i}
+                      {i.name}
                     </span>
                   )
                 })}
@@ -136,11 +136,11 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
             <ul className="flex flex-col pt-4">
               {r.ingredients.map((i) => (
                 <li
-                  key={i}
+                  key={i.name}
                   className="flex justify-between border-b border-border py-2.5 text-sm last:border-b-0"
                 >
-                  <span>{i}</span>
-                  <span className="font-mono text-muted-foreground">适量</span>
+                  <span>{i.name}</span>
+                  <span className="font-mono text-muted-foreground">{i.amount}</span>
                 </li>
               ))}
             </ul>

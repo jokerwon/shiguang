@@ -6,6 +6,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { ChatModule } from './chat/chat.module';
+import { PantryModule } from './pantry/pantry.module';
+import { FavoriteModule } from './favorite/favorite.module';
+import { PreferenceModule } from './preference/preference.module';
 
 @Module({
   imports: [
@@ -16,6 +19,9 @@ import { ChatModule } from './chat/chat.module';
     AuthModule,
     RecipeModule,
     ChatModule,
+    PantryModule,
+    FavoriteModule,
+    PreferenceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
