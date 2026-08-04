@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "pnpm --parallel --filter @shiguang/web --filter @shiguang/server run dev"
+    "dev": "pnpm --parallel --filter @shiguang/web --filter @shiguang/server run dev",
+    "recipes:generate": "pnpm --filter @shiguang/server run recipes:generate"
   },
   "keywords": [],
   "author": "",

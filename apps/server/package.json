@@ -25,7 +25,8 @@
     "db:reset": "prisma migrate reset",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "db:status": "prisma migrate status"
+    "db:status": "prisma migrate status",
+    "recipes:generate": "tsx scripts/generate-recipes.ts"
   },
   "engines": {
     "npm": ">=10.0.0",
