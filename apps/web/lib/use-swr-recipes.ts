@@ -30,9 +30,9 @@ export function useRecipesQuery() {
   return useSWR<PaginatedRecipes>(key);
 }
 
-// 获取推荐菜谱
-export function useRecommended() {
-  return useSWR<RecommendedResponse>('/recipes/recommended');
+// 获取个性化首页推荐（需认证；token 在 localStorage，只能 client 端取）
+export function usePersonalized() {
+  return useSWR<RecommendedResponse>('/recipes/personalized');
 }
 
 // 按筛选条件获取菜谱（Filter 页面使用）

@@ -3,6 +3,17 @@ import { API_BASE, getToken } from './constants';
 
 /* ---- 共享 fetch 封装 ---- */
 
+/** 带 HTTP status 的 API 错误（用于识别 401 等特定状态） */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const headers: HeadersInit = {
@@ -18,8 +29,9 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const msg = (body as { message?: string | string[] }).message;
-    throw new Error(
+    throw new ApiError(
       msg ? (Array.isArray(msg) ? msg[0] : msg) : `请求失败 (${res.status})`,
+      res.status,
     );
   }
 
@@ -38,6 +50,7 @@ export interface PaginatedRecipes {
   };
 }
 
+/** 个性化首页响应（GET /recipes/personalized，需认证） */
 export interface RecommendedResponse {
   today: Recipe[];
   quick: Recipe[];
@@ -67,10 +80,6 @@ export function fetchRecipes(query: RecipeQuery = {}): Promise<PaginatedRecipes>
 
   const qs = params.toString();
   return request<PaginatedRecipes>(`/recipes${qs ? `?${qs}` : ''}`);
-}
-
-export function fetchRecommended(): Promise<RecommendedResponse> {
-  return request<RecommendedResponse>('/recipes/recommended');
 }
 
 export function fetchRecipeById(id: string): Promise<Recipe> {

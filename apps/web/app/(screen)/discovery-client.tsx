@@ -4,15 +4,26 @@ import * as React from 'react'
 import { Search, User, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CUISINE_LABELS, CUISINES, type Recipe } from '@/lib/recipes'
+import { ApiError } from '@/lib/api'
+import { CUISINE_LABELS, CUISINES } from '@/lib/recipes'
+import { useAuth } from '@/lib/use-auth'
 import { useFavorites } from '@/lib/use-favorites'
 import { useFilters } from '@/lib/use-filters'
+import { usePersonalized } from '@/lib/use-swr-recipes'
+import { PrefsHint } from '@/components/prefs-hint'
 import { RecipeCard } from '@/components/recipe-card'
 
-export function DiscoveryClient({ today, quick }: { today: Recipe[]; quick: Recipe[] }) {
+export function DiscoveryClient() {
   const router = useRouter()
+  const { data, error, isLoading, mutate } = usePersonalized()
+  const { logout } = useAuth()
   const { saved, toggleSave } = useFavorites()
   const { setFilters } = useFilters()
+
+  // token 过期是唯一现实的 401 场景：清会话，AuthGuard 会接管跳转 /login
+  React.useEffect(() => {
+    if (error instanceof ApiError && error.status === 401) logout()
+  }, [error, logout])
 
   const openDetail = (id: string) => router.push(`/recipe/${id}`)
 
@@ -20,6 +31,9 @@ export function DiscoveryClient({ today, quick }: { today: Recipe[]; quick: Reci
     setFilters({ cuisine: [c], pref: [], time: 'any' })
     router.push('/filter')
   }
+
+  const today = data?.today ?? []
+  const quick = data?.quick ?? []
 
   return (
     <section className="pb-4 animate-in fade-in slide-in-from-bottom-1.5 duration-200">
@@ -52,16 +66,24 @@ export function DiscoveryClient({ today, quick }: { today: Recipe[]; quick: Reci
         </Link>
       </div>
 
-      <RowTitle title="今日推荐">
+      <PrefsHint />
+
+      <RowTitle title="为你推荐">
         <Link href="/filter" className="text-[13px] text-muted-foreground hover:text-foreground">
           筛选
         </Link>
       </RowTitle>
-      <RecipeGrid>
-        {today.map((r) => (
-          <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onOpen={() => openDetail(r.id)} onToggle={() => toggleSave(r.id)} />
-        ))}
-      </RecipeGrid>
+      {isLoading ? (
+        <RecipeGridSkeleton />
+      ) : error ? (
+        <GridError onRetry={() => mutate()} />
+      ) : (
+        <RecipeGrid>
+          {today.map((r) => (
+            <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onOpen={() => openDetail(r.id)} onToggle={() => toggleSave(r.id)} />
+          ))}
+        </RecipeGrid>
+      )}
 
       <RowTitle title="按菜系探索" />
       <div className="flex gap-2 overflow-x-auto px-4 pb-2 md:flex-wrap md:overflow-visible">
@@ -82,11 +104,15 @@ export function DiscoveryClient({ today, quick }: { today: Recipe[]; quick: Reci
           更多
         </Link>
       </RowTitle>
-      <RecipeGrid>
-        {quick.map((r) => (
-          <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onOpen={() => openDetail(r.id)} onToggle={() => toggleSave(r.id)} />
-        ))}
-      </RecipeGrid>
+      {isLoading ? (
+        <RecipeGridSkeleton />
+      ) : error ? null : (
+        <RecipeGrid>
+          {quick.map((r) => (
+            <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onOpen={() => openDetail(r.id)} onToggle={() => toggleSave(r.id)} />
+          ))}
+        </RecipeGrid>
+      )}
     </section>
   )
 }
@@ -102,4 +128,32 @@ function RowTitle({ title, children }: { title: string; children?: React.ReactNo
 
 function RecipeGrid({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-2 gap-4 px-4 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">{children}</div>
+}
+
+/** 与 RecipeCard 同形的骨架块，避免加载时布局跳动 */
+function RecipeGridSkeleton() {
+  return (
+    <RecipeGrid>
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="overflow-hidden rounded-lg border border-border">
+          <div className="aspect-4/3 animate-pulse bg-muted" />
+          <div className="space-y-2 px-3.5 pb-3.5 pt-3">
+            <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
+          </div>
+        </div>
+      ))}
+    </RecipeGrid>
+  )
+}
+
+function GridError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="mx-4 flex items-center justify-between rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
+      <span>推荐加载失败</span>
+      <button type="button" onClick={onRetry} className="font-medium text-foreground hover:underline">
+        重试
+      </button>
+    </div>
+  )
 }
