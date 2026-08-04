@@ -93,7 +93,7 @@ export default function SettingsScreen() {
                 aria-pressed={goal === g.value}
                 onClick={() => setGoal(g.value)}
                 className={cn(
-                  'rounded-lg border px-3 py-2.5 text-center transition-colors',
+                  'rounded-lg border px-3 py-2.5 text-center transition-[color,border-color,transform] active:scale-[0.96]',
                   goal === g.value
                     ? 'border-foreground bg-foreground text-background'
                     : 'border-border bg-background hover:border-foreground',

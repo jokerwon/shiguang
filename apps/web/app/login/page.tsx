@@ -93,7 +93,7 @@ function LoginForm() {
         </Link>
 
         {/* Card */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-6">
           <h1 className="mb-1 text-[19px] font-bold tracking-tight">{mode === 'login' ? '欢迎回来' : '创建账号'}</h1>
           <p className="mb-5 text-[13px] text-muted-foreground">{mode === 'login' ? '登录你的食光账号' : '注册后即可收藏菜谱、管理食材'}</p>
 

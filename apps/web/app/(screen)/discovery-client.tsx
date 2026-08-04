@@ -92,7 +92,7 @@ export function DiscoveryClient() {
             key={c}
             type="button"
             onClick={() => filterByCuisine(c)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3.5 py-2 text-[13px] font-medium transition-colors hover:border-foreground"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3.5 py-2 text-[13px] font-medium transition-[color,border-color,transform] active:scale-[0.96] hover:border-foreground"
           >
             {CUISINE_LABELS[c]}
           </button>

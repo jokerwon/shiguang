@@ -76,7 +76,7 @@ export default function PantryScreen() {
                   type="button"
                   aria-label={`移除 ${i}`}
                   onClick={() => removeAt(idx)}
-                  className={cn('inline-flex items-center gap-1.5 rounded-full border border-foreground bg-foreground px-3.5 py-2 text-[13px] font-medium text-background')}
+                  className={cn('inline-flex items-center gap-1.5 rounded-full border border-foreground bg-foreground px-3.5 py-2 text-[13px] font-medium text-background transition-transform active:scale-[0.96]')}
                 >
                   {i}
                   <span aria-hidden className="opacity-50">
@@ -101,7 +101,7 @@ export default function PantryScreen() {
                   aria-pressed={on}
                   onClick={() => toggleSuggest(i)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-colors',
+                    'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-[color,border-color,transform] active:scale-[0.96]',
                     on ? 'border-foreground bg-foreground text-background' : 'border-border bg-background hover:border-foreground',
                   )}
                 >

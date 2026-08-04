@@ -10,7 +10,7 @@ export function RecipeCard({ r, score, saved, onOpen, onToggle }: { r: Recipe; s
 
   return (
     <div
-      className="group relative overflow-hidden rounded-lg border border-border bg-background transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_color-mix(in_oklch,var(--foreground)_30%,transparent)]"
+      className="group relative overflow-hidden rounded-lg border border-border bg-background transition-[transform,box-shadow] active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_color-mix(in_oklch,var(--foreground)_30%,transparent)]"
       onClick={onOpen}
     >
       <div className="relative aspect-4/3 overflow-hidden bg-muted">
