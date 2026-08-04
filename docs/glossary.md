@@ -1,6 +1,6 @@
 # 食光 (Shiguang) 领域术语表
 
-> 本术语表定义「下一版(内容深度 + 个性化)」涉及的核心领域概念,作为前后端、AI prompt、文档的统一语言 (Ubiquitous Language)。
+> 本术语表定义「内容深度 + 个性化」(Phase 1–2)与「AI 能力跃迁」(Phase 3–4)涉及的核心领域概念,作为前后端、AI prompt、文档的统一语言 (Ubiquitous Language)。
 
 ## 核心实体 (Core Entities)
 
@@ -69,12 +69,32 @@
 ## AI 相关 (AI Concepts)
 
 ### 上下文注入 (Context Injection)
-**本版 AI 对话的升级方式**。后端在构建 system prompt 时,注入:
-- 偏好档案(忌口/过敏原/健康目标)
-- pantry 现有食材
-- top 5–8 候选菜谱(复用个性化推荐结果)
+后端在构建 system prompt 时注入用户上下文,使 AI 推荐**约束在真实数据上**。
+- **Phase 2 起注入**:偏好档案(忌口/过敏原/健康目标)、pantry 现有食材、top 5–8 候选菜谱(ADR-0006)。
+- **Phase 3 起演进**(ADR-0009):偏好 + pantry 保留注入;**候选菜谱不再每轮注入,改为 `search_recipes` 工具按需查询**。
 
-使 AI 推荐**约束在真实菜谱上**,不编造库里没有的菜。**本版不实现 tool-calling Agent。**
+### 工具调用 (Tool Calling)
+**Phase 3 起 AI 对话的架构**。模型通过 function calling 主动调用后端工具:只读工具(`search_recipes` / `get_recipe` / `get_pantry` / `get_favorites` / `get_preferences`)与写工具(pantry/收藏直接执行;偏好档案走待确认草稿)。推荐算法仍是工具背后的单一事实源。
+
+### 分级确认 (Tiered Confirmation)
+写工具按误操作后果分两级处理(ADR-0009):
+- **直接执行 + 可撤销**:pantry、收藏 —— AI 直接落库,UI 给 undo 入口。
+- **显式确认**:偏好档案 —— 工具只产出待确认草稿,用户在前端确认卡片上点击才生效。
+
+### 操作卡片 (Action Card)
+AI 执行写操作后,前端在消息流中渲染的结果卡片(如「已添加 牛腩 到食材清单」),附「撤销」按钮,撤销调同一 API 逆向操作。渲染数据存于 `Message.toolCalls`,刷新后仍可显示。
+
+### 待确认草稿 (Pending Draft)
+`propose_preference_update` 工具的返回物:一份**未生效**的偏好变更。前端渲染确认卡片展示变更 diff,用户点「确认」后前端直接调 `PUT /preferences` 落库。**确认动作不经过 AI**,是确定性的 UI 路径(过敏原安全红线)。
+
+### 会话 (Conversation) / 消息 (Message)
+**Phase 3 起新增的核心实体**。一个用户可有多个会话;会话包含有序消息(role: user / assistant / tool)。持久化到服务端,刷新/换设备不丢。UI 为最小会话列表:切换 + 删除,不重命名/置顶/搜索(ADR-0010)。
+
+### 滑窗 (Sliding Window)
+每轮请求只携带最近 N 条消息原文作为历史上下文(Phase 3 默认 N=20),控制 token 成本。
+
+### 会话摘要 (Conversation Summary)
+**Phase 4 新增**。超出滑窗的历史由 AI 异步压缩为摘要,随 system prompt 注入;超长会话上下文不丢、成本有界。
 
 ### 待审区 (Staging Area)
 AI 批量生成菜谱的缓冲区。生成的菜谱**先入待审区(JSON / staging 表),人工抽检 + 校验后再导入 Recipe 表**,不直接入库。

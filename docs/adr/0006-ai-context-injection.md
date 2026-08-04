@@ -1,6 +1,6 @@
 # ADR-0006: AI 对话升级 —— 上下文注入到 System Prompt(非 Tool-Calling Agent)
 
-- **状态**:已接受
+- **状态**:已接受(候选菜谱注入部分已被 [ADR-0009](0009-ai-tool-calling-agent.md) 取代;偏好+pantry 注入仍有效)
 - **日期**:2026-07-29
 - **决策者**:Kai(经 grill 会话确认)
 
