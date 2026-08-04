@@ -1,71 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Recipe, Prisma } from 'generated/prisma/client';
-import type { Cuisine, Tag } from 'generated/prisma/client';
+import type { Prisma } from 'generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { QueryRecipesDto } from './recipe.dto';
-
-/* ---- 枚举映射：Prisma 大写 → 前端小写 ---- */
-
-const CUISINE_DOWN: Record<string, string> = {
-  HOME: 'home',
-  WESTERN: 'western',
-  JAPANESE: 'japanese',
-  SICHUAN: 'sichuan',
-  LIGHT: 'light',
-};
-
-const TAG_DOWN: Record<string, string> = {
-  VEGETARIAN: 'vegetarian',
-  HIGH_PROTEIN: 'high-protein',
-  LOW_CAL: 'low-cal',
-  LOW_CARB: 'low-carb',
-  QUICK: 'quick',
-  RICE_FRIENDLY: 'rice-friendly',
-  COMFORTING: 'comforting',
-};
-
-/* ---- 反向映射：前端小写 → Prisma 大写（用于查询过滤） ---- */
-
-const CUISINE_UP: Record<string, Cuisine> = {
-  home: 'HOME',
-  western: 'WESTERN',
-  japanese: 'JAPANESE',
-  sichuan: 'SICHUAN',
-  light: 'LIGHT',
-};
-
-const TAG_UP: Record<string, Tag> = {
-  vegetarian: 'VEGETARIAN',
-  'high-protein': 'HIGH_PROTEIN',
-  'low-cal': 'LOW_CAL',
-  'low-carb': 'LOW_CARB',
-  quick: 'QUICK',
-  'rice-friendly': 'RICE_FRIENDLY',
-  comforting: 'COMFORTING',
-};
-
-/* ---- 响应类型 ---- */
-
-export interface RecipeIngredient {
-  name: string;
-  amount: string;
-}
-
-export interface RecipeResponse {
-  id: string;
-  name: string;
-  desc: string;
-  cuisine: string;
-  time: number;
-  kcal: number;
-  protein: number;
-  carb: number;
-  fat: number;
-  img: string;
-  tags: string[];
-  ingredients: RecipeIngredient[];
-  steps: string[];
-}
+import {
+  CUISINE_UP,
+  TAG_UP,
+  toResponse,
+  type RecipeResponse,
+} from './recipe.mapper';
+import { RecommendationService } from './recommendation.service';
 
 export interface PaginatedResponse {
   data: RecipeResponse[];
@@ -82,12 +25,12 @@ export interface RecommendedResponse {
   quick: RecipeResponse[];
 }
 
-/** 今日推荐菜谱名称列表 */
-const TODAY_NAMES = ['番茄罗勒意面', '藜麦牛油果碗', '麻婆豆腐', '照烧鸡腿饭'];
-
 @Injectable()
 export class RecipeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly recommendation: RecommendationService,
+  ) {}
 
   /* ========== 公共方法 ========== */
 
@@ -107,7 +50,7 @@ export class RecipeService {
     ]);
 
     return {
-      data: data.map((r) => this.toResponse(r)),
+      data: data.map((r) => toResponse(r)),
       meta: {
         total,
         page,
@@ -117,27 +60,24 @@ export class RecipeService {
     };
   }
 
-  async findRecommended(): Promise<RecommendedResponse> {
-    const todayRecipes = await this.prisma.recipe.findMany({
-      where: { name: { in: TODAY_NAMES } },
-    });
-
-    // 按 TODAY_NAMES 顺序排列
-    const today = TODAY_NAMES.map((name) =>
-      todayRecipes.find((r) => r.name === name),
-    )
-      .filter((r): r is Recipe => r != null)
-      .map((r) => this.toResponse(r));
-
-    const quickRecipes = await this.prisma.recipe.findMany({
-      where: { time: { lte: 15 } },
-      orderBy: { time: 'asc' },
-      take: 4,
-    });
+  /**
+   * 个性化首页（ADR-0005）：today 来自 RecommendationService
+   * （硬过滤忌口/过敏原 + pantry/时间/目标/轮换加权排序）；
+   * quick 保留「15 分钟快手」逻辑。
+   */
+  async findPersonalized(userId: string): Promise<RecommendedResponse> {
+    const [top, quickRecipes] = await Promise.all([
+      this.recommendation.recommend(userId, 4),
+      this.prisma.recipe.findMany({
+        where: { time: { lte: 15 } },
+        orderBy: { time: 'asc' },
+        take: 4,
+      }),
+    ]);
 
     return {
-      today,
-      quick: quickRecipes.map((r) => this.toResponse(r)),
+      today: top.map((r) => toResponse(r)),
+      quick: quickRecipes.map((r) => toResponse(r)),
     };
   }
 
@@ -146,7 +86,7 @@ export class RecipeService {
     if (!recipe) {
       throw new NotFoundException('菜谱不存在');
     }
-    return this.toResponse(recipe);
+    return toResponse(recipe);
   }
 
   /* ========== 内部方法 ========== */
@@ -190,24 +130,5 @@ export class RecipeService {
     }
 
     return where;
-  }
-
-  /** 将 Prisma 返回的 Recipe 转为前端可用的格式 */
-  private toResponse(recipe: Recipe): RecipeResponse {
-    return {
-      id: recipe.id,
-      name: recipe.name,
-      desc: recipe.desc,
-      cuisine: CUISINE_DOWN[recipe.cuisine],
-      time: recipe.time,
-      kcal: recipe.kcal,
-      protein: recipe.protein,
-      carb: recipe.carb,
-      fat: recipe.fat,
-      img: recipe.img,
-      tags: recipe.tags.map((t) => TAG_DOWN[t]),
-      ingredients: recipe.ingredients as unknown as RecipeIngredient[],
-      steps: recipe.steps as string[],
-    };
   }
 }
