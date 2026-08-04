@@ -39,6 +39,9 @@
 **Phase 4(更懂你)** — 记忆的深度与安全(ADR-0008)
 - 写偏好档案:前端确认卡片,显式确认才落库(ADR-0009)
 - 滑窗 + 会话摘要(ADR-0010)
+- 长会话种子脚本:摘要验收前置([验收清单](../acceptance/phase-3-4-checklist.md) F3)
 - 体验打磨
+
+**Phase 3 / 4 验收标准**见 [acceptance/phase-3-4-checklist.md](../acceptance/phase-3-4-checklist.md)(手动场景走查制)。
 
 **术语**见 [glossary.md](../glossary.md)。
