@@ -1,12 +1,14 @@
 'use client'
 
 import * as React from 'react'
-import { ChevronLeft, Clock, Calendar, Bookmark } from 'lucide-react'
+import { ChevronLeft, Clock, Bookmark } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { usePantry } from '@/lib/use-pantry'
 import { useFavorites } from '@/lib/use-favorites'
 import { CUISINE_LABELS, matchScore, type Recipe } from '@/lib/recipes'
+import { RecipeImage } from '@/components/recipe-image'
+import { ShoppingListDialog } from '@/components/shopping-list-dialog'
 import { cn } from '@/lib/utils'
 
 export function RecipeDetail({ recipe }: { recipe: Recipe }) {
@@ -14,7 +16,6 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const { pantry } = usePantry()
   const { saved, toggleSave } = useFavorites()
   const [tab, setTab] = React.useState<'steps' | 'ings'>('steps')
-  const [imgErr, setImgErr] = React.useState(false)
 
   const r = recipe
   const m = matchScore(r, pantry)
@@ -25,19 +26,7 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
     <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200 pb-28">
       {/* hero */}
       <div className="relative">
-        {r.img && !imgErr ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={r.img}
-            alt={name}
-            onError={() => setImgErr(true)}
-            className="aspect-4/3 w-full object-cover md:aspect-21/9"
-          />
-        ) : (
-          <div className="grid aspect-4/3 w-full place-items-center bg-[linear-gradient(135deg,var(--primary-soft),color-mix(in_oklch,var(--foreground)_6%,transparent))] font-mono text-sm text-muted-foreground md:aspect-21/9">
-            {name}
-          </div>
-        )}
+        <RecipeImage r={r} variant="hero" />
         <button
           type="button"
           onClick={() => router.back()}
@@ -59,12 +48,32 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
               <Clock size={15} />
               <span className="font-mono">{r.time}分钟</span>
             </span>
-            <span className="flex items-center gap-1.5">
-              <Calendar size={15} />
-              <span className="font-mono">{r.kcal}kcal</span>
-            </span>
             <span>{CUISINE_LABELS[r.cuisine]}</span>
           </div>
+
+          {/* 营养三要素（ADR-0002/0003：AI 估算值，需标注） */}
+          <div className="mt-4">
+            <div className="grid grid-cols-4 gap-2">
+              {(
+                [
+                  ['热量', r.kcal, 'kcal'],
+                  ['蛋白质', r.protein, 'g'],
+                  ['碳水', r.carb, 'g'],
+                  ['脂肪', r.fat, 'g'],
+                ] as const
+              ).map(([label, value, unit]) => (
+                <div key={label} className="rounded-lg border border-border bg-muted px-3 py-2.5 text-center">
+                  <div className="font-mono text-[15px] font-bold">
+                    {value}
+                    <span className="ml-0.5 text-[11px] font-normal text-muted-foreground">{unit}</span>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-muted-foreground">{label}</div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-1.5 text-right text-xs text-muted-foreground">营养为估算值</p>
+          </div>
+
           <p className="mt-3 text-sm text-muted-foreground">{r.desc}</p>
 
           {pantry.length > 0 && (
@@ -159,7 +168,7 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
           <Bookmark size={18} fill={isSaved ? 'currentColor' : 'none'} />
           {isSaved ? '已收藏' : '收藏'}
         </Button>
-        <Button className="flex-2">开始烹饪</Button>
+        <ShoppingListDialog recipe={r} />
       </div>
     </section>
   )

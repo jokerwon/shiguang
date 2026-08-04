@@ -82,14 +82,20 @@ export function resolveIng(text: string): string {
   return hit ?? text.trim()
 }
 
+/** 食材命中：norm 后双向 includes（与服务端推荐算法的硬过滤同语义） */
+export function hasIng(pantry: string[], name: string): boolean {
+  return pantry.some((p) => norm(name).includes(norm(p)) || norm(p).includes(norm(name)))
+}
+
 export function matchScore(recipe: Recipe, pantry: string[]) {
   if (pantry.length === 0) return { score: 0, have: [] as string[] }
-  const have = recipe.ingredients
-    .filter((i) =>
-      pantry.some((p) => norm(i.name).includes(norm(p)) || norm(p).includes(norm(i.name))),
-    )
-    .map((i) => i.name)
+  const have = recipe.ingredients.filter((i) => hasIng(pantry, i.name)).map((i) => i.name)
   return { score: Math.round((have.length / recipe.ingredients.length) * 100), have }
+}
+
+/** 缺料清单（ADR-0007）：pantry 中没有的食材，含用量。即时快照，不持久化 */
+export function missingIngredients(recipe: Recipe, pantry: string[]): Ingredient[] {
+  return recipe.ingredients.filter((i) => !hasIng(pantry, i.name))
 }
 
 export function matchRecipes(recipes: Recipe[], pantry: string[]) {

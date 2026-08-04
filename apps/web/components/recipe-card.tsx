@@ -1,25 +1,9 @@
 'use client'
 
-import * as React from 'react'
-import Image from 'next/image'
 import { Bookmark } from 'lucide-react'
 import { CUISINE_LABELS, type Recipe } from '@/lib/recipes'
+import { RecipeImage } from '@/components/recipe-image'
 import { cn } from '@/lib/utils'
-
-const PH_GRADIENT = 'linear-gradient(135deg, var(--primary-soft), color-mix(in oklch, var(--foreground) 6%, transparent))'
-
-function RecipeImage({ r, className }: { r: Recipe; className?: string }) {
-  const [err, setErr] = React.useState(false)
-  const name = r.name
-  if (!r.img || err) {
-    return (
-      <div className={cn('grid h-full w-full place-items-center font-mono text-xs text-muted-foreground', className)} style={{ backgroundImage: PH_GRADIENT }}>
-        {name}
-      </div>
-    )
-  }
-  return <Image fill src={r.img} alt={name} sizes="(max-width: 640px) 50vw, 220px" loading="lazy" onError={() => setErr(true)} className={cn('h-full w-full object-cover', className)} />
-}
 
 export function RecipeCard({ r, score, saved, onOpen, onToggle }: { r: Recipe; score?: number; saved: boolean; onOpen: () => void; onToggle: () => void }) {
   const name = r.name
