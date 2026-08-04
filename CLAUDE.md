@@ -32,6 +32,7 @@ pnpm dev # 同时启动前端 (3000) 和后端 (3001) 开发服务器
 pnpm --filter @shiguang/web dev # 仅启动前端
 pnpm --filter @shiguang/server start:dev # 仅启动后端
 pnpm --filter @shiguang/server db:generate # 生成 Prisma Client
+pnpm recipes:generate # AI 批量生成菜谱 → staging 待审区（ADR-0003）
 ```
 
 ## 开发环境要求
@@ -42,5 +43,5 @@ pnpm --filter @shiguang/server db:generate # 生成 Prisma Client
 
 ## 环境变量
 
-- `apps/server/.env` — `DATABASE_URL`（PostgreSQL 连接串）、`JWT_SECRET`
+- `apps/server/.env` — `DATABASE_URL`（PostgreSQL 连接串）、`JWT_SECRET`、`OPENAI_API_KEY` / `OPENAI_BASE_URL` / `MODEL_NAME`（AI 对话与菜谱生成共用）
 - `apps/web/` — `NEXT_PUBLIC_API_URL` 指向后端（默认 `http://localhost:3001`）

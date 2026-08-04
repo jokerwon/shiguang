@@ -44,14 +44,27 @@ pnpm db:studio      # 打开 Prisma Studio
 pnpm db:status      # 检查迁移状态
 ```
 
+### 菜谱内容生产（ADR-0003）
+
+```bash
+pnpm recipes:generate                     # AI 批量生成 → prisma/staging/recipes-staging.json
+pnpm recipes:generate --batches 2         # 每个菜系生成 2 批（每批默认 8 道）
+pnpm recipes:generate --only sichuan,home # 只生成指定菜系
+```
+
+生成结果**先入 staging 待审区，不直接入库**：脚本做字段/营养/去重校验（`src/recipe/recipe-draft.ts`），人工抽检 staging JSON 后，`pnpm db:seed` 合并「`prisma/recipes-curated.ts` 人工精选 + staging」upsert 入库（seed 时再过一遍校验兜底）。
+
 ## 环境变量
 
 `.env` 文件位于 `apps/server/`。必须包含：
 
 - `DATABASE_URL` — PostgreSQL 连接串，格式：`postgresql://user:password@host:port/dbname`
 - `JWT_SECRET` — JWT 签名密钥（开发环境默认值：`shiguang-dev-secret`）
+- `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `MODEL_NAME` — OpenAI-compatible 端点，`/chat` 与 `recipes:generate` 共用
 
 参见 `.env.example`。
+
+**时区**：推荐算法的「晚间」「当天」取服务器本地时间（`RecommendationService`），部署要求 `TZ=Asia/Shanghai`，本地 dev 无需处理。
 
 ## 架构
 
@@ -60,7 +73,7 @@ pnpm db:status      # 检查迁移状态
 ```
 src/
   main.ts                     # 入口：CORS、ValidationPipe、ShutdownHooks
-  app.module.ts               # 根模块：ConfigModule、PrismaModule、AuthModule
+  app.module.ts               # 根模块：ConfigModule、PrismaModule、AuthModule 等
   app.controller.ts / .service.ts  # 占位，暂无逻辑
 
   prisma/
@@ -68,11 +81,36 @@ src/
     prisma.service.ts         # 继承 PrismaClient + onModuleInit/Destroy
 
   auth/
-    auth.module.ts            # 注册 JwtModule (7天过期)
+    auth.module.ts            # 注册 JwtModule (7天过期)，exports JwtModule + JwtAuthGuard
     auth.controller.ts        # POST /auth/login, POST /auth/register
     auth.service.ts           # 登录/注册逻辑，bcryptjs 密码哈希
-    auth.dto.ts               # LoginDto / RegisterDto，class-validator 校验
+    jwt-auth.guard.ts         # 手写 CanActivate，验签后把 { sub, email } 挂 request.user
+    current-user.decorator.ts # @CurrentUser() 取 userId（sub）
+
+  recipe/
+    recipe.controller.ts      # GET /recipes（分页筛选）、GET /recipes/personalized（需认证）、GET /recipes/:id
+    recipe.service.ts         # 查询 + 响应组装
+    recipe.mapper.ts          # Prisma 枚举 ↔ 前端小写映射、toResponse、中文标签（CUISINE_ZH/TAG_ZH）
+    recommendation.service.ts # 个性化推荐（ADR-0005）：首页与 AI 注入共用的单一事实源
+    recommendation.scoring.ts # 打纯正函数：硬过滤 + pantry/时间/目标/轮换加权（0.45/0.15/0.15/0.25）
+    recipe-draft.ts           # AI 生成菜谱的校验纯函数（generate 脚本与 seed 共用）
+
+  chat/
+    chat.controller.ts        # POST /chat（需认证，流式）
+    chat.service.ts           # 请求级构建 system prompt（上下文注入，ADR-0006）
+    prompts/                  # system/recipe/behavior/guardrails 静态段 + context-builder 动态段
+
+  pantry/                     # GET/PUT /pantry（整体替换，string[]）
+  favorite/                   # GET /favorites、POST /favorites/:recipeId（toggle）
+  preference/                 # GET/PUT /preferences（忌口/过敏原/健康目标）
 ```
+
+### 个性化推荐（ADR-0005/0006）
+
+- `RecommendationService` 只注入 PrismaService（PrismaModule 全局），**不 import Pantry/Preference 模块**，零模块间耦合
+- 算法：硬过滤（忌口 ∪ 过敏原，与前端 matchScore 同语义的双向 includes）→ 加权排序（pantry 匹配 0.45 + 时间适配 0.15 + 健康目标 0.15 + 新鲜度轮换 0.25）；轮换种子 = FNV-1a(userId + 当天日期)，无状态、当天稳定按天轮换
+- **依赖方向**：ChatModule → RecipeModule（单向，无循环）。`/chat` 每次请求用 `recommend(userId, 8)` 的候选注入 system prompt，AI 只能推荐候选清单内的真实菜谱
+- 单测：`recommendation.scoring.spec.ts`、`recipe-draft.spec.ts`（纯函数，零 DB）
 
 ### 数据库 — PostgreSQL + Prisma
 
@@ -81,10 +119,13 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 使用 `@prisma/adapter-pg` 直接连接 PostgreSQL，不依赖连接池。
 
 数据模型（`prisma/schema.prisma`）：
-- **Recipe** — 菜谱（id, name, desc, cuisine, time, kcal, img, tags, ingredients, steps）。tags/ingredients/steps 为 JSON 字段。索引：cuisine, time
+- **Recipe** — 菜谱（id, name, desc, cuisine, time, kcal, protein/carb/fat, img, tags, ingredients, steps）。ingredients 为 Json（`{name, amount}[]`），steps 为 Json（string[]）。索引：cuisine, time
 - **User** — 用户（id, email, passwordHash, displayName, avatarUrl, role）
+- **PantryItem** — 食材清单（userId + name 唯一）
+- **Favorite** — 收藏（userId + recipeId 唯一）
+- **UserPreference** — 偏好档案（userId 唯一；dislikedIngredients/allergens/healthGoal）
 
-种子数据（`prisma/seed.ts`）包含与前端 `apps/web/lib/recipes.ts` 一致的 12 道菜谱。使用 upsert（按 name）实现幂等。
+种子数据：`prisma/recipes-curated.ts`（人工精选）+ `prisma/staging/recipes-staging.json`（AI 生成待审区，存在才合并），按 name upsert 幂等。
 
 ### 认证
 

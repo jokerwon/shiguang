@@ -45,48 +45,50 @@ app/
 
   (screen)/               # 路由组 — 需要认证的页面（AuthGuard 包裹）
     layout.tsx            # 共享布局：顶部导航 + TabBar + AuthGuard
-    page.tsx              # 发现页（首页）— 今日推荐、菜系探索
+    page.tsx              # 发现页（首页）— 为你推荐、菜系探索、15 分钟快手
     pantry/page.tsx       # 食材清单 — 添加食材、智能匹配
-    chat/page.tsx         # 对话 Agent — 模拟聊天推荐菜谱
+    chat/page.tsx         # 对话 Agent — AI 菜谱推荐（上下文注入）
     filter/page.tsx       # 筛选页 — 按菜系/偏好/时间筛选
     favorite/page.tsx     # 收藏夹 — 已收藏菜谱列表
-    recipe/[id]/page.tsx  # 菜谱详情页 — 步骤/食材、匹配度
+    settings/page.tsx     # 我的 — 偏好档案（忌口/过敏原/健康目标）
+    recipe/[id]/page.tsx  # 菜谱详情页 — 步骤/食材、营养、缺料清单
 ```
 
 ## 认证机制
 
-- **存储**: JWT token + user 对象持久化在 `localStorage`（key: `shiguang_token`, `shiguang_user`）
+- **存储**: JWT token + user 对象持久化在 `localStorage`（key: `shiguang:token`, `shiguang:user`）
 - **后端 API**: `NEXT_PUBLIC_API_URL`（默认 `http://localhost:3001`），端点 `/auth/login`, `/auth/register`
-- **前端状态**: `AuthProvider` (`lib/use-auth.tsx`) — React Context，在 `Providers` (`components/providers.tsx`) 中挂载
+- **前端状态**: `AuthProvider` (`lib/use-auth.tsx`) — React Context；login/logout 时清空全部 SWR 缓存（天然按用户隔离）
 - **路由保护**: `AuthGuard` (`components/auth-guard.tsx`) — 未登录用户重定向到 `/login?redirect=原路径`，加载中显示 spinner
 - **登录页**: 已登录用户自动跳转回 `redirect` 参数指定的页面
 
-## 跨页面状态管理 (localStorage + Event)
+## 数据层（SWR + 服务端持久化，ADR-0004）
 
-所有持久化状态都通过 `localStorage` + `CustomEvent` 实现跨页面同步：
+用户数据已迁服务端，前端经 SWR 消费（乐观更新 + 失败回滚）：
 
-| Hook | Storage Key | 事件 |
-|------|------------|------|
-| `useFavorites()` | `shiguang:favorites` | `shiguang:favorites-change` |
-| `usePantry()` | `shiguang:pantry` | `shiguang:pantry-change` |
-| `useFilters()` | `shiguang:filters` | `shiguang:filters-change` |
+| Hook | SWR key | 说明 |
+|------|---------|------|
+| `usePantry()` | `/pantry` | 食材清单（PUT 整体替换） |
+| `useFavorites()` | `/favorites` | 收藏（POST toggle，返回 id 列表 → `saved: Set`） |
+| `usePreferences()` | `/preferences` | 偏好档案（忌口/过敏原/健康目标），含 `isEmpty`（首页软提示用） |
+| `usePersonalized()` | `/recipes/personalized` | 首页个性化推荐（需认证） |
+| `useFilters()` | localStorage | 筛选草稿（唯一仍走本地存储的状态） |
 
-每个 hook 都采用 SSR-safe 模式：初始 state 为空，在 `useEffect` 挂载后从 `localStorage` 读取真实数据，避免 hydration mismatch。同时监听 `storage` 事件（跨标签页）和自定义事件（同标签页）。
-
-## 数据层
-
-- **`lib/recipes.ts`** — 所有菜谱数据、分类常量（`CUISINES`, `PREFS`, `TIMES`）、匹配算法（`matchScore`, `matchRecipes`）。菜谱当前是硬编码数组，无需 API 调用。
-- **`lib/auth.ts`** — 登录/注册 API 调用函数（`loginApi`, `registerApi`），纯 HTTP fetch。
-- **`lib/utils.ts`** — `cn()` 函数（`clsx` + `twMerge`）。
+- **`lib/api.ts`** — `request<T>()` 自动拼 `API_BASE` + 附 Bearer；失败抛 `ApiError`（带 `status`，401 可识别 → logout）
+- **`lib/fetcher.ts`** — SWR fetcher 复用 `request()`，所有 SWR key 天然带鉴权
+- **`lib/recipes.ts`** — `Recipe` 类型、分类常量、`matchScore/matchRecipes`（食材页本地即时反馈）、`hasIng/missingIngredients`（缺料清单纯函数）
+- **首页为何 client 端取数**：token 在 localStorage，RSC 服务端 fetch 拿不到 Bearer，个性化端点只能 client SWR（骨架屏兜底首屏）；详情页是公开端点，保留 RSC
 
 ## 共享组件
 
-- `components/app-nav.tsx` — `Navbar`（桌面端顶部导航）和 `Tabbar`（移动端底部导航），四个导航项：发现/食材/对话/收藏
-- `components/recipe-card.tsx` — 菜谱卡片，含图片、收藏按钮、匹配度徽标
+- `components/app-nav.tsx` — `Navbar`（桌面）/ `Tabbar`（移动），五个导航项：发现/食材/对话/收藏/我的
+- `components/recipe-card.tsx` — 菜谱卡片（图、收藏、匹配度徽标）
+- `components/recipe-image.tsx` — 图片与占位符（ADR-0003：首字 + 菜系配色，`variant: card | hero`），card 与详情页共用
+- `components/shopping-list-dialog.tsx` — 缺料清单浮层（ADR-0007：即时快照，勾选不持久化）
+- `components/prefs-hint.tsx` — 首页软提示（空偏好档案时引导去设置，可关闭）
 - `components/auth-guard.tsx` — 路由保护
-- `components/providers.tsx` — Client Provider 聚合（仅 AuthProvider）
-- `components/logo.tsx` — Logo SVG 图标
-- `components/ui/` — shadcn/ui 组件（button, input, alert, navigation-menu）
+- `components/providers.tsx` — SWRProvider > AuthProvider
+- `components/ui/` — shadcn/ui 组件；`components/ai-elements/` — AI SDK Elements（对话页）
 
 ## 设计系统
 
