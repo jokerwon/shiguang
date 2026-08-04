@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation'
@@ -30,7 +31,7 @@ const INITIAL_MESSAGE = '你好，我是食光 👋。告诉我手边有什么�
 export default function ChatScreen() {
   const [field, setField] = React.useState('')
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error, clearError } = useChat({
     transport: new DefaultChatTransport({
       api: `${API_BASE}/chat`,
       headers: () => {
@@ -46,6 +47,7 @@ export default function ChatScreen() {
 
   const handleSend = (text: string) => {
     if (!text.trim() || isStreaming) return
+    clearError()
     sendMessage({ text })
     setField('')
   }
@@ -94,6 +96,16 @@ export default function ChatScreen() {
         </Suggestions>
 
         <div className="border-t border-border bg-background px-4 py-4">
+          {/* /chat 需认证（ADR-0006）：token 过期等发送失败在此提示 */}
+          {error && (
+            <p className="mb-3 text-[13px] text-muted-foreground">
+              发送失败{error.message.includes('401') ? '，登录已过期，请' : '，请稍后重试（或'}
+              <Link href="/login" className="font-medium text-foreground hover:underline">
+                重新登录
+              </Link>
+              {error.message.includes('401') ? '。' : '）。'}
+            </p>
+          )}
           <PromptInput onSubmit={handleSubmit}>
             <PromptInputBody>
               <PromptInputTextarea
