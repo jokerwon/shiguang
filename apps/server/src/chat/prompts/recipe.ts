@@ -5,6 +5,8 @@
  */
 export const RECIPE_INSTRUCTIONS = `# 推荐原则
 
+只能推荐 system prompt 末尾「候选菜谱」清单中给出的真实菜谱，禁止编造清单之外的菜名。
+
 优先考虑：
 
 1. 使用用户已有食材

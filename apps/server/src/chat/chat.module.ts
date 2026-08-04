@@ -2,10 +2,13 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createOpenAI } from '@ai-sdk/openai';
 import { OpenAIChatModelId } from '@ai-sdk/openai/internal';
+import { AuthModule } from '../auth/auth.module';
+import { RecipeModule } from '../recipe/recipe.module';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
 
 @Module({
+  imports: [AuthModule, RecipeModule],
   controllers: [ChatController],
   providers: [
     ChatService,
