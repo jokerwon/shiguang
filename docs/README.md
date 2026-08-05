@@ -13,7 +13,7 @@
 
 | 文档 | 状态 | 说明 |
 |------|------|------|
-| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0010，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
+| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0011，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
 
 ## 实施层（按 Phase）
 
@@ -23,6 +23,7 @@
 |-------|---------|---------|------|
 | 1 内容深度+个性化 | [implementation/phase-1-implementation.md](./implementation/phase-1-implementation.md)（仅覆盖地基部分；体验部分无文档，承认断链，追溯见 git history，勿补写） | [phase-1-checklist.md](./acceptance/phase-1-checklist.md)（后补的回归基线，依据真实代码回溯编写） | 已交付，实施文档归档 |
 | 2 AI 会动手 | [implementation/phase-2-implementation.md](./implementation/phase-2-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md) | 已交付——Conversation/Message 表 + 会话 CRUD、chat tool-loop、只读/写工具、操作卡片 undo、会话列表 |
+| 2.1 会话重设计 | [implementation/phase-2-1-implementation.md](./implementation/phase-2-1-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md)（补充 URL 归属场景） | 待开工——ADR-0011：会话状态归属(URL)+ Message 表重审 |
 | 3 更懂你 | **待写**——须待 Phase 2 代码落地后编写，"关键前置发现"只能来自对真实代码的探索，提前写是虚构 | 已备（与 Phase 2 共用同一份清单的 E/F 节） | 未开工 |
 
 ## 运行层

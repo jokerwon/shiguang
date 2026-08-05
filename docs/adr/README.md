@@ -15,7 +15,8 @@
 | [ADR-0007](./0007-shopping-list-snapshot.md) | 缺料购物清单:详情页即时快照,不持久化 | 1 |
 | [ADR-0008](./0008-theme-ai-capability-leap.md) | 主题:AI 能力跃迁(动嘴不动手),分两 Phase 交付 | — |
 | [ADR-0009](./0009-ai-tool-calling-agent.md) | AI tool-calling:工具清单、注入演进、分级确认 | 2 / 3 |
-| [ADR-0010](./0010-persistent-conversations.md) | 持久化多会话:Conversation/Message 表、最小会话列表、滑窗+摘要 | 2 / 3 |
+| [ADR-0010](./0010-persistent-conversations.md) | 持久化多会话:Conversation/Message 表、最小会话列表、滑窗+摘要(部分被 ADR-0011 取代) | 2 / 3 |
+| [ADR-0011](./0011-conversation-state-ownership-and-message-schema.md) | 会话状态归属(URL)+ Message 表重审(砍 content/toolCalls、加 seq) | 2 |
 
 ## Phase 总览
 
