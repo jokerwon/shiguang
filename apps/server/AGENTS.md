@@ -16,7 +16,7 @@ shiguang/
   pnpm-workspace.yaml
 ```
 
-包管理器：pnpm 10.15+。从仓库根目录或 `apps/server/` 执行命令均可，但 `package.json` 中的 scripts 在 `apps/server/` 目录下运行。
+包管理器：pnpm 11.20+。从仓库根目录或 `apps/server/` 执行命令均可，但 `package.json` 中的 scripts 在 `apps/server/` 目录下运行。
 
 ## 常用命令
 

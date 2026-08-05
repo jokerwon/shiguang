@@ -18,7 +18,7 @@ pnpm --filter @shiguang/server db:generate && pnpm --filter @shiguang/server db:
 pnpm dev   # 同时启动前后端
 ```
 
-要求：Node.js >= 20，pnpm >= 10.15，PostgreSQL。
+要求：Node.js >= 20，pnpm >= 11.20，PostgreSQL。
 
 ## 文档
 

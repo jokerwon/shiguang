@@ -16,7 +16,7 @@ shiguang/
   pnpm-workspace.yaml
 ```
 
-包管理器：**pnpm 10.15+**。通过 `pnpm --filter <package>` 在根目录操作任意子包。
+包管理器：**pnpm 11.20+**。通过 `pnpm --filter <package>` 在根目录操作任意子包。
 
 ## 子项目文档
 
@@ -65,7 +65,7 @@ pnpm recipes:generate # AI 批量生成菜谱 → staging 待审区（ADR-0003�
 ## 开发环境要求
 
 - **Node.js** >= 20.0.0
-- **pnpm** >= 10.15.0
+- **pnpm** >= 11.20.0
 - **PostgreSQL** — 后端数据库，需提前创建数据库并配置 `apps/server/.env` 中的 `DATABASE_URL`
 
 ## 环境变量
