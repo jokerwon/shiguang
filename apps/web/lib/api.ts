@@ -111,6 +111,17 @@ export function toggleFavorite(recipeId: string): Promise<string[]> {
   return request<string[]>(`/favorites/${recipeId}`, { method: 'POST' });
 }
 
+/**
+ * 幂等 set 收藏（ADR-0009 操作卡片 undo 需要）。
+ * 带 `{ saved: boolean }` body 走幂等 set；无 body 维持 toggle 语义。
+ */
+export function setFavorite(recipeId: string, saved: boolean): Promise<string[]> {
+  return request<string[]>(`/favorites/${recipeId}`, {
+    method: 'POST',
+    body: JSON.stringify({ saved }),
+  });
+}
+
 /* ---- Preferences API ---- */
 
 export type HealthGoal = 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
@@ -137,5 +148,36 @@ export function updatePreferences(
   return request<PreferenceResponse>('/preferences', {
     method: 'PUT',
     body: JSON.stringify(input),
+  });
+}
+
+/* ---- Conversations API (ADR-0010) ---- */
+
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
+/** UIMessage（与后端 ai SDK v7 形态一致，宽松类型） */
+export interface ChatUIMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  parts: { type: string; text?: string; [k: string]: unknown }[];
+}
+
+export function fetchConversations(): Promise<ConversationSummary[]> {
+  return request<ConversationSummary[]>('/conversations');
+}
+
+export function fetchConversationMessages(
+  id: string,
+): Promise<ChatUIMessage[]> {
+  return request<ChatUIMessage[]>(`/conversations/${id}/messages`);
+}
+
+export function deleteConversation(id: string): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>(`/conversations/${id}`, {
+    method: 'DELETE',
   });
 }

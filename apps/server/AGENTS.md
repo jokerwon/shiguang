@@ -96,21 +96,30 @@ src/
     recipe-draft.ts           # AI 生成菜谱的校验纯函数（generate 脚本与 seed 共用）
 
   chat/
-    chat.controller.ts        # POST /chat（需认证，流式）
-    chat.service.ts           # 请求级构建 system prompt（上下文注入，ADR-0006）
+    chat.controller.ts        # POST /chat（需认证，流式，body { conversationId?, message }）
+    chat.service.ts           # tool-loop + 持久化（ADR-0009/0010）：DB 取滑窗上下文，streamText + tools，onFinish 落库
     prompts/                  # system/recipe/behavior/guardrails 静态段 + context-builder 动态段
+    tools/                    # AI 工具（ADR-0009）：read-tools / write-tools（*-logic.ts 为纯逻辑，单测友好）+ index 工厂
 
-  pantry/                     # GET/PUT /pantry（整体替换，string[]）
-  favorite/                   # GET /favorites、POST /favorites/:recipeId（toggle）
-  preference/                 # GET/PUT /preferences（忌口/过敏原/健康目标）
+  conversation/               # 会话持久化（ADR-0010）：Conversation/Message CRUD + 滑窗上下文 + UIMessage↔DB mapper
+  pantry/                     # GET/PUT /pantry（整体替换，string[]）；exports PantryService 供 chat 写工具复用
+  favorite/                   # GET /favorites、POST /favorites/:recipeId（无 body=toggle，{saved} body=幂等 set）
+  preference/                 # GET/PUT /preferences（忌口/过敏原/健康目标）；exports PreferenceService 供 chat 只读工具复用
 ```
+
+### AI 对话（ADR-0006/0009/0010）
+
+- **注入演进（ADR-0009）**：保留偏好/pantry/季节/用户名注入；候选菜谱注入已移除，改为 `search_recipes` 工具按需查询。`ChatService` 不再调 `recommend(userId, 8)`，但仍用 `loadSignals` 取 blocked/pantry/healthGoal（注入与硬过滤共用）。
+- **tool-loop**：`streamText({ tools, stopWhen: stepCountIs(5) })`，工具经 `createChatTools(deps, userId)` 工厂闭包捕获 userId。`search_recipes` 先过 `blocked` 硬过滤再打分排序（复用 `recommendation.scoring`，单一事实源）。
+- **写工具幂等**：`add_pantry_items`/`remove_pantry_items` 基于 `findAll + replace` 组合实现去重幂等；`set_favorite` 用幂等 set 语义（`FavoriteService.set`，toggle 对 AI 危险）。
+- **持久化（ADR-0010）**：body 只带 `conversationId? + message`，后端从 DB 取最近 20 条组装上下文（不信客户端全量）。无 conversationId 则创建会话（title = 首条消息截断 ~20 字），id 经响应头 `x-conversation-id` 回传前端。`toUIMessageStream` 的 `onFinish` 落库 assistant 消息（含 tool parts）。
+- 单测：`recommendation.scoring.spec.ts`、`recipe-draft.spec.ts`、`conversation.mapper.spec.ts`、`chat/tools/tools.spec.ts`（纯函数，零 DB）。
 
 ### 个性化推荐（ADR-0005/0006）
 
 - `RecommendationService` 只注入 PrismaService（PrismaModule 全局），**不 import Pantry/Preference 模块**，零模块间耦合
 - 算法：硬过滤（忌口 ∪ 过敏原，与前端 matchScore 同语义的双向 includes）→ 加权排序（pantry 匹配 0.45 + 时间适配 0.15 + 健康目标 0.15 + 新鲜度轮换 0.25）；轮换种子 = FNV-1a(userId + 当天日期)，无状态、当天稳定按天轮换
-- **依赖方向**：ChatModule → RecipeModule（单向，无循环）。`/chat` 每次请求用 `recommend(userId, 8)` 的候选注入 system prompt，AI 只能推荐候选清单内的真实菜谱
-- 单测：`recommendation.scoring.spec.ts`、`recipe-draft.spec.ts`（纯函数，零 DB）
+- **依赖方向**：ChatModule → RecipeModule / PantryModule / FavoriteModule / PreferenceModule / ConversationModule（单向，无循环）。推荐打分仍是首页与 `search_recipes` 工具的单一事实源。
 
 ### 数据库 — PostgreSQL + Prisma
 
@@ -124,6 +133,8 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 - **PantryItem** — 食材清单（userId + name 唯一）
 - **Favorite** — 收藏（userId + recipeId 唯一）
 - **UserPreference** — 偏好档案（userId 唯一；dislikedIngredients/allergens/healthGoal）
+- **Conversation** — 会话（ADR-0010；userId, title, updatedAt）。索引：userId + updatedAt
+- **Message** — 消息（ADR-0010；conversationId, role, content 拼接文本, toolCalls Json? 非文本 parts）。索引：conversationId + createdAt
 
 种子数据：`prisma/recipes-curated.ts`（人工精选）+ `prisma/staging/recipes-staging.json`（AI 生成待审区，存在才合并），按 name upsert 幂等。
 

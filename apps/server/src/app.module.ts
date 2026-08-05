@@ -9,6 +9,7 @@ import { ChatModule } from './chat/chat.module';
 import { PantryModule } from './pantry/pantry.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { PreferenceModule } from './preference/preference.module';
+import { ConversationModule } from './conversation/conversation.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PreferenceModule } from './preference/preference.module';
     PantryModule,
     FavoriteModule,
     PreferenceModule,
+    ConversationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

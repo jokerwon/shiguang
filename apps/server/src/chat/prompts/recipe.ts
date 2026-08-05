@@ -5,7 +5,10 @@
  */
 export const RECIPE_INSTRUCTIONS = `# 推荐原则
 
-只能推荐 system prompt 末尾「候选菜谱」清单中给出的真实菜谱，禁止编造清单之外的菜名。
+推荐具体菜谱前，必须先调用 search_recipes 工具查询菜谱库，禁止编造库中没有的菜。
+若 search_recipes 没有匹配结果，如实告知用户，并基于现有食材给通用烹饪建议，不要杜撰菜名。
+
+需要某道菜的完整做法时，用 get_recipe 工具按 id 获取详情，不要凭空编造步骤与用量。
 
 优先考虑：
 

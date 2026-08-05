@@ -35,8 +35,12 @@ describe('dailySeed / seededJitter', () => {
   });
 
   it('不同日期或不同用户结果不同（按天轮换）', () => {
-    expect(dailySeed('u1', '2026-08-04')).not.toBe(dailySeed('u1', '2026-08-05'));
-    expect(dailySeed('u1', '2026-08-04')).not.toBe(dailySeed('u2', '2026-08-04'));
+    expect(dailySeed('u1', '2026-08-04')).not.toBe(
+      dailySeed('u1', '2026-08-05'),
+    );
+    expect(dailySeed('u1', '2026-08-04')).not.toBe(
+      dailySeed('u2', '2026-08-04'),
+    );
   });
 
   it('jitter 落在 [0,1] 且稳定', () => {

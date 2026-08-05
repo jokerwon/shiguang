@@ -94,11 +94,11 @@ describe('validateRecipeDraft', () => {
   });
 
   it('拒绝 steps 少于 3 条或含空步骤', () => {
-    expect(
-      validateRecipeDraft({ ...VALID, steps: ['一', '二'] }).ok,
-    ).toBe(false);
-    expect(
-      validateRecipeDraft({ ...VALID, steps: ['一', '二', ''] }).ok,
-    ).toBe(false);
+    expect(validateRecipeDraft({ ...VALID, steps: ['一', '二'] }).ok).toBe(
+      false,
+    );
+    expect(validateRecipeDraft({ ...VALID, steps: ['一', '二', ''] }).ok).toBe(
+      false,
+    );
   });
 });

@@ -7,5 +7,6 @@ import { AuthModule } from '../auth/auth.module';
   imports: [AuthModule], // 拿到 JwtAuthGuard + JwtService
   controllers: [PreferenceController],
   providers: [PreferenceService],
+  exports: [PreferenceService], // ChatModule 只读工具复用（ADR-0009）
 })
 export class PreferenceModule {}

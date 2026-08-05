@@ -22,7 +22,7 @@
 | Phase | 实施清单 | 验收清单 | 状态 |
 |-------|---------|---------|------|
 | 1 内容深度+个性化 | [implementation/phase-1-implementation.md](./implementation/phase-1-implementation.md)（仅覆盖地基部分；体验部分无文档，承认断链，追溯见 git history，勿补写） | [phase-1-checklist.md](./acceptance/phase-1-checklist.md)（后补的回归基线，依据真实代码回溯编写） | 已交付，实施文档归档 |
-| 2 AI 会动手 | [implementation/phase-2-implementation.md](./implementation/phase-2-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md) | **未开工**——ADR/实施清单/验收已备,代码未动(schema 无 Conversation 表、src 无 conversation 模块与 chat/tools 目录) |
+| 2 AI 会动手 | [implementation/phase-2-implementation.md](./implementation/phase-2-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md) | 已交付——Conversation/Message 表 + 会话 CRUD、chat tool-loop、只读/写工具、操作卡片 undo、会话列表 |
 | 3 更懂你 | **待写**——须待 Phase 2 代码落地后编写，"关键前置发现"只能来自对真实代码的探索，提前写是虚构 | 已备（与 Phase 2 共用同一份清单的 E/F 节） | 未开工 |
 
 ## 运行层

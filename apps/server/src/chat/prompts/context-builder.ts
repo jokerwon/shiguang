@@ -3,19 +3,12 @@ import { RECIPE_INSTRUCTIONS } from './recipe';
 import { BEHAVIOR_PROMPT } from './behavior';
 import { GUARDRAILS } from './guardrails';
 
-/** 候选菜谱（推荐算法产出的真实菜谱，ADR-0006） */
-export interface CandidateRecipe {
-  name: string;
-  /** 中文菜系名 */
-  cuisine: string;
-  time: number;
-  kcal: number;
-  protein: number;
-  /** 中文标签 */
-  tags: string[];
-}
-
-/** 运行时注入的动态上下文（每次请求重新构建，不落 service 单例） */
+/**
+ * 运行时注入的动态上下文（每次请求重新构建，不落 service 单例）。
+ *
+ * ADR-0009 注入演进：候选菜谱注入已移除，改为 search_recipes 工具按需查询。
+ * 保留偏好/pantry/季节/用户名注入（便宜、每轮都需要，是推荐与安全的基准上下文）。
+ */
 export interface PromptContext {
   /** 用户显示名称 */
   userName?: string;
@@ -27,8 +20,6 @@ export interface PromptContext {
   pantryIngredients?: string[];
   /** 当前季节（用于推荐时令菜） */
   season?: 'spring' | 'summer' | 'autumn' | 'winter';
-  /** 候选菜谱（个性化推荐 top N） */
-  candidates?: CandidateRecipe[];
 }
 
 const SEASON_LABELS: Record<string, string> = {
@@ -78,16 +69,6 @@ export function buildSystemPrompt(context?: PromptContext): string {
 
     if (dynamicParts.length > 0) {
       parts.push(`## 当前上下文\n${dynamicParts.join('\n')}`);
-    }
-
-    if (context.candidates?.length) {
-      const lines = context.candidates.map(
-        (c) =>
-          `- ${c.name}（${c.cuisine} · ${c.time}分钟 · ${c.kcal}kcal · 蛋白质${c.protein}g${c.tags.length ? ` · ${c.tags.join('/')}` : ''}）`,
-      );
-      parts.push(
-        `## 候选菜谱（菜谱库中与本用户最匹配的真实菜谱）\n${lines.join('\n')}\n\n你只能从「候选菜谱」中推荐具体菜谱，禁止编造清单之外的菜名；若候选都不适合用户需求，如实说明，并基于现有食材给通用烹饪建议。`,
-      );
     }
   }
 

@@ -7,5 +7,6 @@ import { AuthModule } from '../auth/auth.module';
   imports: [AuthModule], // 拿到 JwtAuthGuard + JwtService
   controllers: [PantryController],
   providers: [PantryService],
+  exports: [PantryService], // ChatModule 写工具复用 replace 语义（ADR-0009）
 })
 export class PantryModule {}

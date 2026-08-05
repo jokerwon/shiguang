@@ -23,19 +23,44 @@ export class FavoriteService {
     if (existing) {
       await this.prisma.favorite.delete({ where: { id: existing.id } });
     } else {
-      try {
-        await this.prisma.favorite.create({ data: { userId, recipeId } });
-      } catch (e) {
-        // recipe 不存在 → 外键约束失败(P2003,driver adapter 形态)
-        if (
-          e instanceof Prisma.PrismaClientKnownRequestError &&
-          (e.code === 'P2025' || e.code === 'P2003')
-        ) {
-          throw new NotFoundException('菜谱不存在');
-        }
-        throw e;
-      }
+      await this.createOrThrow(userId, recipeId);
     }
     return this.findAll(userId);
+  }
+
+  /**
+   * 幂等 set(ADR-0009 写工具语义):目标状态已一致则直接返回当前列表;
+   * 否则 create/delete。AI 写工具必须用此语义——toggle 对 AI 是危险的
+   * (说「收藏」却翻转成取消)。
+   */
+  async set(
+    userId: string,
+    recipeId: string,
+    saved: boolean,
+  ): Promise<string[]> {
+    const existing = await this.prisma.favorite.findUnique({
+      where: { userId_recipeId: { userId, recipeId } },
+    });
+    if (saved) {
+      if (!existing) await this.createOrThrow(userId, recipeId);
+    } else if (existing) {
+      await this.prisma.favorite.delete({ where: { id: existing.id } });
+    }
+    return this.findAll(userId);
+  }
+
+  /** create 并在 recipe 不存在时抛 404(外键约束失败) */
+  private async createOrThrow(userId: string, recipeId: string): Promise<void> {
+    try {
+      await this.prisma.favorite.create({ data: { userId, recipeId } });
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        (e.code === 'P2025' || e.code === 'P2003')
+      ) {
+        throw new NotFoundException('菜谱不存在');
+      }
+      throw e;
+    }
   }
 }

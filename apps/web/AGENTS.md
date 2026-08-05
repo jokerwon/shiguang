@@ -51,7 +51,7 @@ app/
     layout.tsx            # 共享布局：顶部导航 + TabBar + AuthGuard
     page.tsx              # 发现页（首页）— 为你推荐、菜系探索、15 分钟快手
     pantry/page.tsx       # 食材清单 — 添加食材、智能匹配
-    chat/page.tsx         # 对话 Agent — AI 菜谱推荐（上下文注入）
+    chat/page.tsx         # 对话 Agent — AI tool-calling + 持久化多会话（ADR-0009/0010）：会话列表、操作卡片 undo
     filter/page.tsx       # 筛选页 — 按菜系/偏好/时间筛选
     favorite/page.tsx     # 收藏夹 — 已收藏菜谱列表
     settings/page.tsx     # 我的 — 偏好档案（忌口/过敏原/健康目标）
@@ -76,6 +76,7 @@ app/
 | `useFavorites()` | `/favorites` | 收藏（POST toggle，返回 id 列表 → `saved: Set`） |
 | `usePreferences()` | `/preferences` | 偏好档案（忌口/过敏原/健康目标），含 `isEmpty`（首页软提示用） |
 | `usePersonalized()` | `/recipes/personalized` | 首页个性化推荐（需认证） |
+| `useConversations()` | `/conversations` | 会话列表（ADR-0010，按 updatedAt 倒序） |
 | `useFilters()` | localStorage | 筛选草稿（唯一仍走本地存储的状态） |
 
 - **`lib/api.ts`** — `request<T>()` 自动拼 `API_BASE` + 附 Bearer；失败抛 `ApiError`（带 `status`，401 可识别 → logout）
@@ -92,7 +93,9 @@ app/
 - `components/prefs-hint.tsx` — 首页软提示（空偏好档案时引导去设置，可关闭）
 - `components/auth-guard.tsx` — 路由保护
 - `components/providers.tsx` — SWRProvider > AuthProvider
-- `components/ui/` — shadcn/ui 组件；`components/ai-elements/` — AI SDK Elements（对话页）
+- `components/chat-sidebar.tsx` — 会话列表侧栏（ADR-0010：桌面侧栏 / 移动抽屉，含新建/切换/删除）
+- `components/chat-action-card.tsx` — 写工具结果的操作卡片（ADR-0009：「已添加/移除/收藏」+ 撤销，add↔remove、set_favorite↔反向 set）
+- `components/ui/` — shadcn/ui 组件；`components/ai-elements/` — AI SDK Elements（对话页）；`ai-elements/tool.tsx` 渲染工具调用过程与操作卡片
 
 ## 设计系统
 
