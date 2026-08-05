@@ -80,6 +80,7 @@ export class ConversationService {
         role: cols.role,
         content: cols.content,
         toolCalls: cols.toolCalls as never,
+        parts: cols.parts as never,
       },
     });
   }

@@ -134,7 +134,7 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 - **Favorite** — 收藏（userId + recipeId 唯一）
 - **UserPreference** — 偏好档案（userId 唯一；dislikedIngredients/allergens/healthGoal）
 - **Conversation** — 会话（ADR-0010；userId, title, updatedAt）。索引：userId + updatedAt
-- **Message** — 消息（ADR-0010；conversationId, role, content 拼接文本, toolCalls Json? 非文本 parts）。索引：conversationId + createdAt
+- **Message** — 消息（ADR-0010；conversationId, role, content 拼接文本(冗余), toolCalls Json? 非文本 parts(兼容列), parts Json? 原始 UIMessage parts 数组(保序，还原唯一来源)）。索引：conversationId + createdAt
 
 种子数据：`prisma/recipes-curated.ts`（人工精选）+ `prisma/staging/recipes-staging.json`（AI 生成待审区，存在才合并），按 name upsert 幂等。
 

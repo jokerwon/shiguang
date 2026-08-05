@@ -63,8 +63,9 @@ model Message {
   id             String       @id @default(cuid())
   conversationId String
   role           String // user | assistant
-  content        String // 拼接文本（text parts 合并）
-  toolCalls      Json? // 非文本 parts（工具调用/结果），操作卡片渲染所需
+  content        String // 拼接文本（text parts 合并，冗余；title 生成/调试用）
+  toolCalls      Json? // 非文本 parts（工具调用/结果），兼容列；还原走 parts
+  parts          Json? // 原始 UIMessage parts 数组（保序，含 text/tool 交错结构，还原唯一来源）
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 

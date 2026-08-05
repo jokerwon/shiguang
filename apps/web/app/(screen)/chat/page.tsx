@@ -16,14 +16,6 @@ import { fetchConversationMessages } from '@/lib/api'
 import { refreshConversations } from '@/lib/use-conversations'
 import { useSWRConfig } from 'swr'
 
-/** 从 UIMessage parts 中提取纯文本内容 */
-function getMessageText(parts: { type: string; text?: string }[]): string {
-  return parts
-    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-    .map((p) => p.text)
-    .join('')
-}
-
 const QUICK_PROMPTS: { label: string; query: string }[] = [
   { label: '鸡蛋+西红柿', query: '冰箱里有鸡蛋和西红柿，能做什么？' },
   { label: '15分钟晚餐', query: '15分钟内能搞定的晚餐' },
@@ -196,20 +188,16 @@ export default function ChatScreen() {
             {messages.map((m) => (
               <Message from={m.role === 'user' ? 'user' : 'assistant'} key={m.id}>
                 <MessageContent>
-                  {/* text parts 渲染为 markdown；tool parts 渲染为工具行/操作卡片 */}
-                  {(() => {
-                    const parts = m.parts as unknown as { type: string; text?: string }[]
-                    const text = getMessageText(parts.filter((p) => !isToolPart(p)))
-                    const toolParts = parts.filter(isToolPart) as unknown as ToolPart[]
-                    return (
-                      <>
-                        {text && <MessageResponse>{text}</MessageResponse>}
-                        {toolParts.map((tp, i) => (
-                          <ToolPartView key={`${tp.type}-${i}`} part={tp} />
-                        ))}
-                      </>
-                    )
-                  })()}
+                  {/* 按 parts 原序渲染：text part → markdown，tool part → 工具行/操作卡片（保留交错顺序） */}
+                  {(m.parts as unknown as { type: string; text?: string }[]).map((p, i) => {
+                    if (isToolPart(p)) {
+                      return <ToolPartView key={`${p.type}-${i}`} part={p as unknown as ToolPart} />
+                    }
+                    if (p.type === 'text' && p.text) {
+                      return <MessageResponse key={`text-${i}`}>{p.text}</MessageResponse>
+                    }
+                    return null
+                  })}
                 </MessageContent>
               </Message>
             ))}
