@@ -14,16 +14,16 @@ ADR-0006 的上下文注入让 AI 推荐落在真实菜谱上,但它是「盲动
 
 ### 工具清单
 
-**只读工具(Phase 3)**:
+**只读工具(Phase 2)**:
 - `search_recipes` — 按食材/菜系/标签/时长/营养条件检索菜谱库
 - `get_recipe` — 单道菜谱详情
 - `get_pantry` / `get_favorites` / `get_preferences` — 查用户数据
 
-**写工具 · 直接执行(Phase 3)** — pantry 与收藏:
+**写工具 · 直接执行(Phase 2)** — pantry 与收藏:
 - `add_pantry_items` / `remove_pantry_items`
 - `set_favorite`(收藏/取消收藏)
 
-**写工具 · 需确认(Phase 4)** — 偏好档案:
+**写工具 · 需确认(Phase 3)** — 偏好档案:
 - `propose_preference_update` — **不直接执行**,返回「待确认草稿」
 
 ### 注入策略演进(修订 ADR-0006)

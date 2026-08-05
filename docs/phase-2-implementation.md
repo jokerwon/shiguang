@@ -1,8 +1,8 @@
-# Phase 3 实现任务清单 —— AI 会动手
+# Phase 2 实现任务清单 —— AI 会动手
 
 > 对应 [ADR-0008](./adr/0008-theme-ai-capability-leap.md)(分期)、[ADR-0009](./adr/0009-ai-tool-calling-agent.md)(工具与分级确认)、[ADR-0010](./adr/0010-persistent-conversations.md)(持久化会话)。
 > **目标**:AI 从顾问变代理。四块:① Conversation/Message 持久化 ② Chat 后端重构为 tool-loop ③ 只读工具 + pantry/收藏写工具 ④ 前端会话列表 + 操作卡片 undo。
-> **不在本期**:偏好档案写入(确认卡片)、会话摘要、体验打磨 —— 属 Phase 4。
+> **不在本期**:偏好档案写入(确认卡片)、会话摘要、体验打磨 —— 属 Phase 3。
 
 ## ⚠️ 关键前置发现
 
@@ -81,7 +81,7 @@
 |---|------|------|------|
 | 3.1 | 文档同步 | `apps/server/CLAUDE.md`、`apps/web/CLAUDE.md` | 模块结构(chat/tools、conversation)、数据模型、数据层表格(chat hooks)更新 |
 | 3.2 | 全量回归 | — | `pnpm --filter @shiguang/server test`、`pnpm --filter @shiguang/web lint`;手动过一遍:推荐页 / 食材页 / 收藏页 / 对话页全链路 |
-| 3.3 | ADR 状态回写 | `docs/adr/README.md` | Phase 3 条目标记完成 |
+| 3.3 | ADR 状态回写 | `docs/adr/README.md` | Phase 2 条目标记完成 |
 
 ---
 
@@ -98,7 +98,7 @@ W0.6 探测脚本若失败(端点实际不支持流式 tool_calls)→ 停下来,
 
 ## 明确不做(本期边界)
 
-- 偏好档案写工具 + 确认卡片(Phase 4,ADR-0009 已定方案)
-- 会话摘要(Phase 4;本期滑窗 N=20 兜底,超长会话旧消息直接不进上下文)
+- 偏好档案写工具 + 确认卡片(Phase 3,ADR-0009 已定方案)
+- 会话摘要(Phase 3;本期滑窗 N=20 兜底,超长会话旧消息直接不进上下文)
 - 会话重命名 / 置顶 / 搜索(ADR-0010 明确不做)
 - 对话中生成新菜谱入库(staging 流程保持人工,ADR-0003 不变)
