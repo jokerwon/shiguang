@@ -1,6 +1,6 @@
 # Phase 2 实现任务清单 —— AI 会动手
 
-> 对应 [ADR-0008](./adr/0008-theme-ai-capability-leap.md)(分期)、[ADR-0009](./adr/0009-ai-tool-calling-agent.md)(工具与分级确认)、[ADR-0010](./adr/0010-persistent-conversations.md)(持久化会话)。
+> 对应 [ADR-0008](../adr/0008-theme-ai-capability-leap.md)(分期)、[ADR-0009](../adr/0009-ai-tool-calling-agent.md)(工具与分级确认)、[ADR-0010](../adr/0010-persistent-conversations.md)(持久化会话)。
 > **目标**:AI 从顾问变代理。四块:① Conversation/Message 持久化 ② Chat 后端重构为 tool-loop ③ 只读工具 + pantry/收藏写工具 ④ 前端会话列表 + 操作卡片 undo。
 > **不在本期**:偏好档案写入(确认卡片)、会话摘要、体验打磨 —— 属 Phase 3。
 

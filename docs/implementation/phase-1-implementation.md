@@ -1,6 +1,6 @@
 # Phase 1 实现任务清单 —— 数据地基
 
-> 对应 [ADR-0001](./adr/0001-theme-content-depth-personalization.md)(分期)、[ADR-0002](./adr/0002-recipe-schema-depth.md)(schema)、[ADR-0004](./adr/0004-server-side-user-data.md)(持久化)。
+> 对应 [ADR-0001](../adr/0001-theme-content-depth-personalization.md)(分期)、[ADR-0002](../adr/0002-recipe-schema-depth.md)(schema)、[ADR-0004](../adr/0004-server-side-user-data.md)(持久化)。
 > **目标**:立起数据架构,不新增用户可见功能。三块:① Recipe schema 扩展 + 回填 ② 三张新表 + 后端 API ③ 前端 hooks 由 localStorage 改为服务端。
 
 ## ⚠️ 关键前置发现
@@ -148,4 +148,4 @@ W1(schema)───┘   (W1 与 W2 可并行,均各自独立 migration)
 3. **幂等约束**:`PantryItem`/`Favorite` 的 `@@unique` 是防重复写的底线,toggle 类接口要按"存在则删、不存在则增"实现。
 4. **Phase 1 不做**:`/recipes/personalized`(W2 偏好 API 就绪也先不接首页)、AI 上下文注入、`/chat` 加 guard、设置页 UI、购物清单——均属 Phase 2(见各 ADR)。
 
-**术语**见 [glossary.md](./glossary.md);决策依据见 [adr/](./adr/)。
+**术语**见 [glossary.md](../glossary.md);决策依据见 [adr/](../adr/)。

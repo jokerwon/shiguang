@@ -35,7 +35,7 @@
 - 写 pantry / 收藏:直接执行 + 操作卡片可撤销(ADR-0009)
 - 注入演进:偏好+pantry 保留注入,候选菜谱改工具按需查询(ADR-0009)
 - 历史上下文:简单滑窗(ADR-0010)
-- 实施清单:[phase-2-implementation.md](../phase-2-implementation.md)
+- 实施清单:[implementation/phase-2-implementation.md](../implementation/phase-2-implementation.md)
 
 **Phase 3(更懂你,未开工)** — 记忆的深度与安全(ADR-0008)
 - 写偏好档案:前端确认卡片,显式确认才落库(ADR-0009)
