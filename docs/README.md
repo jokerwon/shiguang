@@ -7,7 +7,7 @@
 | 文档 | 状态 | 说明 |
 |------|------|------|
 | [glossary.md](./glossary.md) | 常驻 | 领域术语表（Ubiquitous Language）。⚠️ 字段级事实以 `apps/server/prisma/schema.prisma` 为准，本表只定义概念语义 |
-| 根 [CLAUDE.md](../CLAUDE.md) / [apps/web/AGENTS.md](../apps/web/AGENTS.md) / [apps/server/AGENTS.md](../apps/server/AGENTS.md) | 常驻 | Agent 工作指令。`apps/*/AGENTS.md` 是唯一事实源；`apps/*/CLAUDE.md` 为 `@AGENTS.md` 指针文件 |
+| 根 [AGENTS.md](../AGENTS.md) / [apps/web/AGENTS.md](../apps/web/AGENTS.md) / [apps/server/AGENTS.md](../apps/server/AGENTS.md) | 常驻 | Agent 工作指令。各层 `AGENTS.md` 是唯一事实源；同层 `CLAUDE.md` 均为 `@AGENTS.md` 指针文件 |
 
 ## 决策层（ADR）
 

@@ -24,4 +24,4 @@ pnpm dev   # 同时启动前后端
 
 - 文档索引与状态：[docs/README.md](docs/README.md)
 - 架构决策记录：[docs/adr/](docs/adr/README.md)
-- Agent 工作指令：[CLAUDE.md](CLAUDE.md)（根）、[apps/web/AGENTS.md](apps/web/AGENTS.md)、[apps/server/AGENTS.md](apps/server/AGENTS.md)
+- Agent 工作指令：[AGENTS.md](AGENTS.md)（根）、[apps/web/AGENTS.md](apps/web/AGENTS.md)、[apps/server/AGENTS.md](apps/server/AGENTS.md)（各层 `CLAUDE.md` 均为 `@AGENTS.md` 指针）
