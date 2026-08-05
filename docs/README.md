@@ -1,6 +1,5 @@
 # 食光文档索引
 
-> 文档分层与迭代纪律见 [documentation-strategy.md](./documentation-strategy.md)。
 > 状态约定：**常驻** = 必须永远保鲜；**活跃** = 当前 Phase 内迭代；**归档** = 只读，不再修改；**缺失** = 已知断链，诚实标注。
 
 ## 常驻层
@@ -8,7 +7,7 @@
 | 文档 | 状态 | 说明 |
 |------|------|------|
 | [glossary.md](./glossary.md) | 常驻 | 领域术语表（Ubiquitous Language）。⚠️ 字段级事实以 `apps/server/prisma/schema.prisma` 为准，本表只定义概念语义 |
-| 根 `CLAUDE.md` / `apps/*/AGENTS.md` | 常驻 | Agent 工作指令（`apps/*/CLAUDE.md` 是指向 AGENTS.md 的 symlink） |
+| 根 [CLAUDE.md](../CLAUDE.md) / [apps/web/AGENTS.md](../apps/web/AGENTS.md) / [apps/server/AGENTS.md](../apps/server/AGENTS.md) | 常驻 | Agent 工作指令。`apps/*/AGENTS.md` 是唯一事实源；`apps/*/CLAUDE.md` 为 `@AGENTS.md` 指针文件 |
 
 ## 决策层（ADR）
 
@@ -25,3 +24,9 @@
 | 1 内容深度+个性化 | [phase-1-implementation.md](./phase-1-implementation.md)（仅覆盖地基部分；体验部分无文档，承认断链，追溯见 git history，勿补写） | **缺失** | 已交付，实施文档归档 |
 | 2 AI 会动手 | [phase-2-implementation.md](./phase-2-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md) | **未开工**——ADR/清单/验收已备（2026-08-04），代码未动（核实于 2026-08-05：无 conversation 模块、schema 无 Conversation 表） |
 | 3 更懂你 | **待写**——须待 Phase 2 代码落地后编写，"关键前置发现"只能来自对真实代码的探索，提前写是虚构 | 已备（与 Phase 2 共用同一份清单的 E/F 节） | 未开工 |
+
+## 运行层
+
+| 文档 | 状态 | 说明 |
+|------|------|------|
+| 部署 Runbook | **待写** | 进入真实部署前编写：部署步骤、环境变量/密钥清单（用途/获取/轮换）、故障处置。OPC 没有 on-call 轮值，这是写给状态最差的自己看的 |
