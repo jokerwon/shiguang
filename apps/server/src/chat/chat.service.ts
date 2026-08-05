@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   convertToModelMessages,
+  generateId,
   stepCountIs,
   streamText,
   toUIMessageStream,
@@ -111,6 +112,11 @@ export class ChatService {
     const conversationService = this.conversation;
     const stream = toUIMessageStream({
       stream: result.stream,
+      // 显式生成 assistant message id：否则 onFinish 拿到的 message.id 为 ""，
+      // 落库后 DB 主键变成空串（覆盖 @default(cuid())），且与客户端 useChat
+      // 自行生成的 id 不一致。传入 generateMessageId 后，服务端生成 id 经
+      // start chunk 下发客户端，DB 亦存同一 id——三方一致。
+      generateMessageId: generateId,
       onFinish: async ({ messages }) => {
         const last = messages[messages.length - 1];
         if (last && last.role === 'assistant') {
