@@ -10,13 +10,23 @@ export function useConversations() {
     '/conversations',
   )
 
+  // ADR-0011：删除失败时回滚乐观删除并向上抛出，调用方据 Promise reject 做用户提示。
   const remove = React.useCallback(
     async (id: string) => {
-      await deleteConversation(id)
+      // 乐观删除：先从缓存移除
       await mutate(
         (cur) => (cur ?? []).filter((c) => c.id !== id),
         { revalidate: false },
       )
+      try {
+        await deleteConversation(id)
+      } catch (e) {
+        // 失败回滚：恢复被删除的条目（重新拉取列表最稳妥）
+        await mutate()
+        throw e
+      }
+      // 成功：保持乐观删除，后台静默 revalidate 兜底
+      void mutate()
     },
     [mutate],
   )

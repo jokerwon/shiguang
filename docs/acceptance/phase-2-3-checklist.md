@@ -1,6 +1,6 @@
 # Phase 2 + 3 验收走查清单
 
-- **依据**:[ADR-0008](../adr/0008-theme-ai-capability-leap.md) / [0009](../adr/0009-ai-tool-calling-agent.md) / [0010](../adr/0010-persistent-conversations.md)
+- **依据**:[ADR-0008](../adr/0008-theme-ai-capability-leap.md) / [0009](../adr/0009-ai-tool-calling-agent.md) / [0010](../adr/0010-persistent-conversations.md) / [0011](../adr/0011-conversation-state-ownership-and-message-schema.md)
 - **验收方式**:手动场景走查，每条场景须可复现、通过条件明确
 - **制定方式**:经 grill 会话确认(2026-08-04)
 
@@ -19,10 +19,13 @@
 
 | # | 场景 | 通过条件 |
 |---|------|---------|
-| A1 | 发起新对话 | 自动建会话，标题由首条用户消息生成 |
-| A2 | 从历史列表切换会话 | 消息完整重现，**含工具卡片**(toolCalls 落库生效) |
-| A3 | 删除会话 | 列表移除，不可再访问(级联清理) |
-| A4 | 刷新页面 | 会话不丢、消息完整;操作卡片可渲染但**撤销入口只读** |
+| A1 | 发起新对话 | 自动建会话，标题由首条用户消息生成；URL 由 `/chat/new` 变 `/chat/:id`（ADR-0011） |
+| A2 | 从历史列表切换会话 | 消息完整重现，**含工具卡片**(parts 落库生效)；URL 变 `/chat/:id` |
+| A3 | 删除会话 | 列表移除，不可再访问(级联清理)；删除当前会话跳回 `/chat/new`；失败有用户可见反馈 |
+| A4 | 刷新页面 | URL 保持 `/chat/:id`，会话不丢、消息完整;操作卡片可渲染但**撤销入口只读** |
+| A5 | 越权访问 `/chat/:id`（不属于自己的会话） | 提示「会话不存在」并跳回 `/chat/new`（ADR-0011） |
+| A6 | `/chat/new` 连发两条消息 | 两条消息归入同一会话，不分裂（URL 首条后已带 id） |
+| A7 | 流结束后侧栏排序 | 会话 `updatedAt` 更新，侧栏时间戳/排序即时刷新（流后 `mutate('/conversations')`） |
 
 ## B. 只读工具(推荐质量)
 

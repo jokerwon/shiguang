@@ -26,7 +26,7 @@ export class ConversationService {
     });
   }
 
-  /** 取会话的全部消息（按 createdAt 升序），越权返回 404 */
+  /** 取会话的全部消息（按 seq 升序），越权返回 404 */
   async listMessages(
     userId: string,
     conversationId: string,
@@ -34,12 +34,12 @@ export class ConversationService {
     await this.assertOwned(userId, conversationId);
     const rows = await this.prisma.message.findMany({
       where: { conversationId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { seq: 'asc' },
     });
     return rows.map((r) => toUIMessage(r as MessageRow));
   }
 
-  /** 取最近 N 条消息作为上下文（滑窗，ADR-0010），越权返回 404 */
+  /** 取最近 N 条消息作为上下文（滑窗，ADR-0010/0011：按 seq desc），越权返回 404 */
   async recentMessages(
     userId: string,
     conversationId: string,
@@ -47,7 +47,7 @@ export class ConversationService {
     await this.assertOwned(userId, conversationId);
     const rows = await this.prisma.message.findMany({
       where: { conversationId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { seq: 'desc' },
       take: CONTEXT_WINDOW,
     });
     // desc 取出后反转为升序，保证对话时序
@@ -73,16 +73,48 @@ export class ConversationService {
   ): Promise<void> {
     const cols = fromUIMessage(message);
     if (!cols) return; // 无可落库内容则跳过
-    await this.prisma.message.create({
-      data: {
-        conversationId,
-        id: message.id,
-        role: cols.role,
-        content: cols.content,
-        toolCalls: cols.toolCalls as never,
-        parts: cols.parts as never,
-      },
+    // ADR-0011：seq = max(seq)+1，配 @@unique 冲突重试。
+    // URL 拥有 + 单标签视图下并发写同会话概率极低，重试 1-2 次兜底即可。
+    const MAX_RETRY = 3;
+    for (let attempt = 0; ; attempt++) {
+      const seq = await this.nextSeq(conversationId);
+      try {
+        await this.prisma.message.create({
+          data: {
+            conversationId,
+            id: message.id,
+            seq,
+            role: cols.role,
+            parts: cols.parts as never,
+          },
+        });
+        return;
+      } catch (e) {
+        if (attempt < MAX_RETRY - 1 && this.isUniqueViolation(e)) {
+          continue; // seq 冲突，重算重试
+        }
+        throw e;
+      }
+    }
+  }
+
+  /** 计算会话内下一条消息的 seq（= max(seq)+1，空会话从 1 起） */
+  private async nextSeq(conversationId: string): Promise<number> {
+    const last = await this.prisma.message.aggregate({
+      where: { conversationId },
+      _max: { seq: true },
     });
+    return (last._max.seq ?? 0) + 1;
+  }
+
+  /** Prisma 唯一约束冲突判定（code P2002） */
+  private isUniqueViolation(e: unknown): boolean {
+    return (
+      typeof e === 'object' &&
+      e !== null &&
+      'code' in e &&
+      (e as { code: string }).code === 'P2002'
+    );
   }
 
   /** touch conversation.updatedAt（每轮对话后调用，保证列表按最近活跃排序） */

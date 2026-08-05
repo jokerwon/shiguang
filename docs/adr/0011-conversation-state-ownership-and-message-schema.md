@@ -103,3 +103,12 @@ model Message {
 
 - [ADR-0010](./0010-persistent-conversations.md)(被本 ADR 取代 UI 状态归属假设与 Message schema)
 - [ADR-0009](./0009-ai-tool-calling-agent.md)(tool-loop 与持久化的上层消费者)
+
+## 实施勘误(2026-08-05)
+
+决策 2「useChat 常量 id」原计划用 `useRef` 在 `prepareSendMessagesRequest` 回调内实时读路由 id(本文「决策 2」「关键前置发现 5/7」均据此描述)。实施时发现:本项目前端启用 React Compiler,其 `react-hooks/refs` 规则**禁止在 render 期可执行代码(含 `useMemo`/`useCallback` 工厂体)内访问 `ref.current`**,无论是否经函数包裹 Compiler 均会内联判定。ref 方案无法通过 lint。
+
+实际采用:**transport 依赖 `routeId`(state)用 `useMemo` 重建**,`prepareSendMessagesRequest` 直接闭包读 `routeId`。语义安全性论证:URL 方案下 `router.replace('/chat/:id')` 在首条消息**响应头到达时**触发(`customFetch` 拦截),此时流式请求**已发出在飞**,transport 引用变化不影响进行中的请求,下次 `sendMessage` 才用新 transport——流式不中断,与决策 2 的目标(消除流式中途切 id 的未定义行为)等价。`useChat({ id: 'chat' })` 常量化不变。
+
+决策 1/3/4 与本文描述一致,无偏差。
+

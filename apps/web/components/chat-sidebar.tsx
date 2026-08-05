@@ -71,11 +71,14 @@ export function ChatSidebar({ activeId, onSelect, onNew, onClose }: SidebarProps
                 <button
                   type="button"
                   aria-label="删除会话"
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation()
-                    if (confirm('删除该会话？所有消息将一并删除，不可恢复。')) {
-                      remove(c.id)
+                    if (!confirm('删除该会话？所有消息将一并删除，不可恢复。')) return
+                    try {
+                      await remove(c.id)
                       if (c.id === activeId) onNew()
+                    } catch {
+                      alert('删除失败，请稍后重试')
                     }
                   }}
                   className="shrink-0 text-muted-foreground/50 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"

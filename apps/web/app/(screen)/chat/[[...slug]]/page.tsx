@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation'
@@ -12,7 +13,7 @@ import { Shimmer } from '@/components/ai-elements/shimmer'
 import { ToolPartView, type ToolPart } from '@/components/ai-elements/tool'
 import { ChatSidebar } from '@/components/chat-sidebar'
 import { API_BASE, getToken } from '@/lib/constants'
-import { fetchConversationMessages } from '@/lib/api'
+import { fetchConversationMessages, ApiError } from '@/lib/api'
 import { refreshConversations } from '@/lib/use-conversations'
 import { useSWRConfig } from 'swr'
 
@@ -30,27 +31,52 @@ function isToolPart(p: { type: string }): boolean {
   return p.type.startsWith('tool-')
 }
 
+/**
+ * 从路由 params 推导当前会话状态。
+ * - slug 缺省 / ['new'] → 新会话态（conversationId = undefined）
+ * - [id] → 已有会话（conversationId = id）
+ */
+function useRouteConversationId(): string | undefined {
+  const params = useParams<{ slug?: string[] }>()
+  const slug = params?.slug
+  if (!slug || slug.length === 0 || slug[0] === 'new') return undefined
+  return slug[0]
+}
+
 export default function ChatScreen() {
+  const router = useRouter()
+  const routeId = useRouteConversationId()
   const [field, setField] = React.useState('')
-  const [activeId, setActiveId] = React.useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
   // 标记切换会话时的「正在加载历史」状态，避免 useChat 初始空消息闪现
   const [loadingHistory, setLoadingHistory] = React.useState(false)
+  // 越权/不存在会话的提示：存出错的 routeId，routeId 变化后自动失效，无需 effect 主动清
+  const [notFoundId, setNotFoundId] = React.useState<string | undefined>(undefined)
   const { mutate: globalMutate } = useSWRConfig()
 
+  // ADR-0011：useChat 常量 id（'chat'），切换会话不切 id，流式不中断。
+  // conversationId 从路由 routeId 读取。transport 依赖 routeId 重建：
+  // URL 方案下 router.replace（首条消息响应头到达时触发）发生在流式请求已发出之后，
+  // transport 引用变化不影响在飞请求，下次 sendMessage 才用新 transport，流式不中断。
+  // （未用 ref 实时读取：本项目 React Compiler 禁止 render 期 ref.current 访问。）
+
   // 自定义 fetch：拦截响应头 x-conversation-id（新建会话时后端回传）
+  // 首条消息后 router.replace 到真实 id（非 push，不污染历史）。
   const customFetch = React.useCallback(
     (input: RequestInfo | URL, init?: RequestInit) => {
       return fetch(input, init).then((res) => {
         const cid = res.headers.get('x-conversation-id')
         if (cid) {
-          setActiveId((cur) => cur ?? cid)
+          // 仅当当前仍是新会话态时 replace，避免重复跳转
+          if (!routeId) {
+            router.replace(`/chat/${cid}`)
+          }
           refreshConversations()
         }
         return res
       })
     },
-    [],
+    [router, routeId],
   )
 
   const transport = React.useMemo(
@@ -64,58 +90,69 @@ export default function ChatScreen() {
           if (token) headers.Authorization = `Bearer ${token}`
           return headers
         },
-        // ADR-0010：只发 conversationId + 最新一条用户消息，后端从 DB 组装历史
+        // ADR-0010：只发 conversationId + 最新一条用户消息，后端从 DB 组装历史。
+        // ADR-0011：conversationId 从路由 routeId 读取（URL 是事实源）。
         prepareSendMessagesRequest: ({ messages }) => {
           const last = messages[messages.length - 1]
           return {
             body: {
-              conversationId: activeId ?? undefined,
+              conversationId: routeId,
               message: last,
             },
           }
         },
       }),
-    [activeId, customFetch],
+    [customFetch, routeId],
   )
 
   const { messages, sendMessage, status, error, clearError, setMessages } = useChat({
-    id: activeId ?? 'new',
+    id: 'chat',
     transport,
   })
 
   const isStreaming = status === 'submitted' || status === 'streaming'
 
-  // 流结束后兜底刷新 pantry/favorites（写工具可能改了数据，ADR-0009 一致性）
+  // 流结束后兜底刷新 pantry/favorites/conversations（写工具可能改了数据 + 会话 updatedAt 变化，ADR-0009/0011 一致性）
   const prevStatus = React.useRef(status)
   React.useEffect(() => {
     if (prevStatus.current === 'streaming' && status === 'ready') {
       globalMutate('/pantry')
       globalMutate('/favorites')
+      globalMutate('/conversations')
     }
     prevStatus.current = status
   }, [status, globalMutate])
 
-  // 切换会话：拉历史消息并 setMessages 还原（含 tool parts）
-  const selectConversation = React.useCallback(
-    async (id: string) => {
-      setActiveId(id)
-      setLoadingHistory(true)
-      try {
-        const history = await fetchConversationMessages(id)
-        setMessages(history as UIMessage[])
-      } finally {
-        setLoadingHistory(false)
-      }
-    },
-    [setMessages],
-  )
-
-  // 新对话：清空当前消息
-  const newConversation = React.useCallback(() => {
-    setActiveId(null)
+  // ADR-0011：切换会话由路由驱动。routeId 变化 → 拉历史或清空。
+  React.useEffect(() => {
+    if (!routeId) {
+      // 新会话态：清空消息（避免上一会话闪现）
+      setMessages([])
+      return
+    }
+    let cancelled = false
+    setLoadingHistory(true)
+    // 先清空避免上一会话消息闪现
     setMessages([])
-    setSidebarOpen(false)
-  }, [setMessages])
+    fetchConversationMessages(routeId)
+      .then((history) => {
+        if (!cancelled) setMessages(history as UIMessage[])
+      })
+      .catch((err) => {
+        if (cancelled) return
+        if (err instanceof ApiError && err.status === 404) {
+          // 越权/不存在：记录出错 id（显示条件据此判定，routeId 变化后自动失效）
+          setNotFoundId(routeId)
+          router.replace('/chat/new')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingHistory(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [routeId, setMessages, router])
 
   const handleSend = (text: string) => {
     if (!text.trim() || isStreaming) return
@@ -128,11 +165,21 @@ export default function ChatScreen() {
     handleSend(message.text)
   }
 
+  // 侧栏切换/新建/删除均经路由驱动（ADR-0011：URL 是事实源）
+  const handleSelect = React.useCallback((id: string) => {
+    router.push(`/chat/${id}`)
+  }, [router])
+
+  const handleNew = React.useCallback(() => {
+    router.push('/chat/new')
+    setSidebarOpen(false)
+  }, [router])
+
   return (
     <div className="flex h-[calc(100dvh-2*var(--nav-h))] flex-col md:h-[calc(100dvh-var(--nav-h)-3.5rem)] md:flex-row md:gap-4 md:px-4 md:py-6">
       {/* 桌面侧栏 */}
       <aside className="hidden md:block md:w-64 md:shrink-0 md:overflow-hidden md:rounded-2xl md:border md:border-border">
-        <ChatSidebar activeId={activeId} onSelect={selectConversation} onNew={newConversation} />
+        <ChatSidebar activeId={routeId ?? null} onSelect={handleSelect} onNew={handleNew} />
       </aside>
 
       {/* 移动端抽屉 */}
@@ -141,9 +188,9 @@ export default function ChatScreen() {
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <aside className="absolute left-0 top-0 h-full w-72 max-w-[80%] border-r border-border bg-background">
             <ChatSidebar
-              activeId={activeId}
-              onSelect={selectConversation}
-              onNew={newConversation}
+              activeId={routeId ?? null}
+              onSelect={handleSelect}
+              onNew={handleNew}
               onClose={() => setSidebarOpen(false)}
             />
           </aside>
@@ -162,7 +209,7 @@ export default function ChatScreen() {
             ☰
           </button>
           <span className="text-sm text-muted-foreground">
-            {activeId ? '当前会话' : '新对话'}
+            {routeId ? '当前会话' : '新对话'}
           </span>
         </div>
 
@@ -181,6 +228,14 @@ export default function ChatScreen() {
               <Message from="assistant">
                 <MessageContent>
                   <Shimmer>加载历史…</Shimmer>
+                </MessageContent>
+              </Message>
+            )}
+
+            {notFoundId && notFoundId === routeId && (
+              <Message from="assistant">
+                <MessageContent>
+                  <MessageResponse>会话不存在，已为你新建对话。</MessageResponse>
                 </MessageContent>
               </Message>
             )}
