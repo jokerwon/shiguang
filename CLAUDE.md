@@ -20,10 +20,23 @@ shiguang/
 
 ## 子项目文档
 
-- **前端架构与开发细节** → `apps/web/CLAUDE.md`
-- **后端架构与开发细节** → `apps/server/CLAUDE.md`
+- **前端架构与开发细节** → `apps/web/AGENTS.md`
+- **后端架构与开发细节** → `apps/server/AGENTS.md`
 
-请优先阅读对应子项目的 CLAUDE.md，此处仅记录 monorepo 层面的通用信息。
+请优先阅读对应子项目的 AGENTS.md（子项目的 CLAUDE.md 仅是指向它的指针），此处仅记录 monorepo 层面的通用信息。
+
+## 文档索引
+
+`docs/README.md` 是全库文档索引（含各文档状态：常驻/活跃/归档/缺失），修改或新增文档时同步更新。
+
+## 文档纪律
+
+- **做出架构级取舍时**（选型、数据模型、安全边界、跨模块依赖方向），提示是否新增 ADR；ADR 与对应代码变更在同一提交单元内。
+- **ADR 只增不改**：推翻旧决策写新 ADR 并在旧文加 supersede 指针，不改原文。
+- **Phase 任务完成时**，同步勾选对应验收清单（`docs/acceptance/`）。
+- **Phase 收尾时**，审计常驻层文档（本文件、`apps/*/AGENTS.md`、`docs/glossary.md`）与代码实际行为的一致性，不符则更新文档。
+- **常驻层文档禁用"本版/新增/最近"等相对时间措辞**——写当前事实，历史演变归 ADR。
+- **字段级事实不复制进文档**，一律引用 `apps/server/prisma/schema.prisma` 等代码源。
 
 ## 根目录命令
 
