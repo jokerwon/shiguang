@@ -51,7 +51,7 @@ app/
     layout.tsx            # 共享布局：顶部导航 + TabBar + AuthGuard
     page.tsx              # 发现页（首页）— 为你推荐、菜系探索、15 分钟快手
     pantry/page.tsx       # 食材清单 — 添加食材、智能匹配
-    chat/page.tsx         # 对话 Agent — AI tool-calling + 持久化多会话（ADR-0009/0010）：会话列表、操作卡片 undo
+    chat/[[...slug]]/page.tsx  # 对话 Agent — AI tool-calling + 持久化多会话（ADR-0009/0010/0011）：会话状态由 URL 拥有（/chat/new、/chat/:id），可选 catch-all 命中 /chat
     filter/page.tsx       # 筛选页 — 按菜系/偏好/时间筛选
     favorite/page.tsx     # 收藏夹 — 已收藏菜谱列表
     settings/page.tsx     # 我的 — 偏好档案（忌口/过敏原/健康目标）
@@ -76,7 +76,7 @@ app/
 | `useFavorites()` | `/favorites` | 收藏（POST toggle，返回 id 列表 → `saved: Set`） |
 | `usePreferences()` | `/preferences` | 偏好档案（忌口/过敏原/健康目标），含 `isEmpty`（首页软提示用） |
 | `usePersonalized()` | `/recipes/personalized` | 首页个性化推荐（需认证） |
-| `useConversations()` | `/conversations` | 会话列表（ADR-0010，按 updatedAt 倒序） |
+| `useConversations()` | `/conversations` | 会话列表（ADR-0010/0011，按 updatedAt 倒序；`remove` 乐观删除 + 失败回滚 + 抛错供调用方提示） |
 | `useFilters()` | localStorage | 筛选草稿（唯一仍走本地存储的状态） |
 
 - **`lib/api.ts`** — `request<T>()` 自动拼 `API_BASE` + 附 Bearer；失败抛 `ApiError`（带 `status`，401 可识别 → logout）

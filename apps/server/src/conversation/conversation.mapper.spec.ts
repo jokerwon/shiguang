@@ -1,5 +1,5 @@
-// mapper 单测：覆盖 text-only / 含 toolCalls / 交错保序 / 旧数据兼容 / 空 content 五种形态。
-// 零 DB，纯函数。
+// mapper 单测：覆盖 text-only / 含 tool parts / 交错保序 / 空 parts 四种形态。
+// ADR-0011：content/toolCalls 列已砍，parts 是唯一还原来源。零 DB，纯函数。
 import {
   toUIMessage,
   fromUIMessage,
@@ -11,9 +11,8 @@ type AnyPart = UIMessage['parts'][number];
 
 const row = (over: Partial<MessageRow> = {}): MessageRow => ({
   id: 'm1',
+  seq: 1,
   role: 'assistant',
-  content: '',
-  toolCalls: null,
   parts: null,
   createdAt: new Date('2026-01-01T00:00:00Z'),
   ...over,
@@ -25,7 +24,6 @@ describe('conversation.mapper', () => {
       const u = toUIMessage(
         row({
           role: 'user',
-          content: '你好',
           parts: [{ type: 'text', text: '你好' }],
         }),
       );
@@ -43,7 +41,7 @@ describe('conversation.mapper', () => {
         output: [{ id: 'r1', name: '番茄炒蛋' }],
       } as unknown as AnyPart;
       const u = toUIMessage(
-        row({ content: '已为你找到菜谱', parts: [textPart, toolPart] }),
+        row({ parts: [textPart, toolPart] }),
       );
       expect(u.parts).toEqual([textPart, toolPart]);
     });
@@ -62,30 +60,14 @@ describe('conversation.mapper', () => {
       expect(u.parts).toEqual([toolPart, textPart]);
     });
 
-    it('旧数据兼容：无 parts 列时退化到 content + toolCalls 拼装（text 在前）', () => {
-      const toolPart = {
-        type: 'tool-set_favorite',
-        toolCallId: 'call_2',
-        state: 'output-available',
-        input: { recipeId: 'r1', saved: true },
-        output: { saved: true, favorites: ['r1'] },
-      } as unknown as AnyPart;
-      const u = toUIMessage(
-        row({ content: '已收藏', toolCalls: [toolPart], parts: null }),
-      );
-      expect(u.parts).toHaveLength(2);
-      expect(u.parts[0]).toEqual({ type: 'text', text: '已收藏' });
-      expect(u.parts[1]).toEqual(toolPart);
-    });
-
-    it('空 content 且无 parts: parts 为空数组', () => {
-      const u = toUIMessage(row({ content: '', parts: null }));
+    it('parts 为 null（防御）: 返回空数组', () => {
+      const u = toUIMessage(row({ parts: null }));
       expect(u.parts).toEqual([]);
     });
   });
 
   describe('fromUIMessage', () => {
-    it('text-only: 合并为 content，toolCalls 为 null，parts 原样', () => {
+    it('text-only: 只返回 role + parts（无 content/toolCalls）', () => {
       const msg: UIMessage = {
         id: 'm1',
         role: 'user',
@@ -93,13 +75,11 @@ describe('conversation.mapper', () => {
       };
       expect(fromUIMessage(msg)).toEqual({
         role: 'user',
-        content: '你好',
-        toolCalls: null,
         parts: [{ type: 'text', text: '你好' }],
       });
     });
 
-    it('多个 text parts 合并拼接，parts 保留原始分段', () => {
+    it('多个 text parts 原样保留分段', () => {
       const msg: UIMessage = {
         id: 'm1',
         role: 'assistant',
@@ -109,11 +89,10 @@ describe('conversation.mapper', () => {
         ],
       };
       const cols = fromUIMessage(msg);
-      expect(cols?.content).toBe('第一段。第二段。');
       expect(cols?.parts).toEqual(msg.parts);
     });
 
-    it('含 tool parts: content 取文本，toolCalls 存非文本 parts，parts 保序', () => {
+    it('含 tool parts: parts 保序（不再分离 toolCalls）', () => {
       const toolPart = {
         type: 'tool-set_favorite',
         toolCallId: 'call_2',
@@ -127,9 +106,10 @@ describe('conversation.mapper', () => {
         parts: [{ type: 'text', text: '已收藏' }, toolPart],
       };
       const cols = fromUIMessage(msg);
-      expect(cols?.content).toBe('已收藏');
-      expect(cols?.toolCalls).toEqual([toolPart]);
       expect(cols?.parts).toEqual(msg.parts);
+      // 不再产出 content / toolCalls 字段
+      expect(cols).not.toHaveProperty('content');
+      expect(cols).not.toHaveProperty('toolCalls');
     });
 
     it('空 parts: 返回 null', () => {
@@ -155,9 +135,8 @@ describe('conversation.mapper', () => {
       const cols = fromUIMessage(original);
       const restored = toUIMessage({
         id: original.id,
+        seq: 1,
         role: cols.role,
-        content: cols.content,
-        toolCalls: cols.toolCalls,
         parts: cols.parts,
         createdAt: new Date(),
       });

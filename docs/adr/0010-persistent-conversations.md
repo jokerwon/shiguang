@@ -1,6 +1,8 @@
 # ADR-0010: 持久化多会话 —— Conversation/Message 表、最小会话列表、滑窗+摘要
 
-- **状态**:已接受
+> **⚠️ 部分被取代(2026-08-05)**:本 ADR 的「会话 UI 状态管理」隐含假设(前端 `useState` 持有当前会话 id)与「Message 表 schema」(content/toolCalls 冗余列、无 seq、role 注释三类但实际两类)已被 [ADR-0011](./0011-conversation-state-ownership-and-message-schema.md) 取代。本 ADR 的「多会话持久化」「最小会话列表」「滑窗+摘要方向」仍有效。原文保留不改(ADR 只增不改)。
+
+- **状态**:已接受(部分被 ADR-0011 取代)
 - **日期**:2026-08-04
 - **决策者**:Kai(经 grill 会话确认)
 

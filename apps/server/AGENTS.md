@@ -112,7 +112,7 @@ src/
 - **注入演进（ADR-0009）**：保留偏好/pantry/季节/用户名注入；候选菜谱注入已移除，改为 `search_recipes` 工具按需查询。`ChatService` 不再调 `recommend(userId, 8)`，但仍用 `loadSignals` 取 blocked/pantry/healthGoal（注入与硬过滤共用）。
 - **tool-loop**：`streamText({ tools, stopWhen: stepCountIs(5) })`，工具经 `createChatTools(deps, userId)` 工厂闭包捕获 userId。`search_recipes` 先过 `blocked` 硬过滤再打分排序（复用 `recommendation.scoring`，单一事实源）。
 - **写工具幂等**：`add_pantry_items`/`remove_pantry_items` 基于 `findAll + replace` 组合实现去重幂等；`set_favorite` 用幂等 set 语义（`FavoriteService.set`，toggle 对 AI 危险）。
-- **持久化（ADR-0010）**：body 只带 `conversationId? + message`，后端从 DB 取最近 20 条组装上下文（不信客户端全量）。无 conversationId 则创建会话（title = 首条消息截断 ~20 字），id 经响应头 `x-conversation-id` 回传前端。`toUIMessageStream` 的 `onFinish` 落库 assistant 消息（含 tool parts）。
+- **持久化（ADR-0010/0011）**：body 只带 `conversationId? + message`，后端从 DB 取最近 20 条组装上下文（不信客户端全量，按 `seq desc` 滑窗）。无 conversationId 则创建会话（title = 首条消息截断 ~20 字），id 经响应头 `x-conversation-id` 回传前端。`toUIMessageStream` 的 `onFinish` 落库 assistant 消息（含 tool parts）；`appendMessage` 由应用层算 `seq = max(seq)+1`，配 `@@unique` 冲突重试。
 - 单测：`recommendation.scoring.spec.ts`、`recipe-draft.spec.ts`、`conversation.mapper.spec.ts`、`chat/tools/tools.spec.ts`（纯函数，零 DB）。
 
 ### 个性化推荐（ADR-0005/0006）
@@ -134,7 +134,7 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 - **Favorite** — 收藏（userId + recipeId 唯一）
 - **UserPreference** — 偏好档案（userId 唯一；dislikedIngredients/allergens/healthGoal）
 - **Conversation** — 会话（ADR-0010；userId, title, updatedAt）。索引：userId + updatedAt
-- **Message** — 消息（ADR-0010；conversationId, role, content 拼接文本(冗余), toolCalls Json? 非文本 parts(兼容列), parts Json? 原始 UIMessage parts 数组(保序，还原唯一来源)）。索引：conversationId + createdAt
+- **Message** — 消息（ADR-0010/0011；conversationId, seq 消息级序号(会话内 1 起单调递增,应用层 max+1,@@unique([conversationId,seq])), role string(user|assistant 实际两类,tool 信息在 assistant.parts 内), parts Json 原始 UIMessage parts 数组(保序,还原唯一来源)）。索引：conversationId + seq（唯一 + 普通）。content/toolCalls 列已砍（ADR-0011 死重量）
 
 种子数据：`prisma/recipes-curated.ts`（人工精选）+ `prisma/staging/recipes-staging.json`（AI 生成待审区，存在才合并），按 name upsert 幂等。
 
