@@ -61,4 +61,6 @@ ADR-0006 的上下文注入让 AI 推荐落在真实菜谱上,但它是「盲动
 - 负面:chat 变为多轮 tool round-trip 架构,流式响应需处理 tool_calls 增量;前端需渲染工具调用过程与两类卡片(操作/确认);undo 需维护操作的可逆映射。
 - 影响:ADR-0006 的候选菜谱注入被本条取代(偏好/pantry 注入仍有效);`ChatService` 需重构为 tool-loop;前端对话页引入工具渲染(ai-elements 已具备 Tool 组件基础)。
 
+> **勘误(2026-08-05)**:上句「ai-elements 已具备 Tool 组件基础」为决策时的假设,经核实不成立——`apps/web/components/ai-elements/` 现仅有 conversation / message / prompt-input / shimmer / suggestion,**无 Tool 组件**,需在 Phase 2 新增(见 [phase-2-implementation.md](../implementation/phase-2-implementation.md) W0.5 / W2.4)。本条为事实性勘误,非决策变更。
+
 **相关 ADR**:[0006](0006-ai-context-injection.md)(部分被本条修订) [0008](0008-theme-ai-capability-leap.md) [0010](0010-persistent-conversations.md)

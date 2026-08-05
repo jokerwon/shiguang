@@ -79,7 +79,7 @@
 
 | # | 任务 | 文件 | 说明 |
 |---|------|------|------|
-| 3.1 | 文档同步 | `apps/server/CLAUDE.md`、`apps/web/CLAUDE.md` | 模块结构(chat/tools、conversation)、数据模型、数据层表格(chat hooks)更新 |
+| 3.1 | 文档同步 | `apps/server/AGENTS.md`、`apps/web/AGENTS.md` | 模块结构(chat/tools、conversation)、数据模型、数据层表格(chat hooks)更新。注:`apps/*/CLAUDE.md` 是指向 AGENTS.md 的指针文件,不要改 |
 | 3.2 | 全量回归 | — | `pnpm --filter @shiguang/server test`、`pnpm --filter @shiguang/web lint`;手动过一遍:推荐页 / 食材页 / 收藏页 / 对话页全链路 |
 | 3.3 | ADR 状态回写 | `docs/adr/README.md` | Phase 2 条目标记完成 |
 
