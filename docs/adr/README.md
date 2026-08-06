@@ -17,6 +17,7 @@
 | [ADR-0009](./0009-ai-tool-calling-agent.md) | AI tool-calling:工具清单、注入演进、分级确认 | 2 / 3 |
 | [ADR-0010](./0010-persistent-conversations.md) | 持久化多会话:Conversation/Message 表、最小会话列表、滑窗+摘要(部分被 ADR-0011 取代) | 2 / 3 |
 | [ADR-0011](./0011-conversation-state-ownership-and-message-schema.md) | 会话状态归属(URL)+ Message 表重审(砍 content/toolCalls、加 seq) | 2 |
+| [ADR-0012](./0012-phase-3-preference-confirm-and-summary.md) | Phase 3 设计定稿:草稿=操作集、刷新后卡片只读、摘要异步+增量、种子脚本形态 | 3 |
 
 ## Phase 总览
 
@@ -38,11 +39,12 @@
 - 历史上下文:简单滑窗(ADR-0010)
 - 实施清单:[implementation/phase-2-implementation.md](../implementation/phase-2-implementation.md)
 
-**Phase 3(更懂你,未开工)** — 记忆的深度与安全(ADR-0008)
-- 写偏好档案:前端确认卡片,显式确认才落库(ADR-0009)
-- 滑窗 + 会话摘要(ADR-0010)
-- 长会话种子脚本:摘要验收前置([验收清单](../acceptance/phase-2-3-checklist.md) F3)
-- 体验打磨
+**Phase 3(更懂你,设计定稿未开工)** — 记忆的深度与安全(ADR-0008,定稿见 ADR-0012)
+- 写偏好档案:前端确认卡片,显式确认才落库(ADR-0009);草稿=操作集、确认时合并、刷新后只读(ADR-0012)
+- 滑窗 + 会话摘要:异步生成、增量更新、`Conversation` 加两列(ADR-0010,机制定稿 ADR-0012)
+- 长会话种子脚本:插库 + 直调摘要 service(ADR-0012;[验收清单](../acceptance/phase-2-3-checklist.md) F3)
+- 体验打磨:限缩为 E/F 实现中长出的部分(ADR-0012)
+- 实施清单:[implementation/phase-3-implementation.md](../implementation/phase-3-implementation.md)
 
 **Phase 2 / 3 验收标准**见 [acceptance/phase-2-3-checklist.md](../acceptance/phase-2-3-checklist.md)(手动场景走查制)。
 
