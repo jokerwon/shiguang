@@ -13,7 +13,7 @@
 
 | 文档 | 状态 | 说明 |
 |------|------|------|
-| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0012，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
+| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0013，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
 
 ## 实施层（按 Phase）
 
@@ -25,6 +25,8 @@
 | 2 AI 会动手 | [implementation/phase-2-implementation.md](./implementation/phase-2-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md) | 已交付——Conversation/Message 表 + 会话 CRUD、chat tool-loop、只读/写工具、操作卡片 undo、会话列表 |
 | 2.1 会话重设计 | [implementation/phase-2-1-implementation.md](./implementation/phase-2-1-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md)（补充 URL 归属场景） | 已交付——ADR-0011：会话状态归属(URL)+ Message 表重审（砍 content/toolCalls、加 seq） |
 | 3 更懂你 | [implementation/phase-3-implementation.md](./implementation/phase-3-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md)（E/F 节） | 已交付——`update_preferences` 草稿 + 确认卡片、历史消息只读、滑窗 + 会话摘要、长会话种子脚本（ADR-0012） |
+| 3.5 自动化验证补齐 | [implementation/phase-3-5-implementation.md](./implementation/phase-3-5-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md)（G 节） | 进行中——后端纯逻辑测试补齐、工具参数校验路径、seq 不变量、迁移备份入流程；无新 ADR |
+| 4 认证双轨 | [implementation/phase-4-implementation.md](./implementation/phase-4-implementation.md) | [phase-4-checklist.md](./acceptance/phase-4-checklist.md) | 进行中——短 access + 滑动 refresh、复用检测、cookie/body 双轨、删 User.role（ADR-0013，原生 app 认证前置） |
 
 ## 运行层
 
