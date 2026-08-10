@@ -42,12 +42,29 @@ docs/
 
 docs 根只放全局文档；每 Phase 的工件按类型归目录——实施清单进 `implementation/`、验收清单进 `acceptance/`，命名 `phase-N-*.md`。
 
+## 迭代流程
+
+每个需求迭代（Phase）按以下主干执行：
+
+1. **探索**：用 CodeGraph/grep/读代码摸清相关模块现状，产出的事实供后续工件引用。
+2. **ADR（触发式）**：涉及架构级取舍（选型、数据模型、安全边界、跨模块依赖方向）时先写 ADR 定稿设计，模板沿用 `docs/adr/` 现有篇章（Context / Decision / Rationale / Alternatives / Consequences）。
+3. **实施清单**：在 `docs/implementation/` 新建 `phase-N-implementation.md`，含"关键前置发现"（必须来自第 1 步对真实代码的探索，不凭空写）+ 按工作流分组的任务表 + 每组的验收小节。
+4. **实现**：编码 + 迁移（若有 schema 变更，见下"数据模型变更"）。
+5. **验收**：走查 `docs/acceptance/` 对应清单并勾选；后端改动完成前必跑 `pnpm --filter @shiguang/server test` 与 `pnpm -r lint`。
+6. **收尾**：审计常驻层文档与代码实际行为的一致性；同步 `docs/README.md` 索引。
+
+## 数据模型变更
+
+修改 `apps/server/prisma/schema.prisma` 时：
+
+1. 本地库执行 `pnpm --filter @shiguang/server db:migrate`（Prisma migrate dev）验证迁移；
+2. `pnpm --filter @shiguang/server db:generate` 重新生成 Client；
+3. 跑通后端测试后，在实施清单记录"迁移已验证"。
+
 ## 文档纪律
 
-- **做出架构级取舍时**（选型、数据模型、安全边界、跨模块依赖方向），提示是否新增 ADR；ADR 与对应代码变更在同一提交单元内。
-- **ADR 只增不改**：推翻旧决策写新 ADR 并在旧文加 supersede 指针，不改原文。
-- **Phase 开工前**在 `docs/implementation/` 写实施清单（含"关键前置发现"——必须来自对真实代码的探索，不凭空写）；**任务完成时**同步勾选 `docs/acceptance/` 对应验收清单。
-- **Phase 收尾时**，审计常驻层文档（本文件、`apps/*/AGENTS.md`、`docs/glossary.md`）与代码实际行为的一致性，不符则更新文档。
+- **ADR 只增不改**：推翻旧决策写新 ADR 并在旧文加 supersede 指针，不改原文。ADR 与对应代码变更绑定同一 Phase（实现提交在 message 中引用 ADR 号）。
+- **任务完成时**同步勾选 `docs/acceptance/` 对应验收清单。
 - **常驻层文档禁用"本版/新增/最近"等相对时间措辞**——写当前事实，历史演变归 ADR。
 - **字段级事实不复制进文档**，一律引用 `apps/server/prisma/schema.prisma` 等代码源。
 - **新增/移动/删除文档后**，同步 `docs/README.md` 索引并检查指向旧路径的交叉链接。
