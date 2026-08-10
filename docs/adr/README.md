@@ -18,6 +18,7 @@
 | [ADR-0010](./0010-persistent-conversations.md) | 持久化多会话:Conversation/Message 表、最小会话列表、滑窗+摘要(部分被 ADR-0011 取代) | 2 / 3 |
 | [ADR-0011](./0011-conversation-state-ownership-and-message-schema.md) | 会话状态归属(URL)+ Message 表重审(砍 content/toolCalls、加 seq) | 2 |
 | [ADR-0012](./0012-phase-3-preference-confirm-and-summary.md) | Phase 3 设计定稿:草稿=操作集、刷新后卡片只读、摘要异步+增量、种子脚本形态 | 3 |
+| [ADR-0013](./0013-auth-refresh-token-rotation.md) | 认证双轨:短 access + 长效 refresh 滑动轮换、复用检测整族吊销、Web cookie/原生 body 双轨、删 User.role | 4 |
 
 ## Phase 总览
 
@@ -47,6 +48,14 @@
 - 体验打磨:限缩为 E/F 实现中长出的部分(ADR-0012)
 - 实施清单:[implementation/phase-3-implementation.md](../implementation/phase-3-implementation.md)
 
-**Phase 2 / 3 验收标准**见 [acceptance/phase-2-3-checklist.md](../acceptance/phase-2-3-checklist.md)(手动场景走查制)。
+**Phase 4(认证双轨,进行中)** — 原生 app 的认证前置(ADR-0013)
+- 双 token:15 分钟 access(JWT)+ 30 天滑动 refresh(opaque,bcrypt 哈希落库)
+- refresh 一次一换 + 复用检测整族吊销;Web refresh 走 httpOnly cookie、原生走 body
+- `POST /auth/refresh` / `/auth/logout` 新增;login/register 响应改 `{accessToken, user}`
+- 前端 401 单飞 refresh 重放(chat 与 api 共用同一 inflight);启动静默 refresh
+- 删 `User.role` 死重(零消费方)
+- 实施清单:[implementation/phase-4-implementation.md](../implementation/phase-4-implementation.md)
+
+**Phase 2 / 3 验收标准**见 [acceptance/phase-2-3-checklist.md](../acceptance/phase-2-3-checklist.md)(手动场景走查制);**Phase 4** 见 [acceptance/phase-4-checklist.md](../acceptance/phase-4-checklist.md)。
 
 **术语**见 [glossary.md](../glossary.md)。
