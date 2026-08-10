@@ -57,6 +57,7 @@ docs 根只放全局文档；每 Phase 的工件按类型归目录——实施�
 
 修改 `apps/server/prisma/schema.prisma` 时：
 
+0. **destructive 变更**（砍列/改类型/删表）前先备份：`pg_dump "$DATABASE_URL" > /tmp/shiguang-pre-migrate.sql`；
 1. 本地库执行 `pnpm --filter @shiguang/server db:migrate`（Prisma migrate dev）验证迁移；
 2. `pnpm --filter @shiguang/server db:generate` 重新生成 Client；
 3. 跑通后端测试后，在实施清单记录"迁移已验证"。
