@@ -6,6 +6,7 @@ import {
   runAddPantryItems,
   runRemovePantryItems,
   runSetFavorite,
+  runUpdatePreferences,
 } from './write-tools-logic';
 import { runSearchRecipes, runGetRecipe } from './read-tools-logic';
 import type { ChatToolDeps } from './types';
@@ -205,6 +206,86 @@ describe('chat tools', () => {
       const result = await runSetFavorite(deps, 'u1', 'r1', false);
       expect(result.saved).toBe(false);
       expect(state.favorites).toEqual([]);
+    });
+  });
+
+  describe('update_preferences 草稿零副作用（E4 红线）', () => {
+    it('返回操作集草稿，不触碰任何写 dep', async () => {
+      const pref = {
+        dislikedIngredients: [] as string[],
+        allergens: [] as string[],
+        healthGoal: 'BALANCED' as const,
+      };
+      const pantryReplace = jest.fn();
+      const favoriteSet = jest.fn();
+      const { deps } = makeDeps({ pref });
+      deps.pantryReplace = pantryReplace;
+      deps.favoriteSet = favoriteSet;
+
+      const result = await runUpdatePreferences(deps, 'u1', {
+        addDisliked: ['香菜'],
+      });
+
+      expect(result.draft.addDisliked).toEqual(['香菜']);
+      expect(result.draft.setHealthGoal).toBeUndefined();
+      // 零写副作用：结构上无偏好写能力，写 dep 也确未被调用
+      expect(pantryReplace).not.toHaveBeenCalled();
+      expect(favoriteSet).not.toHaveBeenCalled();
+    });
+
+    it('add 幂等：已在忌口的重复 add 被忽略；全部归一为空返回 note', async () => {
+      const { deps } = makeDeps({
+        pref: {
+          dislikedIngredients: ['香菜'],
+          allergens: [],
+          healthGoal: 'BALANCED',
+        },
+      });
+      const result = await runUpdatePreferences(deps, 'u1', {
+        addDisliked: ['香菜'],
+        removeDisliked: ['不存在'],
+      });
+      expect(result.draft).toEqual({});
+      expect(result.note).toBeDefined();
+    });
+
+    it('remove 归一化：只移除当前存在的项', async () => {
+      const { deps } = makeDeps({
+        pref: {
+          dislikedIngredients: ['香菜', '茼蒿'],
+          allergens: [],
+          healthGoal: 'BALANCED',
+        },
+      });
+      const result = await runUpdatePreferences(deps, 'u1', {
+        removeDisliked: ['香菜', '不存在'],
+      });
+      expect(result.draft.removeDisliked).toEqual(['香菜']);
+    });
+
+    it('全字段缺省时拒绝（抛错，AI 端以工具错误如实呈现）', async () => {
+      const { deps } = makeDeps({});
+      await expect(runUpdatePreferences(deps, 'u1', {})).rejects.toThrow(
+        '未指定任何偏好变更',
+      );
+    });
+
+    it('healthGoal 覆盖 + 过敏原增删并存于草稿', async () => {
+      const { deps } = makeDeps({
+        pref: {
+          dislikedIngredients: [],
+          allergens: ['花生'],
+          healthGoal: 'BALANCED',
+        },
+      });
+      const result = await runUpdatePreferences(deps, 'u1', {
+        setHealthGoal: 'FAT_LOSS',
+        addAllergens: ['虾'],
+        removeAllergens: ['花生'],
+      });
+      expect(result.draft.setHealthGoal).toBe('FAT_LOSS');
+      expect(result.draft.addAllergens).toEqual(['虾']);
+      expect(result.draft.removeAllergens).toEqual(['花生']);
     });
   });
 });

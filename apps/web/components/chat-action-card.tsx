@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useSWRConfig } from 'swr'
-import { replacePantry, setFavorite } from '@/lib/api'
+import { fetchPantry, replacePantry, setFavorite } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 /**
@@ -10,14 +10,18 @@ import { cn } from '@/lib/utils'
  * 附「撤销」按钮——add↔remove、set_favorite↔反向 set。
  * 已撤销的卡片置灰防重复点击。撤销复用 replacePantry / setFavorite API，
  * 成功后 mutate 对应 SWR key 保证食材页/收藏页数据一致。
+ * readOnly（历史消息/刷新后，ADR-0012 决策 2）：卡片可渲染但撤销入口锁定。
+ * 撤销基于**当前**清单计算（fetchPantry 拉最新，不用 tool output 里的过期快照），
+ * 修复刷新后撤销会冲掉新加食材的 bug。
  */
 interface ActionCardProps {
   toolName: string
   input?: Record<string, unknown>
   output?: unknown
+  readOnly?: boolean
 }
 
-export function ChatActionCard({ toolName, input, output }: ActionCardProps) {
+export function ChatActionCard({ toolName, input, output, readOnly }: ActionCardProps) {
   const { mutate } = useSWRConfig()
   const [undone, setUndone] = React.useState(false)
   const [pending, setPending] = React.useState(false)
@@ -25,18 +29,18 @@ export function ChatActionCard({ toolName, input, output }: ActionCardProps) {
   const out = (output ?? {}) as Record<string, unknown>
 
   const handleUndo = async () => {
-    if (undone || pending) return
+    if (undone || pending || readOnly) return
     setPending(true)
     try {
       if (toolName === 'add_pantry_items') {
         const added = (out.added as string[]) ?? []
-        const current = (out.pantry as string[]) ?? []
+        const current = await fetchPantry()
         const next = current.filter((n) => !added.includes(n))
         const result = await replacePantry(next)
         await mutate('/pantry', result, { revalidate: false })
       } else if (toolName === 'remove_pantry_items') {
         const removed = (out.removed as string[]) ?? []
-        const current = (out.pantry as string[]) ?? []
+        const current = await fetchPantry()
         const next = [...current, ...removed]
         const result = await replacePantry(next)
         await mutate('/pantry', result, { revalidate: false })
@@ -58,7 +62,7 @@ export function ChatActionCard({ toolName, input, output }: ActionCardProps) {
     <div
       className={cn(
         'my-1 flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/30 px-3 py-2 text-[13px]',
-        undone && 'opacity-50',
+        (undone || readOnly) && 'opacity-50',
       )}
     >
       <span className="flex items-center gap-1.5">
@@ -68,15 +72,19 @@ export function ChatActionCard({ toolName, input, output }: ActionCardProps) {
           {undone && <span className="ml-1 text-muted-foreground">（已撤销）</span>}
         </span>
       </span>
-      {!undone && (
-        <button
-          type="button"
-          onClick={handleUndo}
-          disabled={pending}
-          className="shrink-0 font-medium text-primary hover:underline disabled:opacity-50"
-        >
-          {pending ? '撤销中…' : '撤销'}
-        </button>
+      {readOnly ? (
+        <span className="shrink-0 text-muted-foreground">历史操作已锁定</span>
+      ) : (
+        !undone && (
+          <button
+            type="button"
+            onClick={handleUndo}
+            disabled={pending}
+            className="shrink-0 font-medium text-primary hover:underline disabled:opacity-50"
+          >
+            {pending ? '撤销中…' : '撤销'}
+          </button>
+        )
       )}
     </div>
   )

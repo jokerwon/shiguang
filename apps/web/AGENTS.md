@@ -51,7 +51,7 @@ app/
     layout.tsx            # 共享布局：顶部导航 + TabBar + AuthGuard
     page.tsx              # 发现页（首页）— 为你推荐、菜系探索、15 分钟快手
     pantry/page.tsx       # 食材清单 — 添加食材、智能匹配
-    chat/[[...slug]]/page.tsx  # 对话 Agent — AI tool-calling + 持久化多会话（ADR-0009/0010/0011）：会话状态由 URL 拥有（/chat/new、/chat/:id），可选 catch-all 命中 /chat
+    chat/[[...slug]]/page.tsx  # 对话 Agent — AI tool-calling + 持久化多会话（ADR-0009/0010/0011/0012）：会话状态由 URL 拥有（/chat/new、/chat/:id），可选 catch-all 命中 /chat；历史消息只读（拉历史时记录 id 集合，卡片撤销/确认入口锁定）
     filter/page.tsx       # 筛选页 — 按菜系/偏好/时间筛选
     favorite/page.tsx     # 收藏夹 — 已收藏菜谱列表
     settings/page.tsx     # 我的 — 偏好档案（忌口/过敏原/健康目标）
@@ -94,8 +94,9 @@ app/
 - `components/auth-guard.tsx` — 路由保护
 - `components/providers.tsx` — SWRProvider > AuthProvider
 - `components/chat-sidebar.tsx` — 会话列表侧栏（ADR-0010：桌面侧栏 / 移动抽屉，含新建/切换/删除）
-- `components/chat-action-card.tsx` — 写工具结果的操作卡片（ADR-0009：「已添加/移除/收藏」+ 撤销，add↔remove、set_favorite↔反向 set）
-- `components/ui/` — shadcn/ui 组件；`components/ai-elements/` — AI SDK Elements（对话页）；`ai-elements/tool.tsx` 渲染工具调用过程与操作卡片
+- `components/chat-action-card.tsx` — 写工具结果的操作卡片（ADR-0009：「已添加/移除/收藏」+ 撤销，add↔remove、set_favorite↔反向 set）。`readOnly`（历史消息/刷新后）撤销入口锁定；撤销基于**当前**清单计算（fetchPantry 拉最新，不用 tool output 过期快照）
+- `components/chat-confirm-card.tsx` — `update_preferences` 草稿的确认卡片（ADR-0012）：渲染操作集 diff（add 绿 / remove 灰 / 过敏原 remove 警告色 / healthGoal 前后对照）；「确认」= 读当前偏好 → apply 操作集 → PUT /preferences → mutate；「取消」/`readOnly` 不落库
+- `components/ui/` — shadcn/ui 组件；`components/ai-elements/` — AI SDK Elements（对话页）；`ai-elements/tool.tsx` 渲染工具调用过程、操作卡片与确认卡片（`update_preferences` 独立于写工具集合）
 
 ## 设计系统
 

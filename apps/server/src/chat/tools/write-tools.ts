@@ -4,6 +4,8 @@ import {
   runAddPantryItems,
   runRemovePantryItems,
   runSetFavorite,
+  runUpdatePreferences,
+  type UpdatePreferenceInput,
 } from './write-tools-logic';
 import type { ChatToolDeps } from './types';
 
@@ -11,6 +13,8 @@ export {
   runAddPantryItems,
   runRemovePantryItems,
   runSetFavorite,
+  runUpdatePreferences,
+  type UpdatePreferenceInput,
 } from './write-tools-logic';
 
 export function createWriteTools(deps: ChatToolDeps, userId: string) {
@@ -70,5 +74,53 @@ export function createWriteTools(deps: ChatToolDeps, userId: string) {
     }) => runSetFavorite(deps, userId, recipeId, saved),
   });
 
-  return { add_pantry_items, remove_pantry_items, set_favorite };
+  // update_preferences（ADR-0012）：只产出待确认草稿，execute 不接触任何写 service——
+  // 「未确认不落库」由架构保证（E4 双保险），确认只认前端按钮。
+  const update_preferences = tool({
+    description:
+      '准备用户偏好档案（忌口/过敏原/健康目标）的变更草稿。用户表达新的忌口、过敏原或健康目标时调用。' +
+      '该工具只产出待确认草稿，不落库——用户需在前端点「确认」后才生效。' +
+      '调用后回复「已为你准备偏好变更，请点确认卡片确认」，不得声称已保存/已记住。',
+    inputSchema: jsonSchema<UpdatePreferenceInput>({
+      type: 'object',
+      properties: {
+        addDisliked: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '新增忌口食材（如「我不吃香菜」→ ["香菜"]）',
+        },
+        removeDisliked: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '解除忌口食材',
+        },
+        addAllergens: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '新增过敏原（安全红线，最优先）',
+        },
+        removeAllergens: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '解除过敏原',
+        },
+        setHealthGoal: {
+          type: 'string',
+          enum: ['BALANCED', 'FAT_LOSS', 'MUSCLE_GAIN'],
+          description:
+            '设定健康目标（BALANCED 均衡 / FAT_LOSS 减脂 / MUSCLE_GAIN 增肌）',
+        },
+      },
+      // 至少一项的约束在 execute 运行时校验（JSON Schema 对「任一可选字段」表达繁琐）
+    }),
+    execute: async (input: UpdatePreferenceInput) =>
+      runUpdatePreferences(deps, userId, input),
+  });
+
+  return {
+    add_pantry_items,
+    remove_pantry_items,
+    set_favorite,
+    update_preferences,
+  };
 }

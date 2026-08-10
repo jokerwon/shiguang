@@ -39,9 +39,10 @@
 - 历史上下文:简单滑窗(ADR-0010)
 - 实施清单:[implementation/phase-2-implementation.md](../implementation/phase-2-implementation.md)
 
-**Phase 3(更懂你,设计定稿未开工)** — 记忆的深度与安全(ADR-0008,定稿见 ADR-0012)
-- 写偏好档案:前端确认卡片,显式确认才落库(ADR-0009);草稿=操作集、确认时合并、刷新后只读(ADR-0012)
-- 滑窗 + 会话摘要:异步生成、增量更新、`Conversation` 加两列(ADR-0010,机制定稿 ADR-0012)
+**Phase 3(更懂你,已交付)** — 记忆的深度与安全(ADR-0008,定稿见 ADR-0012)
+- 写偏好档案:`update_preferences` 工具只产出待确认草稿,前端确认卡片显式确认才落库(ADR-0009);草稿=操作集、确认时合并、刷新后只读(ADR-0012)
+- 历史消息只读:区分历史拉取与流式新消息,操作卡片撤销与确认卡片共用同一只读边界(ADR-0012,顺带修 A4 过期快照 bug)
+- 滑窗 + 会话摘要:异步生成、增量更新、`Conversation` 加 `summary`/`summaryUpToSeq` 两列(ADR-0010,机制定稿 ADR-0012)
 - 长会话种子脚本:插库 + 直调摘要 service(ADR-0012;[验收清单](../acceptance/phase-2-3-checklist.md) F3)
 - 体验打磨:限缩为 E/F 实现中长出的部分(ADR-0012)
 - 实施清单:[implementation/phase-3-implementation.md](../implementation/phase-3-implementation.md)

@@ -20,6 +20,8 @@ export interface PromptContext {
   pantryIngredients?: string[];
   /** 当前季节（用于推荐时令菜） */
   season?: 'spring' | 'summer' | 'autumn' | 'winter';
+  /** 会话摘要（滑窗之外消息的压缩，ADR-0012） */
+  conversationSummary?: string;
 }
 
 const SEASON_LABELS: Record<string, string> = {
@@ -65,6 +67,9 @@ export function buildSystemPrompt(context?: PromptContext): string {
     }
     if (context.season) {
       dynamicParts.push(`当前季节：${SEASON_LABELS[context.season]}`);
+    }
+    if (context.conversationSummary) {
+      dynamicParts.push(`会话摘要：${context.conversationSummary}`);
     }
 
     if (dynamicParts.length > 0) {

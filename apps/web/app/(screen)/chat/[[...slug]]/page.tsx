@@ -52,6 +52,9 @@ export default function ChatScreen() {
   const [loadingHistory, setLoadingHistory] = React.useState(false)
   // 越权/不存在会话的提示：存出错的 routeId，routeId 变化后自动失效，无需 effect 主动清
   const [notFoundId, setNotFoundId] = React.useState<string | undefined>(undefined)
+  // 历史消息 id 集合（ADR-0012 决策 2）：拉取历史时记录，历史消息的操作/确认卡片只读。
+  // 用 state 不用 ref（React Compiler 禁止 render 期读 ref.current）；新流式消息 id 不在集合内 → 可交互。
+  const [readOnlyIds, setReadOnlyIds] = React.useState<Set<string>>(new Set())
   const { mutate: globalMutate } = useSWRConfig()
 
   // ADR-0011：useChat 常量 id（'chat'），切换会话不切 id，流式不中断。
@@ -126,7 +129,9 @@ export default function ChatScreen() {
   // ADR-0011：切换会话由路由驱动。routeId 变化 → 拉历史或清空。
   React.useEffect(() => {
     if (!routeId) {
-      // 新会话态：清空消息（避免上一会话闪现）
+      // 新会话态：清空消息（避免上一会话闪现）。
+      // readOnlyIds 不同步清空：它只对「当前渲染的消息 id」生效，消息已清空则旧 id 天然惰性；
+      // 新流式消息 id 不在集合内 → 可交互。避免在 effect 体同步 setState（react-hooks 规则）。
       setMessages([])
       return
     }
@@ -136,7 +141,10 @@ export default function ChatScreen() {
     setMessages([])
     fetchConversationMessages(routeId)
       .then((history) => {
-        if (!cancelled) setMessages(history as UIMessage[])
+        if (cancelled) return
+        setMessages(history as UIMessage[])
+        // 历史消息一律只读（刷新后撤销/确认入口锁定，ADR-0012 决策 2）
+        setReadOnlyIds(new Set(history.map((m) => m.id)))
       })
       .catch((err) => {
         if (cancelled) return
@@ -246,7 +254,13 @@ export default function ChatScreen() {
                   {/* 按 parts 原序渲染：text part → markdown，tool part → 工具行/操作卡片（保留交错顺序） */}
                   {(m.parts as unknown as { type: string; text?: string }[]).map((p, i) => {
                     if (isToolPart(p)) {
-                      return <ToolPartView key={`${p.type}-${i}`} part={p as unknown as ToolPart} />
+                      return (
+                        <ToolPartView
+                          key={`${p.type}-${i}`}
+                          part={p as unknown as ToolPart}
+                          readOnly={readOnlyIds.has(m.id)}
+                        />
+                      )
                     }
                     if (p.type === 'text' && p.text) {
                       return <MessageResponse key={`text-${i}`}>{p.text}</MessageResponse>

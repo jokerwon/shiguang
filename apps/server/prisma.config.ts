@@ -10,6 +10,9 @@ export default defineConfig({
     seed: 'tsx prisma/seed.ts',
   },
   datasource: {
-    url: process.env['DATABASE_URL'],
+    // Prisma 7 的 prisma.config.ts 无 directUrl 概念，datasource.url 是 CLI 命令
+    // （migrate/db push/studio）使用的唯一连接。指向 DIRECT_URL（会话池 5432）：
+    // 迁移走会话池，运行时仍由 PrismaService 用 DATABASE_URL（事务池 6543）经 adapter 连接。
+    url: process.env['DIRECT_URL'],
   },
 });

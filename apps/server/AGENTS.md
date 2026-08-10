@@ -42,6 +42,7 @@ pnpm db:reset       # 重置数据库
 pnpm db:seed        # 填充种子数据 (tsx prisma/seed.ts)
 pnpm db:studio      # 打开 Prisma Studio
 pnpm db:status      # 检查迁移状态
+pnpm seed:long-conversation -- --user <userId|email> # 长会话种子脚本（F3 验收前置，ADR-0012）
 ```
 
 ### 菜谱内容生产（ADR-0003）
@@ -54,11 +55,16 @@ pnpm recipes:generate --only sichuan,home # 只生成指定菜系
 
 生成结果**先入 staging 待审区，不直接入库**：脚本做字段/营养/去重校验（`src/recipe/recipe-draft.ts`），人工抽检 staging JSON 后，`pnpm db:seed` 合并「`prisma/recipes-curated.ts` 人工精选 + staging」upsert 入库（seed 时再过一遍校验兜底）。
 
+### 长会话种子（Phase 3 验收前置，ADR-0012）
+
+`pnpm seed:long-conversation -- --user <userId|email>` 直插 DB 构造一个 40+ 条消息的会话（话题：减脂餐 → 周末聚餐），随后**进程内直调** `src/chat/summary.ts` 纯函数预生成摘要并写回会话行——不走 HTTP、不烧多轮真实对话。幂等：重跑先删旧种子会话（固定 title 前缀）。缺模型配置（OPENAI_API_KEY/MODEL_NAME）则跳过摘要、仅造滑窗数据。
+
 ## 环境变量
 
 `.env` 文件位于 `apps/server/`。必须包含：
 
-- `DATABASE_URL` — PostgreSQL 连接串，格式：`postgresql://user:password@host:port/dbname`
+- `DATABASE_URL` — 运行时连接串（PrismaService 经 adapter 使用），格式：`postgresql://user:password@host:port/dbname`；托管库用事务池（Supabase 为端口 6543）
+- `DIRECT_URL` — Prisma CLI 迁移连接串（`prisma.config.ts` 的 `datasource.url`）。本地与 `DATABASE_URL` 相同；托管库须为会话池（Supabase 为端口 5432），不能走事务池，否则 migrate 挂起
 - `JWT_SECRET` — JWT 签名密钥（开发环境默认值：`shiguang-dev-secret`）
 - `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `MODEL_NAME` — OpenAI-compatible 端点，`/chat` 与 `recipes:generate` 共用
 
@@ -97,9 +103,10 @@ src/
 
   chat/
     chat.controller.ts        # POST /chat（需认证，流式，body { conversationId?, message }）
-    chat.service.ts           # tool-loop + 持久化（ADR-0009/0010）：DB 取滑窗上下文，streamText + tools，onFinish 落库
-    prompts/                  # system/recipe/behavior/guardrails 静态段 + context-builder 动态段
-    tools/                    # AI 工具（ADR-0009）：read-tools / write-tools（*-logic.ts 为纯逻辑，单测友好）+ index 工厂
+    chat.service.ts           # tool-loop + 持久化（ADR-0009/0010）：DB 取滑窗上下文，streamText + tools，onFinish 落库 + 溢出摘要触发（ADR-0012）
+    summary.ts                # 会话摘要纯逻辑（ADR-0012）：消息序列化 + summarizeOverflow 增量拼接，依赖显式注入，种子脚本进程内直调
+    prompts/                  # system/recipe/behavior/guardrails 静态段 + context-builder 动态段（含会话摘要注入）
+    tools/                    # AI 工具（ADR-0009）：read-tools / write-tools（*-logic.ts 为纯逻辑，单测友好）+ index 工厂；write-tools 含 update_preferences 草稿工具（ADR-0012）
 
   conversation/               # 会话持久化（ADR-0010）：Conversation/Message CRUD + 滑窗上下文 + UIMessage↔DB mapper
   pantry/                     # GET/PUT /pantry（整体替换，string[]）；exports PantryService 供 chat 写工具复用
@@ -112,8 +119,10 @@ src/
 - **注入演进（ADR-0009）**：保留偏好/pantry/季节/用户名注入；候选菜谱注入已移除，改为 `search_recipes` 工具按需查询。`ChatService` 不再调 `recommend(userId, 8)`，但仍用 `loadSignals` 取 blocked/pantry/healthGoal（注入与硬过滤共用）。
 - **tool-loop**：`streamText({ tools, stopWhen: stepCountIs(5) })`，工具经 `createChatTools(deps, userId)` 工厂闭包捕获 userId。`search_recipes` 先过 `blocked` 硬过滤再打分排序（复用 `recommendation.scoring`，单一事实源）。
 - **写工具幂等**：`add_pantry_items`/`remove_pantry_items` 基于 `findAll + replace` 组合实现去重幂等；`set_favorite` 用幂等 set 语义（`FavoriteService.set`，toggle 对 AI 危险）。
+- **偏好草稿（ADR-0012）**：`update_preferences` 工具**结构上不落库**——`execute` 只产出「操作集草稿」（`addDisliked`/`removeDisliked`/`addAllergens`/`removeAllergens`/`setHealthGoal`），读当前偏好仅作快照，不接触任何写 service；E4 红线（「你看着办直接改」不得绕过确认）由架构保证，确认只认前端按钮。prompt 规范禁止声称「已保存/已记住」。
 - **持久化（ADR-0010/0011）**：body 只带 `conversationId? + message`，后端从 DB 取最近 20 条组装上下文（不信客户端全量，按 `seq desc` 滑窗）。无 conversationId 则创建会话（title = 首条消息截断 ~20 字），id 经响应头 `x-conversation-id` 回传前端。`toUIMessageStream` 的 `onFinish` 落库 assistant 消息（含 tool parts）；`appendMessage` 由应用层算 `seq = max(seq)+1`，配 `@@unique` 冲突重试。
-- 单测：`recommendation.scoring.spec.ts`、`recipe-draft.spec.ts`、`conversation.mapper.spec.ts`、`chat/tools/tools.spec.ts`（纯函数，零 DB）。
+- **会话摘要（ADR-0012）**：`onFinish` 落库后 fire-and-forget 检查溢出区（`seq ≤ maxSeq−滑窗` 且 `seq > summaryUpToSeq`），攒够 `SUMMARY_TRIGGER_THRESHOLD` 条调 `summary.ts` 增量拼接（压缩 旧摘要 + 新溢出），写回 `Conversation.summary`/`summaryUpToSeq`；LLM 失败仅记日志、保持旧摘要，降级 = 纯滑窗。`buildSystemPrompt` 注入「会话摘要」段。
+- 单测：`recommendation.scoring.spec.ts`、`recipe-draft.spec.ts`、`conversation.mapper.spec.ts`、`chat/tools/tools.spec.ts`、`chat/summary.spec.ts`（纯函数，零 DB）。
 
 ### 个性化推荐（ADR-0005/0006）
 
@@ -133,7 +142,7 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 - **PantryItem** — 食材清单（userId + name 唯一）
 - **Favorite** — 收藏（userId + recipeId 唯一）
 - **UserPreference** — 偏好档案（userId 唯一；dislikedIngredients/allergens/healthGoal）
-- **Conversation** — 会话（ADR-0010；userId, title, updatedAt）。索引：userId + updatedAt
+- **Conversation** — 会话（ADR-0010/0012；userId, title, summary, summaryUpToSeq, updatedAt。summary 为滑窗外消息的压缩摘要，summaryUpToSeq 为摘要已覆盖到的消息 seq）。索引：userId + updatedAt
 - **Message** — 消息（ADR-0010/0011；conversationId, seq 消息级序号(会话内 1 起单调递增,应用层 max+1,@@unique([conversationId,seq])), role string(user|assistant 实际两类,tool 信息在 assistant.parts 内), parts Json 原始 UIMessage parts 数组(保序,还原唯一来源)）。索引：conversationId + seq（唯一 + 普通）。content/toolCalls 列已砍（ADR-0011 死重量）
 
 种子数据：`prisma/recipes-curated.ts`（人工精选）+ `prisma/staging/recipes-staging.json`（AI 生成待审区，存在才合并），按 name upsert 幂等。

@@ -3,12 +3,15 @@
 import * as React from 'react'
 import { Shimmer } from './shimmer'
 import { ChatActionCard } from '@/components/chat-action-card'
+import { ChatConfirmCard } from '@/components/chat-confirm-card'
 import { cn } from '@/lib/utils'
 
 /**
  * 单个工具调用 part 的渲染（W2.4）。
  * - 调用中（state 非 output-*）：显示 shimmer「正在…」
  * - 完成：折叠为一行摘要；若为写工具，渲染操作卡片（含 undo）
+ * - 完成：update_preferences → 确认卡片（草稿需用户确认，E1–E4）
+ * - readOnly：历史消息（刷新后）卡片操作入口锁定（ADR-0012 决策 2）
  */
 export interface ToolPart {
   type: string
@@ -27,12 +30,13 @@ const TOOL_LABELS: Record<string, string> = {
   add_pantry_items: '添加食材',
   remove_pantry_items: '移除食材',
   set_favorite: '收藏操作',
+  update_preferences: '偏好变更',
 }
 
 /** 写工具名集合（操作卡片渲染范围） */
 const WRITE_TOOLS = new Set(['add_pantry_items', 'remove_pantry_items', 'set_favorite'])
 
-export function ToolPartView({ part }: { part: ToolPart }) {
+export function ToolPartView({ part, readOnly }: { part: ToolPart; readOnly?: boolean }) {
   const name = part.type.startsWith('tool-') ? part.type.slice(5) : part.type
   const label = TOOL_LABELS[name] ?? name
   const isRunning = !part.state || part.state === 'input-streaming' || part.state === 'input-available'
@@ -45,8 +49,14 @@ export function ToolPartView({ part }: { part: ToolPart }) {
         toolName={name}
         input={part.input}
         output={part.output}
+        readOnly={readOnly}
       />
     )
+  }
+
+  // 偏好草稿完成态 → 确认卡片（独立于 WRITE_TOOLS：它不是写工具，不渲染操作卡片）
+  if (!isRunning && !isError && name === 'update_preferences') {
+    return <ChatConfirmCard output={part.output} readOnly={readOnly} />
   }
 
   // 只读工具 / 调用中 / 错误：折叠行

@@ -39,6 +39,19 @@ export class ConversationService {
     return rows.map((r) => toUIMessage(r as MessageRow));
   }
 
+  /** 取会话摘要（滑窗外消息的压缩，ADR-0012），越权返回 404 */
+  async summary(
+    userId: string,
+    conversationId: string,
+  ): Promise<string | null> {
+    await this.assertOwned(userId, conversationId);
+    const conv = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { summary: true },
+    });
+    return conv?.summary ?? null;
+  }
+
   /** 取最近 N 条消息作为上下文（滑窗，ADR-0010/0011：按 seq desc），越权返回 404 */
   async recentMessages(
     userId: string,

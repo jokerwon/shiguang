@@ -26,7 +26,8 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:status": "prisma migrate status",
-    "recipes:generate": "tsx scripts/generate-recipes.ts"
+    "recipes:generate": "tsx scripts/generate-recipes.ts",
+    "seed:long-conversation": "tsx scripts/seed-long-conversation.ts"
   },
   "engines": {
     "npm": ">=10.0.0",

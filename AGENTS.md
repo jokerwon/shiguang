@@ -60,15 +60,16 @@ pnpm --filter @shiguang/web dev # 仅启动前端
 pnpm --filter @shiguang/server start:dev # 仅启动后端
 pnpm --filter @shiguang/server db:generate # 生成 Prisma Client
 pnpm recipes:generate # AI 批量生成菜谱 → staging 待审区（ADR-0003）
+pnpm seed:long-conversation -- --user <userId|email> # 造 40+ 条长会话 + 预生成摘要（F3 验收前置，ADR-0012）
 ```
 
 ## 开发环境要求
 
 - **Node.js** >= 20.0.0
 - **pnpm** >= 11.20.0
-- **PostgreSQL** — 后端数据库，需提前创建数据库并配置 `apps/server/.env` 中的 `DATABASE_URL`
+- **PostgreSQL** — 后端数据库，需提前创建数据库并配置 `apps/server/.env` 中的 `DATABASE_URL` 与 `DIRECT_URL`
 
 ## 环境变量
 
-- `apps/server/.env` — `DATABASE_URL`（PostgreSQL 连接串）、`JWT_SECRET`、`OPENAI_API_KEY` / `OPENAI_BASE_URL` / `MODEL_NAME`（AI 对话与菜谱生成共用）
+- `apps/server/.env` — `DATABASE_URL`（运行时 PostgreSQL 连接串）、`DIRECT_URL`（Prisma CLI 迁移连接串，托管库须为会话池）、`JWT_SECRET`、`OPENAI_API_KEY` / `OPENAI_BASE_URL` / `MODEL_NAME`（AI 对话与菜谱生成共用）
 - `apps/web/` — `NEXT_PUBLIC_API_URL` 指向后端（默认 `http://localhost:3001`）
