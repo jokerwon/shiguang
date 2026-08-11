@@ -14,6 +14,12 @@
 | 登出 | 必须同时作废服务端 refresh 行，不只清本地 |
 | 存量用户 | 部署后旧 7 天 token 过期即强制重新登录一次，可接受 |
 
+## 验证状态（2026-08-11，代码 + API 冒烟层）
+
+- ✅ **已验（API 冒烟）**：A1 / A2 响应形状与 cookie、A3 登出幂等、A4 登出后 refresh 失效、C1 / C2 / C5、轮换成功后旧 refresh 立即失效。其中 C2 已确认 **DB 该用户 RefreshToken 行清 0**（整族吊销）。
+- ✅ **已验（单测）**：C4 过期拒绝（`refresh-token.spec.ts`）、轮换/复用检测/吊销纯逻辑（94 个后端测试全过）。
+- ⏳ **待手动走查（浏览器 + DevTools）**：B 节全部（无感续期、真实 15 分钟过期、流式 chat 中过期、刷新浏览器静默换新）、D 节全部（双 tab 单飞、并发重放、inflight 复用）、E 节回归。前端交互语义已由代码层覆盖（`lib/refresh.ts` 单飞、`request()` 与 chat `customFetch` 共用同一 inflight、启动 lazy init + 后台 refresh）。
+
 ## A. 登录 / 注册 / 登出
 
 | # | 场景 | 通过条件 |

@@ -48,7 +48,7 @@
 - 体验打磨:限缩为 E/F 实现中长出的部分(ADR-0012)
 - 实施清单:[implementation/phase-3-implementation.md](../implementation/phase-3-implementation.md)
 
-**Phase 4(认证双轨,进行中)** — 原生 app 的认证前置(ADR-0013)
+**Phase 4(认证双轨,已交付)** — 原生 app 的认证前置(ADR-0013)
 - 双 token:15 分钟 access(JWT)+ 30 天滑动 refresh(opaque,bcrypt 哈希落库)
 - refresh 一次一换 + 复用检测整族吊销;Web refresh 走 httpOnly cookie、原生走 body
 - `POST /auth/refresh` / `/auth/logout` 新增;login/register 响应改 `{accessToken, user}`
