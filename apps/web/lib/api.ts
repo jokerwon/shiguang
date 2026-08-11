@@ -1,5 +1,6 @@
 import type { Recipe } from './recipes';
 import { API_BASE, getToken } from './constants';
+import { refreshOnce } from './refresh';
 
 /* ---- 共享 fetch 封装 ---- */
 
@@ -14,18 +15,39 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * 401 拦截（ADR-0013 决策 4）：遇 401 先单飞 refresh 再重放原请求一次。
+ * refresh 失败 → 登出事件广播（use-auth 监听跳登录页）+ 向上抛原 401。
+ * 重放仍 401（或原请求本身就不带凭据）→ 直接抛，不递归。
+ */
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await doFetch(path, init);
+  if (res.status !== 401) {
+    return unwrap<T>(res);
+  }
+  try {
+    await refreshOnce();
+  } catch {
+    window.dispatchEvent(new Event('shiguang:logout'));
+    return unwrap<T>(res);
+  }
+  const replay = await doFetch(path, init);
+  return unwrap<T>(replay);
+}
+
+async function doFetch(path: string, init?: RequestInit): Promise<Response> {
   const token = getToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-
-  const res = await fetch(`${API_BASE}${path}`, {
+  return fetch(`${API_BASE}${path}`, {
     ...init,
     headers: { ...headers, ...(init?.headers ?? {}) },
   });
+}
 
+async function unwrap<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const msg = (body as { message?: string | string[] }).message;
@@ -34,7 +56,6 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
       res.status,
     );
   }
-
   return res.json();
 }
 

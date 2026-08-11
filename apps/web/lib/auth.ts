@@ -16,17 +16,19 @@ export interface AuthUser {
   email: string;
   displayName: string | null;
   avatarUrl: string | null;
-  role: string;
 }
 
-interface AuthResponse {
-  token: string;
+/** ADR-0013：login/register/refresh 同构响应；refreshToken 供原生端（Web 走 cookie） */
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
   user: AuthUser;
 }
 
 export async function loginApi(input: LoginInput): Promise<AuthResponse> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
+    credentials: 'include', // 收服务端种的 refresh cookie（ADR-0013）
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
@@ -48,6 +50,7 @@ export async function loginApi(input: LoginInput): Promise<AuthResponse> {
 export async function registerApi(input: RegisterInput): Promise<AuthResponse> {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
