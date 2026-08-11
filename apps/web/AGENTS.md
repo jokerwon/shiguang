@@ -58,10 +58,13 @@ app/
     recipe/[id]/page.tsx  # 菜谱详情页 — 步骤/食材、营养、缺料清单
 ```
 
-## 认证机制
+## 认证机制（ADR-0013：双 token）
 
-- **存储**: JWT token + user 对象持久化在 `localStorage`（key: `shiguang:token`, `shiguang:user`）
-- **后端 API**: `NEXT_PUBLIC_API_URL`（默认 `http://localhost:3001`），端点 `/auth/login`, `/auth/register`
+- **存储**: **access token（JWT，15 分钟）** + user 快照在 `localStorage`（key: `shiguang:token`, `shiguang:user`）；**refresh token（30 天滑动）在 httpOnly cookie**（`shiguang_rt`，`Path=/auth`，XSS 摸不到）；`shiguang:rt` 仅存给原生端凭据容器（Web 不读它，刷新靠 cookie）
+- **后端 API**: `NEXT_PUBLIC_API_URL`（默认 `http://localhost:3001`），端点 `/auth/login`, `/auth/register`, `/auth/refresh`, `/auth/logout`（login/register/logout/refresh 均 `credentials: 'include'`）
+- **401 单飞 refresh**: `lib/refresh.ts` 的 `refreshOnce()`（模块级 inflight 单例）——遇 401 先单飞 `/auth/refresh` 换新 access 再重放原请求；`request()`（lib/api.ts）与 chat transport 的 `customFetch`（对话页）共用同一份 inflight，不互相作废 refresh token。refresh 失败 → 广播 `shiguang:logout` 事件强制登出
+- **启动恢复**: `AuthProvider` 用 lazy init 在客户端首帧恢复 user/token 快照（不闪登出），后台静默 `refreshOnce()` 换新 access；refresh 失败才真登出
+- **登出**: 先 `POST /auth/logout` 作废服务端 refresh 行，再清本地（后端失败也照清本地）
 - **前端状态**: `AuthProvider` (`lib/use-auth.tsx`) — React Context；login/logout 时清空全部 SWR 缓存（天然按用户隔离）
 - **路由保护**: `AuthGuard` (`components/auth-guard.tsx`) — 未登录用户重定向到 `/login?redirect=原路径`，加载中显示 spinner
 - **登录页**: 已登录用户自动跳转回 `redirect` 参数指定的页面

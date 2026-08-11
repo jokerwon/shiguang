@@ -14,6 +14,7 @@ import { ToolPartView, type ToolPart } from '@/components/ai-elements/tool'
 import { ChatSidebar } from '@/components/chat-sidebar'
 import { API_BASE, getToken } from '@/lib/constants'
 import { fetchConversationMessages, ApiError } from '@/lib/api'
+import { refreshOnce } from '@/lib/refresh'
 import { refreshConversations } from '@/lib/use-conversations'
 import { useSWRConfig } from 'swr'
 
@@ -65,19 +66,33 @@ export default function ChatScreen() {
 
   // 自定义 fetch：拦截响应头 x-conversation-id（新建会话时后端回传）
   // 首条消息后 router.replace 到真实 id（非 push，不污染历史）。
+  // 401 处理（ADR-0013 决策 4）：响应头读到 401 → 单飞 refresh → 换新 Bearer 重发一次。
+  // 与 lib/api.ts 共用 refreshOnce 的模块级 inflight，不会互相作废 refresh token。
+  // 已在飞的流式响应不经过这里（流是已建立的连接），只有新发请求会撞 401。
   const customFetch = React.useCallback(
-    (input: RequestInfo | URL, init?: RequestInit) => {
-      return fetch(input, init).then((res) => {
-        const cid = res.headers.get('x-conversation-id')
-        if (cid) {
-          // 仅当当前仍是新会话态时 replace，避免重复跳转
-          if (!routeId) {
-            router.replace(`/chat/${cid}`)
-          }
-          refreshConversations()
+    async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      let res = await fetch(input, init)
+      if (res.status === 401) {
+        try {
+          await refreshOnce()
+        } catch {
+          window.dispatchEvent(new Event('shiguang:logout'))
+          return res // 原 401 交给 useChat error 路径（提示重新登录）
         }
-        return res
-      })
+        const token = getToken()
+        const headers = new Headers(init?.headers)
+        if (token) headers.set('Authorization', `Bearer ${token}`)
+        res = await fetch(input, { ...init, headers })
+      }
+      const cid = res.headers.get('x-conversation-id')
+      if (cid) {
+        // 仅当当前仍是新会话态时 replace，避免重复跳转
+        if (!routeId) {
+          router.replace(`/chat/${cid}`)
+        }
+        refreshConversations()
+      }
+      return res
     },
     [router, routeId],
   )

@@ -15,7 +15,10 @@
 > 字段名/类型/枚举取值见 `apps/server/prisma/schema.prisma`。
 
 ### User(用户)
-注册用户。JWT 认证。
+注册用户。双 token 认证（ADR-0013）：15 分钟 access(JWT) + 30 天滑动 refresh(opaque，bcrypt 哈希落库)。`role` 字段已删（零消费方死重）。
+
+### RefreshToken(刷新令牌登记)
+refresh token 的轮换登记表（ADR-0013）。一次一换、30 天滑动过期；已作废 token 再提交触发整族吊销。字段见 `apps/server/prisma/schema.prisma`。
 
 ### PantryItem(食材清单项)
 用户"现有食材"的一条记录。存储于服务端，是个性化推荐的输入。

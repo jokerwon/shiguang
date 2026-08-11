@@ -35,6 +35,8 @@
 
 **验收**:`prisma migrate dev` 干净通过；`generated/prisma/client` 里 `User` 无 `role`、有 `RefreshToken` 模型。
 
+**⚠️ 迁移已验证（2026-08-11）**:`prisma migrate dev` 报 **Already in sync**（零漂移）。过程中发现前置发现 4 的空目录实为**已应用但 SQL 未落盘**的 phantom 迁移（账本记为 `20260810094902_add_refresh_token` 已应用、校验和对应已丢失的旧草稿 SQL，DB 里实际带 `familyId/revokedAt/replacedByTokenId` 三列 + `Message.parts NOT NULL` 的旧草稿 schema）。收口过程：`resolve --rolled-back` 只认失败态迁移（P3012）无法使用；最终经确认后删除该账本行，以**幂等 sync SQL**（`CREATE TABLE IF NOT EXISTS` + `DROP COLUMN IF EXISTS` + 条件加索引/FK + `parts SET NOT NULL` + `DROP TYPE IF EXISTS "Role"`）由 `migrate deploy` 正规应用并记录正确校验和。该幂等 SQL 同时兼容「干净历史回放」（shadow）与「旧草稿表收口」两条路径。附带的 `Message.parts NOT NULL` 是 pre-existing 存量缺口（历史迁移只 ADD COLUMN + 回填、从未 SET NOT NULL），随本迁移一并补齐。
+
 ---
 
 ## W1 · 后端 auth 改造
@@ -51,6 +53,8 @@
 
 **验收**:login → 拿到短 access + cookie 里有 refresh；带 refresh 调 `/auth/refresh` → 新对返回、旧 refresh 立即失效；**同一个旧 refresh 再调一次 → 该用户全部 refresh 被清**（复用检测）;guard 拒绝拿 refresh 当 access 用。
 
+**✅ API 冒烟已验证（2026-08-11）**:register 201 → body `{accessToken, refreshToken, user}`（无 `token`、user 无 `role`）+ `Set-Cookie: shiguang_rt`（HttpOnly/SameSite=Lax/Path=/auth/Max-Age=30d）；C1（refresh 当 Bearer）401；C5（伪造）401；access 调 `/recipes/personalized` 200；`/auth/refresh` 轮换 200 新对；C2（复用旧 refresh）401 且 **DB 该用户 RefreshToken 行数清 0**（整族吊销）；A3 登出幂等、A4 登出后旧 refresh 401。
+
 ---
 
 ## W2 · 前端 401 单飞 refresh + 启动恢复
@@ -65,6 +69,8 @@
 | 2.6 | logout 调后端 | `apps/web/lib/use-auth.tsx` | 先 `POST /auth/logout`（带 refresh)→ 再清本地；后端失败也照清本地（登出不能因网络卡死） |
 
 **验收**:DevTools 把 access 改成过期/乱串 → 任意请求自动 refresh 重放成功（用户无感）;refresh 也被毁 → 跳登录页；两个 tab 同刻操作不互相把对方踢下线（单飞生效）。
+
+**✅ 前端 lint/tsc**：本次改动 6 文件零新增错误（剩余错误为 pre-existing ai-elements / 页面的 React 19 规则，Phase 3.5 已声明延后）。**✅ 浏览器手动走查**（2026-08-11）：B/D/E 节全过（无感续期、双 tab 单飞、并发重放、启动静默 refresh、五页 + 完整对话冒烟），见验收清单验证状态。
 
 ---
 

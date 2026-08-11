@@ -87,7 +87,8 @@ src/
     prisma.service.ts         # 继承 PrismaClient + onModuleInit/Destroy
 
   auth/
-    auth.module.ts            # 注册 JwtModule (7天过期)，exports JwtModule + JwtAuthGuard
+    auth.module.ts            # 注册 JwtModule (15 分钟 access)，exports JwtModule + JwtAuthGuard
+    refresh-token.ts          # refresh token 纯逻辑（ADR-0013）：签发/轮换/复用检测/吊销，显式注入 prisma
     auth.controller.ts        # POST /auth/login, POST /auth/register
     auth.service.ts           # 登录/注册逻辑，bcryptjs 密码哈希
     jwt-auth.guard.ts         # 手写 CanActivate，验签后把 { sub, email } 挂 request.user
@@ -138,7 +139,8 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 
 数据模型（`prisma/schema.prisma`）：
 - **Recipe** — 菜谱（id, name, desc, cuisine, time, kcal, protein/carb/fat, img, tags, ingredients, steps）。ingredients 为 Json（`{name, amount}[]`），steps 为 Json（string[]）。索引：cuisine, time
-- **User** — 用户（id, email, passwordHash, displayName, avatarUrl, role）
+- **User** — 用户（id, email, passwordHash, displayName, avatarUrl）
+- **RefreshToken** — refresh token 轮换登记（ADR-0013；id, userId, tokenHash 唯一(bcrypt 哈希不落明文), expiresAt, createdAt；级联 FK；userId 索引）。一次一换，30 天滑动过期
 - **PantryItem** — 食材清单（userId + name 唯一）
 - **Favorite** — 收藏（userId + recipeId 唯一）
 - **UserPreference** — 偏好档案（userId 唯一；dislikedIngredients/allergens/healthGoal）
@@ -147,13 +149,16 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 
 种子数据：`prisma/recipes-curated.ts`（人工精选）+ `prisma/staging/recipes-staging.json`（AI 生成待审区，存在才合并），按 name upsert 幂等。
 
-### 认证
+### 认证（ADR-0013：双 token）
 
-JWT 无状态认证。流程：
-1. `POST /auth/register` — 创建用户，返回 `{ token, user }`
-2. `POST /auth/login` — 验证邮箱+密码，返回 `{ token, user }`
-3. JWT payload：`{ sub: userId, email }`，7 天有效期
-4. 密码使用 bcryptjs (cost factor 12) 哈希
+双 token 认证，access 短命 + refresh 滑动轮换：
+1. `POST /auth/register` / `POST /auth/login` — 创建/验证用户，返回 `{ accessToken, refreshToken, user }`，并种 `shiguang_rt` httpOnly cookie（`Path=/auth`，30 天）
+2. **access token**：JWT，payload `{ sub, email, type: 'access' }`，**15 分钟**过期（`auth.module.ts` 的 `expiresIn: '15m'`）。`JwtAuthGuard` 验签后断言 `type === 'access'` 防混淆
+3. **refresh token**：opaque 随机串（非 JWT），DB 只存 bcrypt 哈希（`RefreshToken` 表），**30 天滑动过期**——每次 refresh 作废旧行发新行，新行 `expiresAt = now + 30d`
+4. `POST /auth/refresh`（无 guard）— 凭 refresh token 认证（body 优先、cookie 兜底），成功返回新对 + 种新 cookie；**复用检测**：已作废 token 再提交 → 该用户全部 refresh 行整族吊销
+5. `POST /auth/logout`（无 guard）— 按 refresh token 定位删行 + 清 cookie；幂等
+6. 纯逻辑在 `auth/refresh-token.ts`（`issueRefreshToken`/`rotateRefreshToken`/`revokeRefreshToken`，显式依赖注入，单测友好）；`AuthService` 持有进程内 tombstone 登记供复用检测
+7. 密码使用 bcryptjs (cost factor 12) 哈希
 
 ### 全局管道
 
