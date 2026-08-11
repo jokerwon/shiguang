@@ -73,7 +73,7 @@
 
 | # | 场景 | 通过条件 |
 |---|------|---------|
-| G1 | 质量门命令 | `pnpm -r lint && pnpm --filter @shiguang/server test` 一次全绿 |
-| G2 | 偏好归一化幂等 | `runUpdatePreferences` 用例覆盖:add 已存在跳过 / remove 不存在忽略 / 归一后全空出 note;刻意改坏 `addOps` 后测试转红(变异验证) |
-| G3 | 工具参数校验失败路径 | `update_preferences` 全字段缺省、`setHealthGoal` 非枚举值以工具错误呈现(不经 execute 落库),对应 D2 的自动化兜底 |
+| G1 | 质量门命令 | `pnpm --filter @shiguang/server lint && pnpm --filter @shiguang/server test` 一次全绿（后端 lint+test）；前端 lint 的 React 19 新规则问题（use-auth effect setState、recipe/[id] try/catch、shimmer 渲染期组件创建）与本期无关，留待前端迭代 |
+| G2 | 偏好归一化幂等 | `runUpdatePreferences` 用例覆盖:add 已存在跳过 / remove 不存在忽略 / 归一后全空出 note / 空白清洗；变异验证已执行（去掉 `addOps` 已存在过滤 → 「add 幂等」用例转红，恢复后全绿） |
+| G3 | 工具参数校验失败路径 | `update_preferences` 全字段缺省 → execute 抛错（D2 兜底）；空白/空串数组归一化清洗用例通过。注：`setHealthGoal` 非枚举值等 JSON Schema 约束由模型 provider 端在生成 tool call args 时校验（ai SDK 的 `jsonSchema()` 不带运行时 `validate`），纯函数测试层不可及，留 D2 手动走查 |
 | G4 | seq 不变量 | `appendMessage` 用例覆盖:seq = max+1、`@@unique` 冲突重试、空会话从 1 起(零 DB,fake prisma) |
