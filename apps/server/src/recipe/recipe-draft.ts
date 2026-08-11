@@ -43,6 +43,23 @@ function isFiniteNumber(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v);
 }
 
+/** 安全字符串化 unknown 值（错误消息展示用，避免 [object Object]） */
+function safeStr(v: unknown): string {
+  if (v === null) return 'null';
+  if (v === undefined) return 'undefined';
+  if (typeof v === 'object') return JSON.stringify(v);
+  if (
+    typeof v === 'string' ||
+    typeof v === 'number' ||
+    typeof v === 'boolean' ||
+    typeof v === 'bigint'
+  ) {
+    return v.toString();
+  }
+  // symbol 等罕见类型（菜谱校验场景不会出现）
+  return JSON.stringify(v);
+}
+
 /**
  * 校验一条 AI 生成的菜谱草稿。通过时不代表已归一化（如 img），
  * 调用方负责把 img 归一为 ''（图片全走占位符策略）。
@@ -58,7 +75,7 @@ export function validateRecipeDraft(raw: unknown): DraftValidation {
   if (!isNonEmptyString(r['desc'])) errors.push('desc 缺失或为空');
 
   if (!CUISINES.includes(r['cuisine'] as (typeof CUISINES)[number])) {
-    errors.push(`cuisine 非法: ${String(r['cuisine'])}`);
+    errors.push(`cuisine 非法: ${safeStr(r['cuisine'])}`);
   }
 
   if (!Array.isArray(r['tags'])) {
@@ -71,15 +88,15 @@ export function validateRecipeDraft(raw: unknown): DraftValidation {
   }
 
   if (!isFiniteNumber(r['time']) || r['time'] < 3 || r['time'] > 120) {
-    errors.push(`time 越界 [3,120]: ${String(r['time'])}`);
+    errors.push(`time 越界 [3,120]: ${safeStr(r['time'])}`);
   }
   if (!isFiniteNumber(r['kcal']) || r['kcal'] < 50 || r['kcal'] > 1200) {
-    errors.push(`kcal 越界 [50,1200]: ${String(r['kcal'])}`);
+    errors.push(`kcal 越界 [50,1200]: ${safeStr(r['kcal'])}`);
   }
   for (const key of ['protein', 'carb', 'fat'] as const) {
     const v = r[key];
     if (!isFiniteNumber(v) || v < 0 || v > 150) {
-      errors.push(`${key} 越界 [0,150]: ${String(v)}`);
+      errors.push(`${key} 越界 [0,150]: ${safeStr(v)}`);
     }
   }
 

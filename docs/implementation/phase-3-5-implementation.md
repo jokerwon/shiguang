@@ -7,9 +7,9 @@
 
 ## ⚠️ 关键前置发现
 
-**1. 现有 5 个 spec 全是纯函数风格，零 Nest 容器、零 DB，本期必须沿用。** 测试基建已就绪：`package.json` 的 jest 字段配置（ts-jest、`src/` rootDir），参考样板 [recommendation.scoring.spec.ts](../../apps/server/src/recipe/recommendation.scoring.spec.ts) / [tools.spec.ts](../../apps/server/src/chat/tools/tools.spec.ts)。**不引入 @nestjs/testing**——一旦引入容器测试，运行时长和维护成本跳档，与本期"轻量补齐"定位冲突。
+**1. 现有 5 个 spec 全是纯函数风格，零 Nest 容器、零 DB，本期必须沿用。** 测试基建已就绪：`package.json` 的 jest 字段配置（ts-jest、`src/` rootDir），参考样板 [recommendation.scoring.spec.ts](../../apps/server/src/recipe/recommendation.scoring.spec.ts) / [index.spec.ts](../../apps/server/src/chat/tools/index.spec.ts)。**不引入 @nestjs/testing**——一旦引入容器测试，运行时长和维护成本跳档，与本期"轻量补齐"定位冲突。
 
-**2. `runUpdatePreferences` 是纯函数但测试覆盖在工具层，且归一化分支未穷举。** [write-tools-logic.ts](../../apps/server/src/chat/tools/write-tools-logic.ts) 的 add/remove 幂等归一化（`addOps` = 输入−当前、`removeOps` = 输入∩当前）和「归一后全空 → note」分支是 ADR-0012 决策 3 的核心语义。现有 [tools.spec.ts](../../apps/server/src/chat/tools/tools.spec.ts) 已覆盖零副作用与空操作集拒绝，但「add 已存在跳过」「remove 不存在忽略」「归一后全空出 note」三分支缺用例。
+**2. `runUpdatePreferences` 是纯函数但测试覆盖在工具层，且归一化分支未穷举。** [write-tools-logic.ts](../../apps/server/src/chat/tools/write-tools-logic.ts) 的 add/remove 幂等归一化（`addOps` = 输入−当前、`removeOps` = 输入∩当前）和「归一后全空 → note」分支是 ADR-0012 决策 3 的核心语义。现有 [index.spec.ts](../../apps/server/src/chat/tools/index.spec.ts) 已覆盖零副作用与空操作集拒绝，但「add 已存在跳过」「remove 不存在忽略」「归一后全空出 note」三分支缺用例。
 
 **3. schema 校验失败路径（AI 幻觉参数 → 工具错误 → D2 如实告知）无测试。** tool 定义层（[write-tools.ts](../../apps/server/src/chat/tools/write-tools.ts)）的 input schema 是 AI 输出进系统的第一道闸。需要验证：非法 `setHealthGoal` 枚举值、全字段缺省的 `update_preferences` 调用，会以工具错误呈现而非静默/崩溃（D2 验收场景的自动化兜底）。
 
@@ -25,7 +25,7 @@
 
 | # | 任务 | 文件 | 说明 |
 |---|------|------|------|
-| 0.1 | `runUpdatePreferences` 归一化用例 | `apps/server/src/chat/tools/tools.spec.ts` | 补三分支：add 已存在被跳过（幂等）、remove 不存在被忽略、归一后全空返回 `note` 且 draft 无键。沿用现有 mock deps 风格 |
+| 0.1 | `runUpdatePreferences` 归一化用例 | `apps/server/src/chat/tools/index.spec.ts` | 补三分支：add 已存在被跳过（幂等）、remove 不存在被忽略、归一后全空返回 `note` 且 draft 无键。沿用现有 mock deps 风格 |
 | 0.2 | `preference.service.ts` upsert 部分更新语义 | 同模块新增 `preference.service.spec.ts` | fake prisma（对象字面量实现 `userPreference.upsert`），验证：只传 `dislikedIngredients` 时 update 体不含另两字段（部分更新不覆盖——ADR-0012 决策 3 并行修改场景的 service 层保障） |
 
 **验收**：新用例全绿；刻意改坏 `addOps`（如去掉已存在过滤）→ 测试红。
@@ -36,7 +36,7 @@
 
 | # | 任务 | 文件 | 说明 |
 |---|------|------|------|
-| 1.1 | `update_preferences` 非法输入用例 | `apps/server/src/chat/tools/tools.spec.ts` | ① 全字段缺省 → 工具错误（已有则用，确认断言文本）；② `setHealthGoal` 传非枚举值 → schema 拒绝（在 tool 定义层测，不经 execute）；③ 数组含空串/纯空白 → 归一化清洗后行为正确 |
+| 1.1 | `update_preferences` 非法输入用例 | `apps/server/src/chat/tools/index.spec.ts` | ① 全字段缺省 → 工具错误（已有则用，确认断言文本）；② `setHealthGoal` 传非枚举值 → schema 拒绝（在 tool 定义层测，不经 execute）；③ 数组含空串/纯空白 → 归一化清洗后行为正确 |
 | 1.2 | 其余写工具 schema 抽查 | 同上 | `add_pantry_items` 空数组、`set_favorite` 非法 recipeId 类型——各一条，确认走工具错误而非未捕获异常 |
 
 **验收**：对应 D2 场景（工具执行失败如实告知）有自动化用例兜底；全绿。
@@ -62,4 +62,4 @@
 | 3.2 | 常驻层文档审计 | 根/子 `AGENTS.md` | 根 AGENTS.md「根目录命令」是否需要补测试命令（已有 lint/test 在子项目）；`apps/server/AGENTS.md` 单测清单行更新（新增 spec 文件） |
 | 3.3 | 索引同步 | `docs/README.md` | Phase 3.5 行：实施清单 + 验收清单指向 + 状态 |
 
-**验收**：`pnpm -r lint && pnpm --filter @shiguang/server test` 一次全绿；文档与代码一致。
+**验收**：`pnpm --filter @shiguang/server lint && pnpm --filter @shiguang/server test` 一次全绿（前端 React 19 lint 留待后续，见验收清单 G1）；文档与代码一致。

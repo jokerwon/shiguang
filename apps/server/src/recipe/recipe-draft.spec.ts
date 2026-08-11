@@ -33,9 +33,11 @@ describe('validateRecipeDraft', () => {
   });
 
   it('拒绝缺失必填字段', () => {
-    const { name: _name, ...noName } = VALID;
+    const noName = { ...VALID, name: undefined };
+    delete noName.name;
     expect(validateRecipeDraft(noName).ok).toBe(false);
-    const { desc: _desc, ...noDesc } = VALID;
+    const noDesc = { ...VALID, desc: undefined };
+    delete noDesc.desc;
     expect(validateRecipeDraft(noDesc).ok).toBe(false);
   });
 

@@ -40,9 +40,7 @@ describe('conversation.mapper', () => {
         input: { keyword: '鸡蛋' },
         output: [{ id: 'r1', name: '番茄炒蛋' }],
       } as unknown as AnyPart;
-      const u = toUIMessage(
-        row({ parts: [textPart, toolPart] }),
-      );
+      const u = toUIMessage(row({ parts: [textPart, toolPart] }));
       expect(u.parts).toEqual([textPart, toolPart]);
     });
 

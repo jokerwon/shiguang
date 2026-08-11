@@ -287,5 +287,76 @@ describe('chat tools', () => {
       expect(result.draft.addAllergens).toEqual(['虾']);
       expect(result.draft.removeAllergens).toEqual(['花生']);
     });
+
+    // W1.1③：数组含空串/纯空白 → 归一化清洗后行为正确（uniqueClean trim + 过滤）
+    it('add 数组含空串与纯空白被清洗，去重后落草稿', async () => {
+      const { deps } = makeDeps({
+        pref: {
+          dislikedIngredients: [],
+          allergens: [],
+          healthGoal: 'BALANCED',
+        },
+      });
+      const result = await runUpdatePreferences(deps, 'u1', {
+        addDisliked: ['香菜', '  ', '', '茼蒿', '香菜'],
+      });
+      // 空串/空白被过滤、重复被去重、两侧空白被 trim
+      expect(result.draft.addDisliked).toEqual(['香菜', '茼蒿']);
+    });
+
+    it('输入仅空白与空串时归一化后全空 → 出 note（不入草稿）', async () => {
+      const { deps } = makeDeps({
+        pref: {
+          dislikedIngredients: [],
+          allergens: [],
+          healthGoal: 'BALANCED',
+        },
+      });
+      // 唯一非空字段是 addDisliked，但其内容归一化后为空 → hasAny 判真，
+      // addOps 归一后为空 → 草稿无键 → note。验证清洗不污染「全空」判定。
+      const result = await runUpdatePreferences(deps, 'u1', {
+        addDisliked: ['  ', ''],
+      });
+      expect(result.draft).toEqual({});
+      expect(result.note).toBeDefined();
+    });
+  });
+
+  // W1.2：写工具空入参路径——空数组走零副作用早返回，不触发写 dep、不抛异常。
+  // （缺省必填字段属 JSON Schema 层校验，由模型 provider 端在生成 tool call args
+  // 时执行，不在 execute 运行时；ai SDK 的 jsonSchema() tool 不带运行时 validate，
+  // 故该路径在纯函数测试层不可及，留待 D2 手动走查。）
+  describe('写工具空入参零副作用', () => {
+    it('add_pantry_items 空数组不触发 pantryReplace，返回空 added', async () => {
+      const pantryReplace = jest.fn();
+      const { deps, state } = makeDeps({ pantry: ['鸡蛋'] });
+      deps.pantryReplace = pantryReplace;
+
+      const result = await runAddPantryItems(deps, 'u1', []);
+      expect(result.added).toEqual([]);
+      expect(state.pantry).toEqual(['鸡蛋']);
+      expect(pantryReplace).not.toHaveBeenCalled();
+    });
+
+    it('add_pantry_items 仅空白/空串归一为空，不触发写', async () => {
+      const pantryReplace = jest.fn();
+      const { deps } = makeDeps({ pantry: [] });
+      deps.pantryReplace = pantryReplace;
+
+      const result = await runAddPantryItems(deps, 'u1', ['  ', '']);
+      expect(result.added).toEqual([]);
+      expect(pantryReplace).not.toHaveBeenCalled();
+    });
+
+    it('remove_pantry_items 空数组不触发 pantryReplace', async () => {
+      const pantryReplace = jest.fn();
+      const { deps, state } = makeDeps({ pantry: ['鸡蛋'] });
+      deps.pantryReplace = pantryReplace;
+
+      const result = await runRemovePantryItems(deps, 'u1', []);
+      expect(result.removed).toEqual([]);
+      expect(state.pantry).toEqual(['鸡蛋']);
+      expect(pantryReplace).not.toHaveBeenCalled();
+    });
   });
 });

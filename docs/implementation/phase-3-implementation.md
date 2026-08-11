@@ -45,7 +45,7 @@
 |---|------|------|------|
 | 1.1 | 工具定义 | `apps/server/src/chat/tools/write-tools.ts`、`write-tools-logic.ts` | 输入:`addDisliked?` / `removeDisliked?` / `addAllergens?` / `removeAllergens?` / `setHealthGoal?`(全可选但至少一项)。`execute` 只组装草稿对象返回,**不调任何 service**;output 含操作集 + 当前偏好快照(仅供卡片渲染 diff 对照,不作确认依据) |
 | 1.2 | prompt 规范 | `apps/server/src/chat/prompts/behavior.ts`、`guardrails.ts` | 偏好变更必须走 `update_preferences` 草稿;**不得声称「已保存/已记住」**(只说「已为你准备变更,请确认」);草稿挂出期间可当场回避用户口头忌口,但推荐仍以注入偏好为准;E4 诱导(「你看着办直接改」)一律回应「需要你点确认」 |
-| 1.3 | 单测 | `apps/server/src/chat/tools/tools.spec.ts` | 工具返回草稿且**零副作用**(断言 mock deps 未被调用);空操作集(全字段缺省)拒绝或归一化 |
+| 1.3 | 单测 | `apps/server/src/chat/tools/index.spec.ts` | 工具返回草稿且**零副作用**(断言 mock deps 未被调用);空操作集(全字段缺省)拒绝或归一化 |
 
 **验收**:说「我不吃香菜」→ 消息流出现草稿 tool part,`PUT /preferences` **零调用**(DevTools 网络面板验证);说「好的你看着办直接改吧」→ AI 不产出任何落库行为(E4)。
 
