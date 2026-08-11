@@ -1,6 +1,6 @@
 # 食光 (Shiguang) 领域术语表
 
-> 本术语表定义「内容深度 + 个性化」(Phase 1)与「AI 能力跃迁」(Phase 2–3)涉及的核心领域概念,作为前后端、AI prompt、文档的统一语言 (Ubiquitous Language)。
+> 本术语表定义「内容深度 + 个性化」(Phase 1)与「AI 能力跃迁」(Phase 2–3)与「移动主战场」(Phase 5)涉及的核心领域概念,作为前后端、移动端、AI prompt、文档的统一语言 (Ubiquitous Language)。
 > **本表只定义概念语义。字段级事实(字段名、类型、枚举取值)一律以 `apps/server/prisma/schema.prisma` 为准，此处不复制。**
 
 ## 核心实体 (Core Entities)
@@ -104,6 +104,20 @@ AI 批量生成菜谱的缓冲区。生成的菜谱**先入待审区(JSON / stag
 
 ### 营养估算值 (Estimated Nutrition)
 菜谱的营养三要素由 AI 生成时估算得出,详情页需标注"营养为估算值"以避免误导。
+
+### 离线只读缓存 (Offline Read Cache)
+移动端的离线策略(ADR-0014):**只读、不写**。范围限定在「浏览链」,语义为「每查询键持久化最近成功响应 + stale-while-revalidate」;无网不可写(写路径仍在线,无写队列),回网自动刷新。
+
+### 浏览链 (Browse Chain)
+离线只读缓存覆盖范围的命名(ADR-0014):个性化推荐 → 菜谱详情 → 收藏 这一条核心浏览路径。离线范围的后续扩展(对话/推送等)以此为基线。
+
+## 平台与架构 (Platform & Architecture)
+
+### 移动端主战场 (Mobile-First Platform)
+食光的平台战略(ADR-0014):移动端是主要使用入口,Web 为辅助。首发以原生 app(iOS 先行)落地;主张由原生能力(离线只读缓存、Keychain 常驻登录、原生体验)立住,而非功能面复刻 Web。
+
+### 共享域层 (Shared Domain Layer)
+`packages/domain` 共享包(ADR-0015):Web 与移动端共用的领域类型与纯函数,**框架无关**(无 React,不共享 UI)。Web 与服务端既有的中文标签重复随迁移消除。
 
 ## 协作实践 (Practices)
 
