@@ -70,7 +70,7 @@
 
 **验收**:DevTools 把 access 改成过期/乱串 → 任意请求自动 refresh 重放成功（用户无感）;refresh 也被毁 → 跳登录页；两个 tab 同刻操作不互相把对方踢下线（单飞生效）。
 
-**待手动走查**：前端交互场景（无感续期、双 tab 单飞、启动静默 refresh）需在浏览器 + DevTools 下验证，见验收清单 B/D 节。代码层已覆盖：`request()` 与 chat `customFetch` 共用 `lib/refresh.ts` 模块级 inflight；启动恢复改 lazy init（客户端首帧快照）+ 后台 `refreshOnce()`。前端 lint/tsc：本次改动 6 文件零新增错误（剩余错误为 pre-existing ai-elements / 页面的 React 19 规则，Phase 3.5 已声明延后）。
+**✅ 前端 lint/tsc**：本次改动 6 文件零新增错误（剩余错误为 pre-existing ai-elements / 页面的 React 19 规则，Phase 3.5 已声明延后）。**✅ 浏览器手动走查**（2026-08-11）：B/D/E 节全过（无感续期、双 tab 单飞、并发重放、启动静默 refresh、五页 + 完整对话冒烟），见验收清单验证状态。
 
 ---
 
