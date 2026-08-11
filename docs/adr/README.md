@@ -57,7 +57,7 @@
 - 砍掉(二期):AI 对话、推送(等真机验收)、筛选页、小组件、生物识别
 - 共享域层 `packages/domain`(ADR-0015),迁移 Web 去重
 - 目标零后端改动;Web 维持现状;验收走 iOS 模拟器手动走查
-- 实施/验收清单待写
+- 实施清单:[implementation/phase-5-implementation.md](../implementation/phase-5-implementation.md)（验收清单随实现阶段编写）
 
 **Phase 4(认证双轨,已交付)** — 原生 app 的认证前置(ADR-0013)
 - 双 token:15 分钟 access(JWT)+ 30 天滑动 refresh(opaque,bcrypt 哈希落库)
