@@ -32,19 +32,31 @@ model Recipe {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  displayName  String?
-  avatarUrl    String?
-  role         Role     @default(USER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  displayName   String?
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   pantryItems   PantryItem[]
   favorites     Favorite[]
   preference    UserPreference?
   conversations Conversation[]
+  refreshTokens RefreshToken[]
+}
+
+// refresh token 轮换表（ADR-0013）：只存 bcrypt 哈希，一次一换，30 天滑动过期
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique // bcrypt(opaque token)，不存明文
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Conversation {
@@ -115,11 +127,6 @@ enum Cuisine {
   JAPANESE
   SICHUAN
   LIGHT
-}
-
-enum Role {
-  USER
-  ADMIN
 }
 
 enum HealthGoal {
