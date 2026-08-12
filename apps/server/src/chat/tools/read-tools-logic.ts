@@ -2,13 +2,8 @@
 // search_recipes 先过 blocked 硬过滤再排序（ADR-0006 安全红线），
 // 复用 recommendation.scoring 的打分，单一事实源。返回精简字段控制 token。
 import type { Recipe } from 'generated/prisma/client';
-import {
-  CUISINE_DOWN,
-  CUISINE_ZH,
-  TAG_DOWN,
-  TAG_ZH,
-  toResponse,
-} from '../../recipe/recipe.mapper';
+import { CUISINE_DOWN, TAG_DOWN, toResponse } from '../../recipe/recipe.mapper';
+import { CUISINE_LABELS, PREF_LABELS } from '@shiguang/domain';
 import {
   dateKeyOf,
   dailySeed,
@@ -25,11 +20,11 @@ export function toSummary(r: Recipe): RecipeSummary {
   return {
     id: resp.id,
     name: resp.name,
-    cuisine: CUISINE_ZH[resp.cuisine] ?? resp.cuisine,
+    cuisine: CUISINE_LABELS[resp.cuisine] ?? resp.cuisine,
     time: resp.time,
     kcal: resp.kcal,
     protein: resp.protein,
-    tags: resp.tags.map((t) => TAG_ZH[t] ?? t),
+    tags: resp.tags.map((t) => PREF_LABELS[t] ?? t),
   };
 }
 
@@ -173,13 +168,13 @@ export async function runGetRecipe(
       id: resp.id,
       name: resp.name,
       desc: resp.desc,
-      cuisine: CUISINE_ZH[resp.cuisine] ?? resp.cuisine,
+      cuisine: CUISINE_LABELS[resp.cuisine] ?? resp.cuisine,
       time: resp.time,
       kcal: resp.kcal,
       protein: resp.protein,
       carb: resp.carb,
       fat: resp.fat,
-      tags: resp.tags.map((t) => TAG_ZH[t] ?? t),
+      tags: resp.tags.map((t) => PREF_LABELS[t] ?? t),
       ingredients: resp.ingredients,
       steps: resp.steps,
     },

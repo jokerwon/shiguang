@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "pnpm --parallel --filter @shiguang/web --filter @shiguang/server run dev",
+    "dev:mobile": "pnpm --filter @shiguang/mobile start",
+    "build:domain": "pnpm --filter @shiguang/domain run build",
     "recipes:generate": "pnpm --filter @shiguang/server run recipes:generate",
     "seed:long-conversation": "pnpm --filter @shiguang/server run seed:long-conversation"
   },

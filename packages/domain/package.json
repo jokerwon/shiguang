@@ -1,0 +1,23 @@
+{
+  "name": "@shiguang/domain",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "node": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "prepare": "tsc --build"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

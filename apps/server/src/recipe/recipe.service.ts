@@ -2,16 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from 'generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { QueryRecipesDto } from './recipe.dto';
-import {
-  CUISINE_UP,
-  TAG_UP,
-  toResponse,
-  type RecipeResponse,
-} from './recipe.mapper';
+import type { Recipe as DomainRecipe } from '@shiguang/domain';
+import { CUISINE_UP, TAG_UP, toResponse } from './recipe.mapper';
 import { RecommendationService } from './recommendation.service';
 
 export interface PaginatedResponse {
-  data: RecipeResponse[];
+  data: DomainRecipe[];
   meta: {
     total: number;
     page: number;
@@ -21,8 +17,8 @@ export interface PaginatedResponse {
 }
 
 export interface RecommendedResponse {
-  today: RecipeResponse[];
-  quick: RecipeResponse[];
+  today: DomainRecipe[];
+  quick: DomainRecipe[];
 }
 
 @Injectable()
@@ -81,7 +77,7 @@ export class RecipeService {
     };
   }
 
-  async findById(id: string): Promise<RecipeResponse> {
+  async findById(id: string): Promise<DomainRecipe> {
     const recipe = await this.prisma.recipe.findUnique({ where: { id } });
     if (!recipe) {
       throw new NotFoundException('菜谱不存在');

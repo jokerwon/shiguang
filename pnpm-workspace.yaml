@@ -1,5 +1,6 @@
 packages:
   - 'apps/*'
+  - 'packages/*'
 
 onlyBuiltDependencies:
   - '@nestjs/core'
@@ -16,3 +17,7 @@ allowBuilds:
   prisma: true
   sharp: true
   unrs-resolver: true
+
+overrides:
+  react: 19.2.4
+  react-dom: 19.2.4

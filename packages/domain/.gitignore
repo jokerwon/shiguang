@@ -1,0 +1,4 @@
+# 构建产物与依赖（ADR-0015：服务端消费 dist，构建产物不入库）
+node_modules/
+dist/
+*.tsbuildinfo

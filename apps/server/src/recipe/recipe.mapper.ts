@@ -1,7 +1,8 @@
 // 菜谱实体 ↔ API 响应的映射，供 RecipeService 与 ChatService（AI 上下文注入）共用。
 import type { Recipe, Cuisine, Tag } from 'generated/prisma/client';
+import type { Recipe as DomainRecipe } from '@shiguang/domain';
 
-/* ---- 枚举映射：Prisma 大写 → 前端小写 ---- */
+/* ---- 枚举映射：Prisma 大写 → 前端小写（服务端私有，ADR-0015 边界） ---- */
 
 export const CUISINE_DOWN: Record<string, string> = {
   HOME: 'home',
@@ -41,64 +42,23 @@ export const TAG_UP: Record<string, Tag> = {
   comforting: 'COMFORTING',
 };
 
-/* ---- 中文展示标签（AI prompt 渲染候选菜谱用，与前端 CUISINE_LABELS/PREF_LABELS 对齐） ---- */
+// CUISINE_ZH / TAG_ZH 已迁移到 @shiguang/domain 的 CUISINE_LABELS / PREF_LABELS（ADR-0015 消除双份重复）
 
-export const CUISINE_ZH: Record<string, string> = {
-  home: '家常',
-  western: '西餐',
-  japanese: '日料',
-  sichuan: '川菜',
-  light: '轻食',
-};
-
-export const TAG_ZH: Record<string, string> = {
-  vegetarian: '素食',
-  'high-protein': '高蛋白',
-  'low-cal': '低卡',
-  'low-carb': '低碳',
-  quick: '快手',
-  'rice-friendly': '下饭',
-  comforting: '治愈系',
-};
-
-/* ---- 响应类型 ---- */
-
-export interface RecipeIngredient {
-  name: string;
-  amount: string;
-}
-
-export interface RecipeResponse {
-  id: string;
-  name: string;
-  desc: string;
-  cuisine: string;
-  time: number;
-  kcal: number;
-  protein: number;
-  carb: number;
-  fat: number;
-  img: string;
-  tags: string[];
-  ingredients: RecipeIngredient[];
-  steps: string[];
-}
-
-/** 将 Prisma 返回的 Recipe 转为前端可用的格式 */
-export function toResponse(recipe: Recipe): RecipeResponse {
+/** 将 Prisma 返回的 Recipe 转为前端可用的格式（返回共享域层 Recipe 类型） */
+export function toResponse(recipe: Recipe): DomainRecipe {
   return {
     id: recipe.id,
     name: recipe.name,
     desc: recipe.desc,
-    cuisine: CUISINE_DOWN[recipe.cuisine],
+    cuisine: CUISINE_DOWN[recipe.cuisine] ?? recipe.cuisine.toLowerCase(),
     time: recipe.time,
     kcal: recipe.kcal,
     protein: recipe.protein,
     carb: recipe.carb,
     fat: recipe.fat,
     img: recipe.img,
-    tags: recipe.tags.map((t) => TAG_DOWN[t]),
-    ingredients: recipe.ingredients as unknown as RecipeIngredient[],
+    tags: recipe.tags.map((t) => TAG_DOWN[t] ?? t.toLowerCase()),
+    ingredients: recipe.ingredients as unknown as DomainRecipe['ingredients'],
     steps: recipe.steps as string[],
   };
 }

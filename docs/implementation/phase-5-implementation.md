@@ -32,6 +32,10 @@
 - 我的:`GET /preferences` / `PUT /preferences`（认证）
 无缺口需后端改动；收藏页取数模式（发现 1）已被 Web 验证可行。
 
+**9. Metro + pnpm 的依赖解析坑:不可用 `disableHierarchicalLookup`，个别包须显式声明。** [metro.config.js](../../apps/mobile/metro.config.js) 的 `config.resolver.disableHierarchicalLookup = true` 会让 Metro 不再沿导入文件路径向上找 node_modules，只认 `nodeModulesPaths` 列出的两个目录——而 pnpm 的传递依赖嵌套在 `.pnpm/<pkg>@<ver>/node_modules/`，层级查找一关就全部解析不到，表现为 expo-router 入口链式 `Unable to resolve`（`@expo/metro-runtime` → `@babel/runtime` → `expo-modules-core`）。ADR-0015 决策 4 只要求 `watchFolders` + `nodeModulesPaths`，该开关是脚手架额外加的、已移除。另两包须显式依赖:expo-router 构建产物运行时引用 `@babel/runtime` 却未声明（[ExpoRoot.js](https://github.com/expo/expo/blob/sdk-57/packages/expo-router/src/ExpoRoot.tsx)），不装即解析失败；`@expo/metro-runtime` 是 Expo Router web 的官方要求依赖。版本以 [apps/mobile/package.json](../../apps/mobile/package.json) 为准。
+
+**10. RN/React 版本须与 SDK 57 兼容矩阵对齐，否则 iOS 生产导出（Hermes bytecode）失败。** 脚手架早期钉的 RN 0.80 与 SDK 57 期望（`expo install --check` / `bundledNativeModules.json`）错位时，`expo export --platform ios` 在 Hermes 字节码步骤报 `Cannot find module 'hermes-compiler/package.json'`——根因是 `@expo/metro-config` 的 `build/serializer/exportHermes.js` 对 `hermes-compiler` 做无保护 `resolveFrom`（找不到即抛，早于 RN 自带 `sdks/hermesc` 回退路径），`hermes-compiler` 是 RN 0.83+ 才作为正式依赖的包。对齐 `expo install --fix` 的期望版本后（RN/React/TS 以 SDK 兼容矩阵为准）web 与 iOS 导出均通过。
+
 ---
 
 ## W0 · `packages/domain` 共享域层（ADR-0015，移动端复用前提）
@@ -58,13 +62,13 @@
 | # | 任务 | 文件 | 说明 |
 |---|------|------|------|
 | 1.1 | Expo 项目初始化 | `apps/mobile/` | `create-expo-app` 或模板，iOS 先行（macOS 已就绪）；TypeScript 默认 |
-| 1.2 | Metro 配置 | `apps/mobile/metro.config.js` | `expo/metro-config` + `watchFolders: [repoRoot]` + `nodeModulesPaths`（pnpm hoisting）——`packages/domain` 源码能被解析并转译（发现 7） |
+| 1.2 | Metro 配置 | `apps/mobile/metro.config.js` | `expo/metro-config` + `watchFolders: [repoRoot]` + `nodeModulesPaths`（pnpm hoisting）——`packages/domain` 源码能被解析并转译（发现 7）。**不可加 `disableHierarchicalLookup`**（发现 9:会挡住 pnpm 嵌套依赖解析） |
 | 1.3 | 依赖 expo-secure-store | `apps/mobile/package.json` | Keychain 凭据容器（ADR-0014 决策 4） |
 | 1.4 | 依赖 `@shiguang/domain` | `apps/mobile/package.json` | `"@shiguang/domain": "workspace:*"`;验证 `import { Recipe } from '@shiguang/domain'` 在 iOS 模拟器可解析（Metro 转译链路通） |
 | 1.5 | 根脚本（可选） | `package.json` | `dev:mobile` 脚本（对齐 `pnpm dev` 惯例） |
 | 1.6 | 后端连通验证 | `apps/mobile/` | 模拟器访问 `http://localhost:3001`（iOS 模拟器 localhost 指向宿主机，注意 base url 形态）;调 `GET /recipes` 返回数据 |
 
-**验收**:`pnpm --filter @shiguang/mobile start`（或 expo start）起模拟器，脚手架首页渲染；`CUISINE_LABELS` 等在 RN 环境渲染正常（共享包经 Metro 转译）；`GET /recipes` 打通。
+**验收**:`pnpm --filter @shiguang/mobile start`（或 expo start）起模拟器，脚手架首页渲染；`CUISINE_LABELS` 等在 RN 环境渲染正常（共享包经 Metro 转译）；`GET /recipes` 打通；`expo export --platform web` 与 `--platform ios` 均导出成功（Metro 解析链路 + Hermes bytecode 通，发现 9/10）。
 
 ---
 

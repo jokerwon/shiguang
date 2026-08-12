@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "食光",
+    "slug": "shiguang-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "shiguang",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kai.shiguang"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
+  }
+}
