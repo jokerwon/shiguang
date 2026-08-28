@@ -1,6 +1,7 @@
 'use client'
 
 import { Bookmark } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
 import { CUISINE_LABELS, type Recipe } from '@/lib/recipes'
 import { RecipeImage } from '@/components/recipe-image'
 import { cn } from '@/lib/utils'
@@ -10,7 +11,7 @@ export function RecipeCard({ r, score, saved, onOpen, onToggle }: { r: Recipe; s
 
   return (
     <div
-      className="group relative overflow-hidden rounded-lg border border-border bg-background transition-[transform,box-shadow] active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_color-mix(in_oklch,var(--foreground)_30%,transparent)]"
+      className="group relative overflow-hidden rounded-lg border border-border bg-background transition-[transform,box-shadow] active:scale-[0.96] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_color-mix(in_oklch,var(--foreground)_30%,transparent)]"
       onClick={onOpen}
     >
       <div className="relative aspect-4/3 overflow-hidden bg-muted">
@@ -30,7 +31,18 @@ export function RecipeCard({ r, score, saved, onOpen, onToggle }: { r: Recipe; s
             saved ? 'text-foreground' : 'text-muted-foreground',
           )}
         >
-          <Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />
+          <AnimatePresence initial={false}>
+            <motion.span
+              key={saved ? 'saved' : 'unsaved'}
+              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+              exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
+              className="absolute inset-0 grid place-items-center"
+            >
+              <Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />
+            </motion.span>
+          </AnimatePresence>
         </button>
       </div>
 

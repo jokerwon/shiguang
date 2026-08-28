@@ -36,7 +36,7 @@ export function DiscoveryClient() {
   const quick = data?.quick ?? []
 
   return (
-    <section className="pb-4 animate-in fade-in slide-in-from-bottom-1.5 duration-200">
+    <section className="pb-4 animate-in fade-in duration-200">
       <div className="gap-y-2 p-4 md:grid md:grid-cols-[1.1fr_0.9fr] md:gap-x-10 md:px-0 md:pt-10">
         <div>
           <h1 className="text-[26px] leading-[1.15] font-bold tracking-tight md:text-[clamp(28px,3.2vw,40px)]">今天想做点什么？</h1>
@@ -44,16 +44,16 @@ export function DiscoveryClient() {
           <Link
             href="/pantry"
             aria-label="搜索菜名，或按食材匹配"
-            className="mt-4 flex w-full items-center gap-2.5 rounded-lg border border-border bg-muted px-3.5 py-3 text-left text-[15px] transition-colors hover:border-foreground md:max-w-md"
+            className="mt-4 flex w-full items-center gap-2.5 rounded-lg border border-border bg-muted px-3.5 py-3 text-left text-[15px] transition-[color,border-color,transform] active:scale-[0.96] hover:border-foreground md:max-w-md"
           >
-            <Search size={18} className="text-muted-foreground" />
+            <Search size={18} strokeWidth={1.5} className="text-muted-foreground" />
             <span className="text-muted-foreground">搜索菜名，或按食材匹配…</span>
           </Link>
         </div>
 
         <Link
           href="/chat"
-          className="mt-4 flex w-full items-center gap-4 rounded-lg bg-foreground p-4 text-background transition-colors hover:bg-[color-mix(in_oklch,var(--foreground)_88%,var(--muted-foreground))] md:mt-0 md:self-center"
+          className="mt-4 flex w-full items-center gap-4 rounded-lg bg-foreground p-4 text-background transition-[background-color,transform] active:scale-[0.96] hover:bg-[color-mix(in_oklch,var(--foreground)_88%,var(--muted-foreground))] md:mt-0 md:self-center"
         >
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
             <User size={22} />

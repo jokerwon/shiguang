@@ -25,7 +25,7 @@ export function PrefsHint() {
 
   return (
     <div className="mx-4 mt-1 flex items-center gap-3 rounded-lg border border-border bg-muted px-4 py-3">
-      <Sparkles size={16} className="shrink-0 text-muted-foreground" />
+      <Sparkles size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
       <p className="flex-1 text-[13px] text-muted-foreground">
         完善偏好，让推荐更准
         <Link href="/settings" className="ml-2 font-medium text-foreground hover:underline">

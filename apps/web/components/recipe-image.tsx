@@ -73,7 +73,7 @@ export function RecipeImage({
         src={r.img}
         alt={r.name}
         onError={() => setErr(true)}
-        className={cn('aspect-4/3 w-full object-cover ring-1 ring-black/10 dark:ring-white/10 md:aspect-21/9', className)}
+        className={cn('aspect-4/3 w-full object-cover ring-1 ring-inset ring-black/10 dark:ring-white/10 md:aspect-21/9', className)}
       />
     )
   }
@@ -86,7 +86,7 @@ export function RecipeImage({
       sizes="(max-width: 640px) 50vw, 220px"
       loading="lazy"
       onError={() => setErr(true)}
-      className={cn('h-full w-full object-cover ring-1 ring-black/10 dark:ring-white/10', className)}
+      className={cn('h-full w-full object-cover ring-1 ring-inset ring-black/10 dark:ring-white/10', className)}
     />
   )
 }
