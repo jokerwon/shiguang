@@ -1,13 +1,11 @@
 'use client'
 
 import { Bookmark, Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { RecipeCard } from '@/components/recipe-card'
 import { useFavorites } from '@/lib/use-favorites'
 import type { Recipe } from '@/lib/recipes'
 
 export function FavoriteClient({ recipes }: { recipes: Recipe[] }) {
-  const router = useRouter()
   const { saved, toggleSave, isLoading } = useFavorites()
   const items = recipes.filter((r) => saved.has(r.id))
 
@@ -42,7 +40,6 @@ export function FavoriteClient({ recipes }: { recipes: Recipe[] }) {
               key={r.id}
               r={r}
               saved={saved.has(r.id)}
-              onOpen={() => router.push(`/recipe/${r.id}`)}
               onToggle={() => toggleSave(r.id)}
             />
           ))}

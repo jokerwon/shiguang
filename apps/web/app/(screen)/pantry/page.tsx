@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Ham } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { RecipeCard } from '@/components/recipe-card'
@@ -13,11 +12,9 @@ import { matchRecipes, resolveIng, SUGGEST_INGS } from '@/lib/recipes'
 import { cn } from '@/lib/utils'
 
 export default function PantryScreen() {
-  const router = useRouter()
   const { pantry, addIng, removeAt, toggleSuggest, clear } = usePantry()
   const { saved, toggleSave } = useFavorites()
   const { recipes } = useAllRecipes()
-  const openDetail = (id: string) => router.push(`/recipe/${id}`)
   const [field, setField] = useState('')
   const [barW, setBarW] = useState(0)
 
@@ -145,7 +142,7 @@ export default function PantryScreen() {
           ) : (
             <div className="grid grid-cols-2 gap-4 px-4 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
               {results.map(({ r, score }) => (
-                <RecipeCard key={r.id} r={r} score={score} saved={saved.has(r.id)} onOpen={() => openDetail(r.id)} onToggle={() => toggleSave(r.id)} />
+                <RecipeCard key={r.id} r={r} score={score} saved={saved.has(r.id)} onToggle={() => toggleSave(r.id)} />
               ))}
             </div>
           )}

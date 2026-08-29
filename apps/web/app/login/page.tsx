@@ -130,7 +130,7 @@ function LoginForm() {
 
           <p className="mt-4 text-center text-[13px] text-muted-foreground">
             {mode === 'login' ? '还没有账号？' : '已有账号？'}
-            <button type="button" onClick={toggleMode} className="ml-1 font-medium text-primary hover:underline">
+            <button type="button" onClick={toggleMode} className="ml-1 font-medium text-accent-foreground hover:underline">
               {mode === 'login' ? '立即注册' : '去登录'}
             </button>
           </p>

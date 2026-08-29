@@ -1,5 +1,3 @@
-import { MessageCircle } from 'lucide-react'
-import Link from 'next/link'
 import Logo from '@/components/logo'
 import { Navbar, Tabbar } from '@/components/app-nav'
 import { AuthGuard } from '@/components/auth-guard'
@@ -22,10 +20,6 @@ export default function ScreenLayout({
         </div>
 
         <Navbar />
-
-        <Link href="/chat">
-          <MessageCircle className="cursor-pointer" size={18} />
-        </Link>
       </header>
 
       <main>

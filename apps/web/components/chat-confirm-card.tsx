@@ -76,7 +76,7 @@ const TONE_CLASS: Record<DiffRow['tone'], string> = {
   add: 'text-emerald-600 dark:text-emerald-400',
   remove: 'text-muted-foreground',
   warn: 'text-amber-600 dark:text-amber-400',
-  goal: 'text-primary',
+  goal: 'text-accent-foreground',
 }
 
 export function ChatConfirmCard({ output, readOnly }: ConfirmCardProps) {

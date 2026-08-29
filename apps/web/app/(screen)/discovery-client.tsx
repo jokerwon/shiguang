@@ -25,8 +25,6 @@ export function DiscoveryClient() {
     if (error instanceof ApiError && error.status === 401) logout()
   }, [error, logout])
 
-  const openDetail = (id: string) => router.push(`/recipe/${id}`)
-
   const filterByCuisine = (c: string) => {
     setFilters({ cuisine: [c], pref: [], time: 'any' })
     router.push('/filter')
@@ -36,15 +34,15 @@ export function DiscoveryClient() {
   const quick = data?.quick ?? []
 
   return (
-    <section className="pb-4 animate-in fade-in duration-200">
-      <div className="gap-y-2 p-4 md:grid md:grid-cols-[1.1fr_0.9fr] md:gap-x-10 md:px-0 md:pt-10">
+    <section className="pb-4 motion-safe:animate-in motion-safe:fade-in duration-200">
+      <div className="gap-y-2 p-4 md:grid md:grid-cols-[1.1fr_0.9fr] md:gap-x-10 md:pt-10">
         <div>
           <h1 className="text-[26px] leading-[1.15] font-bold tracking-tight md:text-[clamp(28px,3.2vw,40px)]">今天想做点什么？</h1>
           <p className="mt-1.5 text-[17px] text-muted-foreground md:mt-0">告诉我手边有什么，我来给你挑一道。</p>
           <Link
             href="/pantry"
             aria-label="搜索菜名，或按食材匹配"
-            className="mt-4 flex w-full items-center gap-2.5 rounded-lg border border-border bg-muted px-3.5 py-3 text-left text-[15px] transition-[color,border-color,transform] active:scale-[0.96] hover:border-foreground md:max-w-md"
+            className="mt-4 flex w-full items-center gap-2.5 rounded-lg border border-border bg-muted px-3.5 py-3 text-left text-[15px] transition-[color,border-color,transform] motion-safe:active:scale-[0.96] hover:border-foreground md:max-w-md"
           >
             <Search size={18} strokeWidth={1.5} className="text-muted-foreground" />
             <span className="text-muted-foreground">搜索菜名，或按食材匹配…</span>
@@ -53,7 +51,7 @@ export function DiscoveryClient() {
 
         <Link
           href="/chat"
-          className="mt-4 flex w-full items-center gap-4 rounded-lg bg-foreground p-4 text-background transition-[background-color,transform] active:scale-[0.96] hover:bg-[color-mix(in_oklch,var(--foreground)_88%,var(--muted-foreground))] md:mt-0 md:self-center"
+          className="mt-4 flex w-full items-center gap-4 rounded-lg bg-foreground p-4 text-background transition-[background-color,transform] motion-safe:active:scale-[0.96] hover:bg-[color-mix(in_oklch,var(--foreground)_88%,var(--muted-foreground))] md:mt-0 md:self-center"
         >
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
             <User size={22} />
@@ -77,10 +75,12 @@ export function DiscoveryClient() {
         <RecipeGridSkeleton />
       ) : error ? (
         <GridError onRetry={() => mutate()} />
+      ) : today.length === 0 ? (
+        <GridEmpty />
       ) : (
         <RecipeGrid>
           {today.map((r) => (
-            <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onOpen={() => openDetail(r.id)} onToggle={() => toggleSave(r.id)} />
+            <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onToggle={() => toggleSave(r.id)} />
           ))}
         </RecipeGrid>
       )}
@@ -92,7 +92,7 @@ export function DiscoveryClient() {
             key={c}
             type="button"
             onClick={() => filterByCuisine(c)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3.5 py-2 text-[13px] font-medium transition-[color,border-color,transform] active:scale-[0.96] hover:border-foreground"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3.5 py-2 text-[13px] font-medium transition-[color,border-color,transform] motion-safe:active:scale-[0.96] hover:border-foreground"
           >
             {CUISINE_LABELS[c]}
           </button>
@@ -106,10 +106,14 @@ export function DiscoveryClient() {
       </RowTitle>
       {isLoading ? (
         <RecipeGridSkeleton />
-      ) : error ? null : (
+      ) : error ? (
+        <GridError onRetry={() => mutate()} />
+      ) : quick.length === 0 ? (
+        <GridEmpty />
+      ) : (
         <RecipeGrid>
           {quick.map((r) => (
-            <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onOpen={() => openDetail(r.id)} onToggle={() => toggleSave(r.id)} />
+            <RecipeCard key={r.id} r={r} saved={saved.has(r.id)} onToggle={() => toggleSave(r.id)} />
           ))}
         </RecipeGrid>
       )}
@@ -154,6 +158,17 @@ function GridError({ onRetry }: { onRetry: () => void }) {
       <button type="button" onClick={onRetry} className="font-medium text-foreground hover:underline">
         重试
       </button>
+    </div>
+  )
+}
+
+function GridEmpty() {
+  return (
+    <div className="mx-4 rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+      暂时没有推荐，
+      <Link href="/filter" className="font-medium text-foreground hover:underline">
+        去筛选看看
+      </Link>
     </div>
   )
 }

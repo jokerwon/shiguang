@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { RecipeCard } from '@/components/recipe-card'
@@ -13,7 +12,6 @@ import type { RecipeQuery } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 export default function FilterScreen() {
-  const router = useRouter()
   const { filters, setFilters } = useFilters()
   const { saved, toggleSave } = useFavorites()
   const [applied, setApplied] = React.useState<Filters>(filters)
@@ -140,7 +138,6 @@ export default function FilterScreen() {
               key={r.id}
               r={r}
               saved={saved.has(r.id)}
-              onOpen={() => router.push(`/recipe/${r.id}`)}
               onToggle={() => toggleSave(r.id)}
             />
           ))}

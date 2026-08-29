@@ -80,7 +80,7 @@ export function ChatActionCard({ toolName, input, output, readOnly }: ActionCard
             type="button"
             onClick={handleUndo}
             disabled={pending}
-            className="shrink-0 font-medium text-primary hover:underline disabled:opacity-50"
+            className="shrink-0 font-medium text-accent-foreground hover:underline disabled:opacity-50"
           >
             {pending ? '撤销中…' : '撤销'}
           </button>
