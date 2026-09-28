@@ -108,7 +108,7 @@ AI 批量生成菜谱的缓冲区。生成的菜谱**先入待审区(JSON / stag
 ## 平台与架构 (Platform & Architecture)
 
 ### 共享域层 (Shared Domain Layer)
-`packages/domain` 共享包(ADR-0015):Web 与服务端共用的领域类型与纯函数,**框架无关**(无 React,不共享 UI)。中文标签映射是同值重复的单一事实源(移动端最初是驱动之一,该端已于 ADR-0016 移除,共享价值独立成立)。
+`packages/domain` 共享包(ADR-0015):Web 与服务端共用的领域类型与纯函数,**框架无关**(无 React,不共享 UI)。中文标签映射是同值重复的单一事实源,重复副本随迁移消除。
 
 ## 协作实践 (Practices)
 

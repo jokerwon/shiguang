@@ -1,5 +1,5 @@
 // 食光共享域层 —— 类型、展示标签、纯函数（ADR-0015）。
-// 消费方：Web（Next 转译源码）、移动端（Metro 转译源码）、服务端（消费 dist 产物）。
+// 消费方：Web（Next 转译源码）、服务端（消费 dist 产物）。
 
 export interface Ingredient {
   name: string;
