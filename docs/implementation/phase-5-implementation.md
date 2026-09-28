@@ -1,3 +1,5 @@
+> ⚠️ **已作废（2026-09-28，ADR-0016）**：`apps/mobile` 已整体移除，平台回归 Web 单客户端。本清单保留为历史记录，**不再维护、不再验收**；`packages/domain` 保留（其动机与价值见 ADR-0015 / ADR-0016）。文中指向 `apps/mobile/**` 的路径均已不存在。
+
 # Phase 5 实现任务清单 —— 原生 app 首发（移动主战场）
 
 > 对应 [ADR-0014](../adr/0014-theme-mobile-first-native-app.md)（主题）+ [ADR-0015](../adr/0015-shared-domain-layer.md)（共享域层）。

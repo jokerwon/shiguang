@@ -19,8 +19,9 @@
 | [ADR-0011](./0011-conversation-state-ownership-and-message-schema.md) | 会话状态归属(URL)+ Message 表重审(砍 content/toolCalls、加 seq) | 2 |
 | [ADR-0012](./0012-phase-3-preference-confirm-and-summary.md) | Phase 3 设计定稿:草稿=操作集、刷新后卡片只读、摘要异步+增量、种子脚本形态 | 3 |
 | [ADR-0013](./0013-auth-refresh-token-rotation.md) | 认证双轨:短 access + 长效 refresh 滑动轮换、复用检测整族吊销、Web cookie/原生 body 双轨、删 User.role | 4 |
-| [ADR-0014](./0014-theme-mobile-first-native-app.md) | 主题:原生 app 首发,移动主战场;首发子集(发现/食材/收藏/我的+详情)、离线只读缓存(浏览链)、移动端认证落地、对话二期 | 5 |
-| [ADR-0015](./0015-shared-domain-layer.md) | 共享域层 `packages/domain`:Web 与移动端共用的领域类型与纯函数,迁移 Web 去重 | 5 |
+| [ADR-0014](./0014-theme-mobile-first-native-app.md) | ~~主题:原生 app 首发,移动主战场~~（**已作废**,被 ADR-0016 取代） | 5 |
+| [ADR-0015](./0015-shared-domain-layer.md) | 共享域层 `packages/domain`:Web 与服务端共用的领域类型与纯函数（移动端动机已作废,决策继续有效） | 5 |
+| [ADR-0016](./0016-remove-mobile-client.md) | 移除移动客户端:删 `apps/mobile`,平台回归 Web 单客户端;保留 `packages/domain` 与 body 双轨 | — |
 
 ## Phase 总览
 
@@ -50,14 +51,11 @@
 - 体验打磨:限缩为 E/F 实现中长出的部分(ADR-0012)
 - 实施清单:[implementation/phase-3-implementation.md](../implementation/phase-3-implementation.md)
 
-**Phase 5(原生 app 首发,设计定稿)** — 移动主战场(ADR-0014,经 grill 会话确认)
-- Expo/React Native 新增 `apps/mobile`,iOS 先行;首发子集:发现/食材/收藏/我的 + 菜谱详情 + 缺料清单 + 登录注册
-- 离线只读缓存(浏览链:个性化/详情/收藏),stale-while-revalidate;无网不可写
-- 移动端认证落地:refresh 存 Keychain(ADR-0013 body 双轨),access 仅内存
-- 砍掉(二期):AI 对话、推送(等真机验收)、筛选页、小组件、生物识别
-- 共享域层 `packages/domain`(ADR-0015),迁移 Web 去重
-- 目标零后端改动;Web 维持现状;验收走 iOS 模拟器手动走查
-- 实施清单:[implementation/phase-5-implementation.md](../implementation/phase-5-implementation.md)（验收清单随实现阶段编写）
+**Phase 5(原生 app 首发,已交付后移除)** — ~~移动主战场~~(ADR-0014,经 grill 会话确认;**该主题已由 ADR-0016 作废**)
+- 曾交付:Expo/React Native `apps/mobile`(iOS 先行),子集为发现/食材/收藏/我的 + 菜谱详情 + 缺料清单 + 登录注册
+- 曾交付:离线只读缓存(浏览链:个性化/详情/收藏)、移动端认证(refresh 存 Keychain,access 仅内存)
+- **2026-09-28 整体删除 `apps/mobile`**(ADR-0016,平台回归 Web 单客户端);`packages/domain` 共享域层保留(ADR-0015 决策继续有效)
+- 历史工件:[implementation/phase-5-implementation.md](../implementation/phase-5-implementation.md)、[acceptance/phase-5-checklist.md](../acceptance/phase-5-checklist.md)(均已标注不再维护)
 
 **Phase 4(认证双轨,已交付)** — 原生 app 的认证前置(ADR-0013)
 - 双 token:15 分钟 access(JWT)+ 30 天滑动 refresh(opaque,bcrypt 哈希落库)

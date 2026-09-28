@@ -107,7 +107,7 @@ export function hasIng(pantry: string[], name: string): boolean {
 export function matchScore(recipe: Recipe, pantry: string[]) {
   if (pantry.length === 0) return { score: 0, have: [] as string[] };
   const have = recipe.ingredients.filter((i) => hasIng(pantry, i.name)).map((i) => i.name);
-  // 空 ingredients 守卫：0/0 = NaN 会污染排序与 UI（服务端虽校验 ≥3，共享函数被 web/mobile 直接消费）
+  // 空 ingredients 守卫：0/0 = NaN 会污染排序与 UI（服务端虽校验 ≥3，共享函数被客户端直接消费）
   const score =
     recipe.ingredients.length === 0
       ? 0

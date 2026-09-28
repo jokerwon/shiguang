@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents (Claude Code, Codex, etc.) when 
 
 ## 项目概述
 
-食光 (Shiguang) — 菜谱推荐应用。pnpm workspace monorepo，包含 Web 前端、后端服务和移动端 app。
+食光 (Shiguang) — 菜谱推荐应用。pnpm workspace monorepo，包含 Web 前端、后端服务和共享域层。
 
 ## Monorepo 结构
 
@@ -13,7 +13,6 @@ shiguang/
   apps/
     web/     → @shiguang/web (Next.js 16, 端口 3000)
     server/  → @shiguang/server (NestJS, 端口 3001)
-    mobile/  → @shiguang/mobile (Expo/React Native, iOS 先行)
   packages/
     domain/  → @shiguang/domain (共享域层：类型/标签/纯函数)
   pnpm-workspace.yaml
@@ -25,7 +24,6 @@ shiguang/
 
 - **前端架构与开发细节** → `apps/web/AGENTS.md`
 - **后端架构与开发细节** → `apps/server/AGENTS.md`
-- **移动端架构与开发细节** → `apps/mobile/AGENTS.md`
 
 请优先阅读对应子项目的 AGENTS.md（子项目的 CLAUDE.md 仅是指向它的指针），此处仅记录 monorepo 层面的通用信息。
 
@@ -78,7 +76,6 @@ docs 根只放全局文档；每 Phase 的工件按类型归目录——实施�
 
 ```bash
 pnpm dev # 同时启动前端 (3000) 和后端 (3001) 开发服务器
-pnpm dev:mobile # 启动移动端 Expo dev server
 pnpm --filter @shiguang/web dev # 仅启动前端
 pnpm --filter @shiguang/server start:dev # 仅启动后端
 pnpm --filter @shiguang/server db:generate # 生成 Prisma Client

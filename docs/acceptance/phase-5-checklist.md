@@ -1,3 +1,5 @@
+> ⚠️ **已作废（2026-09-28，ADR-0016）**：`apps/mobile` 已整体移除，本清单**不再走查**。保留为历史记录；其中 W0（共享域层）的收益已转由 Web/服务端消费，A–E 节（移动端认证/离线/Tab/详情/导出）随 `apps/mobile` 一同失去验收对象。
+
 # Phase 5 验收走查清单 —— 原生 app 首发
 
 - **依据**: [ADR-0014](../adr/0014-theme-mobile-first-native-app.md)（移动主战场）+ [ADR-0015](../adr/0015-shared-domain-layer.md)（共享域层）
