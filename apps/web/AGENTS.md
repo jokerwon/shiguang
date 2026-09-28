@@ -28,7 +28,7 @@ shiguang/
 pnpm dev          # 启动开发服务器 (next dev)
 pnpm build        # 生产构建 (next build)
 pnpm start        # 启动生产服务器 (next start)
-pnpm lint         # 运行 ESLint
+pnpm lint         # 运行 ESLint（含 @shadcn/lint 设计系统插件，规则待配置）
 ```
 
 ## 技术栈
@@ -107,3 +107,4 @@ app/
 - 自定义 CSS 变量：`--nav-h: 62px`（导航栏高度）、`--shell-w: 1120px`（内容最大宽度）
 - `@base-ui/react` 的 NavigationMenu 用于桌面导航
 - 响应式：md 断点以下显示 TabBar，以上显示 Navbar
+- 设计系统规则由 `@shadcn/lint` 承载：插件在 `eslint.config.mjs` 注册，规则尚未启用（可用规则见 https://github.com/shadcn-ui/lint#rules）
