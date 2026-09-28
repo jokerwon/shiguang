@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import Image from 'next/image'
-import type { Recipe } from '@/lib/recipes'
+import type { Recipe } from '@shiguang/domain'
 import { cn } from '@/lib/utils'
 
 /* 占位符视觉（ADR-0003）：首字 + 菜系配色。

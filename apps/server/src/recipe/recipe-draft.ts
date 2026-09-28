@@ -47,16 +47,9 @@ function isFiniteNumber(v: unknown): v is number {
 function safeStr(v: unknown): string {
   if (v === null) return 'null';
   if (v === undefined) return 'undefined';
-  if (typeof v === 'object') return JSON.stringify(v);
-  if (
-    typeof v === 'string' ||
-    typeof v === 'number' ||
-    typeof v === 'boolean' ||
-    typeof v === 'bigint'
-  ) {
-    return v.toString();
-  }
-  // symbol 等罕见类型（菜谱校验场景不会出现）
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return `${v}`;
+  // object/function/symbol 等：JSON.stringify 避免 [object Object]
   return JSON.stringify(v);
 }
 

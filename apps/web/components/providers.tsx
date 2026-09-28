@@ -1,13 +1,25 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { SWRProvider } from '@/lib/swr-config';
+import { SWRConfig } from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { AuthProvider } from '@/lib/use-auth';
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <SWRProvider>
+    <SWRConfig
+      value={{
+        fetcher,
+        dedupingInterval: 2000, // 2s 内并发请求自动去重
+        revalidateOnFocus: true, // 标签页聚焦时刷新
+        revalidateOnReconnect: true, // 网络恢复时刷新
+        shouldRetryOnError: true,
+        errorRetryCount: 3,
+        errorRetryInterval: 5000, // 错误重试间隔 5s
+        focusThrottleInterval: 10000, // 聚焦重新验证间隔 ≥10s
+      }}
+    >
       <AuthProvider>{children}</AuthProvider>
-    </SWRProvider>
+    </SWRConfig>
   );
 }

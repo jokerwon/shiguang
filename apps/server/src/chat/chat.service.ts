@@ -19,6 +19,7 @@ import {
   CONTEXT_WINDOW,
 } from '../conversation/conversation.service';
 import {
+  partsToText,
   toUIMessage,
   type MessageRow,
 } from '../conversation/conversation.mapper';
@@ -37,14 +38,6 @@ function currentSeason(): 'spring' | 'summer' | 'autumn' | 'winter' {
   if (month >= 6 && month <= 8) return 'summer';
   if (month >= 9 && month <= 11) return 'autumn';
   return 'winter';
-}
-
-/** 从 UIMessage parts 中提取纯文本（用于生成会话标题） */
-function messageText(message: UIMessage): string {
-  return (message.parts as { type: string; text?: string }[])
-    .filter((p) => p.type === 'text')
-    .map((p) => p.text ?? '')
-    .join('');
 }
 
 /** tool-loop 最大步数（ADR-0009：多轮 tool round-trip 上限） */
@@ -75,7 +68,7 @@ export class ChatService {
     userId: string;
   }) {
     const { userId, message } = params;
-    const messageTextValue = messageText(message);
+    const messageTextValue = partsToText(message.parts);
 
     // 1. 会话：无 id 则创建（title = 用户消息截断 ~20 字）
     let conversationId = params.conversationId;

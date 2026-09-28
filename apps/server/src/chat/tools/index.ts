@@ -11,5 +11,4 @@ export function createChatTools(deps: ChatToolDeps, userId: string) {
   };
 }
 
-export type ChatToolSet = ReturnType<typeof createChatTools>;
-export type { ChatToolDeps, RecipeSummary } from './types';
+export type { ChatToolDeps } from './types';

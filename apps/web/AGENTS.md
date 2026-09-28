@@ -84,7 +84,7 @@ app/
 
 - **`lib/api.ts`** — `request<T>()` 自动拼 `API_BASE` + 附 Bearer；失败抛 `ApiError`（带 `status`，401 可识别 → logout）
 - **`lib/fetcher.ts`** — SWR fetcher 复用 `request()`，所有 SWR key 天然带鉴权
-- **`lib/recipes.ts`** — `Recipe` 类型、分类常量、`matchScore/matchRecipes`（食材页本地即时反馈）、`hasIng/missingIngredients`（缺料清单纯函数）
+- **`@shiguang/domain`** — 类型、分类常量、`matchScore/matchRecipes`（食材页本地即时反馈）、`hasIng/missingIngredients`（缺料清单纯函数），页面直连共享包（ADR-0015 决策 3）
 - **首页为何 client 端取数**：token 在 localStorage，RSC 服务端 fetch 拿不到 Bearer，个性化端点只能 client SWR（骨架屏兜底首屏）；详情页是公开端点，保留 RSC
 
 ## 共享组件
@@ -95,7 +95,7 @@ app/
 - `components/shopping-list-dialog.tsx` — 缺料清单浮层（ADR-0007：即时快照，勾选不持久化）
 - `components/prefs-hint.tsx` — 首页软提示（空偏好档案时引导去设置，可关闭）
 - `components/auth-guard.tsx` — 路由保护
-- `components/providers.tsx` — SWRProvider > AuthProvider
+- `components/providers.tsx` — SWRConfig（fetcher/重试策略）+ AuthProvider
 - `components/chat-sidebar.tsx` — 会话列表侧栏（ADR-0010：桌面侧栏 / 移动抽屉，含新建/切换/删除）
 - `components/chat-action-card.tsx` — 写工具结果的操作卡片（ADR-0009：「已添加/移除/收藏」+ 撤销，add↔remove、set_favorite↔反向 set）。`readOnly`（历史消息/刷新后）撤销入口锁定；撤销基于**当前**清单计算（fetchPantry 拉最新，不用 tool output 过期快照）
 - `components/chat-confirm-card.tsx` — `update_preferences` 草稿的确认卡片（ADR-0012）：渲染操作集 diff（add 绿 / remove 灰 / 过敏原 remove 警告色 / healthGoal 前后对照）；「确认」= 读当前偏好 → apply 操作集 → PUT /preferences → mutate；「取消」/`readOnly` 不落库

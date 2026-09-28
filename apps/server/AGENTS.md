@@ -79,8 +79,7 @@ pnpm recipes:generate --only sichuan,home # 只生成指定菜系
 ```
 src/
   main.ts                     # 入口：CORS、ValidationPipe、ShutdownHooks
-  app.module.ts               # 根模块：ConfigModule、PrismaModule、AuthModule 等
-  app.controller.ts / .service.ts  # 占位，暂无逻辑
+  app.module.ts               # 根模块：ConfigModule（.env 唯一运行时加载点）、PrismaModule、AuthModule 等
 
   prisma/
     prisma.module.ts          # @Global() 模块，导出 PrismaService
@@ -123,7 +122,7 @@ src/
 - **偏好草稿（ADR-0012）**：`update_preferences` 工具**结构上不落库**——`execute` 只产出「操作集草稿」（`addDisliked`/`removeDisliked`/`addAllergens`/`removeAllergens`/`setHealthGoal`），读当前偏好仅作快照，不接触任何写 service；E4 红线（「你看着办直接改」不得绕过确认）由架构保证，确认只认前端按钮。prompt 规范禁止声称「已保存/已记住」。
 - **持久化（ADR-0010/0011）**：body 只带 `conversationId? + message`，后端从 DB 取最近 20 条组装上下文（不信客户端全量，按 `seq desc` 滑窗）。无 conversationId 则创建会话（title = 首条消息截断 ~20 字），id 经响应头 `x-conversation-id` 回传前端。`toUIMessageStream` 的 `onFinish` 落库 assistant 消息（含 tool parts）；`appendMessage` 由应用层算 `seq = max(seq)+1`，配 `@@unique` 冲突重试。
 - **会话摘要（ADR-0012）**：`onFinish` 落库后 fire-and-forget 检查溢出区（`seq ≤ maxSeq−滑窗` 且 `seq > summaryUpToSeq`），攒够 `SUMMARY_TRIGGER_THRESHOLD` 条调 `summary.ts` 增量拼接（压缩 旧摘要 + 新溢出），写回 `Conversation.summary`/`summaryUpToSeq`；LLM 失败仅记日志、保持旧摘要，降级 = 纯滑窗。`buildSystemPrompt` 注入「会话摘要」段。
-- 单测：`recommendation.scoring.spec.ts`、`recipe-draft.spec.ts`、`conversation.mapper.spec.ts`、`chat/tools/index.spec.ts`、`chat/summary.spec.ts`（纯函数，零 DB）。另有 `preference/preference.service.spec.ts`、`conversation/conversation.service.spec.ts`——service 层用对象字面量 fake prisma（`jest.mock` 拦截 `PrismaService` 避免加载真实 PrismaClient），验证 ADR-0012 部分更新语义与 ADR-0011 seq 不变量/`@@unique` 冲突重试，仍零 DB、零 `@nestjs/testing` 容器。
+- 单测：`recommendation.scoring.spec.ts`、`recipe-draft.spec.ts`、`conversation.mapper.spec.ts`、`chat/tools/index.spec.ts`、`chat/summary.spec.ts`（纯函数，零 DB）。另有 `preference/preference.service.spec.ts`、`conversation/conversation.service.spec.ts`——service 层用对象字面量 fake prisma（`jest.mock` 拦截 `PrismaService` 避免加载真实 PrismaClient），验证 ADR-0012 部分更新语义与 ADR-0011 seq 不变量/`@@unique` 冲突重试，仍零 DB、零 `@nestjs/testing` 容器（起始脚手架 e2e 套件已删）。
 
 ### 个性化推荐（ADR-0005/0006）
 
@@ -176,4 +175,4 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 - **PrismaModule 为 @Global()**：无需在每个 feature module 中重复导入
 - **PrismaService 构造函数中直接创建 pg adapter**：不需要 NestJS ConfigService，直接从 `process.env.DATABASE_URL` 读取
 - **TypeScript 模块模式**：`module: "nodenext"`, `moduleResolution: "nodenext"`
-- **构建工具**：基于 `@swc/core` 编译（速度快），非默认 tsc
+- **构建工具**：Nest 默认 tsc 构建（`nest build`）

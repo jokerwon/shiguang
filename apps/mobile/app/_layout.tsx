@@ -86,8 +86,6 @@ export default function RootLayout() {
     <AuthContext value={{ user, initialized, login, register, logout }}>
       <StatusBar style="auto" />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(auth)" />
         <Stack.Screen
           name="recipe/[id]"
           options={{ headerShown: true, title: '菜谱详情', presentation: 'card' }}

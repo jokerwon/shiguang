@@ -61,13 +61,7 @@ export interface UpdatePreferenceInput {
 }
 
 /** 待确认草稿 = 操作集（ADR-0012 决策 3：非目标快照，避免并行修改被静默覆盖） */
-export interface PreferenceDraft {
-  addDisliked?: string[];
-  removeDisliked?: string[];
-  addAllergens?: string[];
-  removeAllergens?: string[];
-  setHealthGoal?: HealthGoal;
-}
+export type PreferenceDraft = UpdatePreferenceInput;
 
 /** 当前偏好快照（仅供卡片 diff 对照，不作确认依据） */
 export interface PreferenceSnapshot {

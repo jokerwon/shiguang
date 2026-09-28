@@ -31,7 +31,7 @@ export function useConversations() {
     [mutate],
   )
 
-  return { conversations: data ?? [], remove, mutate, isLoading }
+  return { conversations: data ?? [], remove, isLoading }
 }
 
 /** 刷新会话列表（新建/标题更新后调用） */

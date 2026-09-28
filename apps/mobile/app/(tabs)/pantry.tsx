@@ -44,66 +44,37 @@ export default function PantryScreen() {
     setRefreshing(false);
   }, [loadData]);
 
+  // 乐观更新 + 在线持久化；失败回滚并提示，避免本地与服务端不一致
+  const persistPantry = useCallback(
+    async (next: string[]) => {
+      setPantry(next);
+      if (recipes.length > 0) setMatched(matchRecipes(recipes, next));
+      if (!isNetworkOnline()) return;
+      try {
+        await replacePantry(next);
+      } catch {
+        setPantry(pantry);
+        if (recipes.length > 0) setMatched(matchRecipes(recipes, pantry));
+        Alert.alert('保存失败', '网络异常，食材未同步');
+      }
+    },
+    [pantry, recipes],
+  );
+
   const addIngredient = useCallback(
     async (text: string) => {
       if (!text.trim()) return;
       const resolved = resolveIng(text);
-      if (pantry.includes(resolved)) {
-        setInput('');
-        return;
-      }
-      const next = [...pantry, resolved];
-      setPantry(next);
       setInput('');
-      // 本地即时反馈
-      if (recipes.length > 0) {
-        setMatched(matchRecipes(recipes, next));
-      }
-      // 在线时持久化
-      if (isNetworkOnline()) {
-        try {
-          await replacePantry(next);
-        } catch {
-          // 持久化失败：回滚乐观更新并提示，避免本地与服务端不一致
-          setPantry(pantry);
-          if (recipes.length > 0) {
-            setMatched(matchRecipes(recipes, pantry));
-          }
-          Alert.alert('保存失败', '网络异常，食材未同步');
-        }
-      }
+      if (pantry.includes(resolved)) return;
+      await persistPantry([...pantry, resolved]);
     },
-    [pantry, recipes],
+    [pantry, persistPantry],
   );
 
   const removeIngredient = useCallback(
-    async (name: string) => {
-      const next = pantry.filter((p) => p !== name);
-      setPantry(next);
-      if (recipes.length > 0) {
-        setMatched(matchRecipes(recipes, next));
-      }
-      if (isNetworkOnline()) {
-        try {
-          await replacePantry(next);
-        } catch {
-          // 持久化失败：回滚乐观更新并提示，避免本地与服务端不一致
-          setPantry(pantry);
-          if (recipes.length > 0) {
-            setMatched(matchRecipes(recipes, pantry));
-          }
-          Alert.alert('保存失败', '网络异常，食材未同步');
-        }
-      }
-    },
-    [pantry, recipes],
-  );
-
-  const addFromSuggest = useCallback(
-    (name: string) => {
-      addIngredient(name);
-    },
-    [addIngredient],
+    (name: string) => persistPantry(pantry.filter((p) => p !== name)),
+    [pantry, persistPantry],
   );
 
   return (
@@ -134,7 +105,7 @@ export default function PantryScreen() {
             <TouchableOpacity
               key={s}
               style={styles.suggestChip}
-              onPress={() => addFromSuggest(s)}
+              onPress={() => addIngredient(s)}
             >
               <Text style={styles.suggestChipText}>{s}</Text>
             </TouchableOpacity>

@@ -7,18 +7,6 @@ import type { Recipe } from '@shiguang/domain';
 import { API_BASE } from './config';
 import { authManager, getAccessToken, TokenInvalidError } from './auth';
 
-/* ---- 错误类型 ---- */
-
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-
 /* ---- 核心 request ---- */
 
 /**
@@ -49,27 +37,22 @@ async function doFetch(path: string, init?: RequestInit): Promise<Response> {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   });
-  // 合并调用方 headers：安全支持 Headers 实例与普通对象，避免覆盖 Authorization/Content-Type
-  const caller = init?.headers;
-  if (caller) {
-    if (caller instanceof Headers) {
-      caller.forEach((value, key) => headers.set(key, value));
-    } else {
-      Object.entries(caller).forEach(([key, value]) => {
-        headers.set(key, String(value));
-      });
-    }
-  }
   return fetch(`${API_BASE}${path}`, { ...init, headers });
 }
 
 async function unwrap<T>(res: Response): Promise<T> {
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    const msg = (body as { message?: string | string[] }).message;
-    throw new ApiError(
-      msg ? (Array.isArray(msg) ? msg[0] : msg) : `请求失败 (${res.status})`,
-      res.status,
+    const body: unknown = await res.json().catch(() => null);
+    const message =
+      body && typeof body === 'object' && 'message' in body
+        ? body.message
+        : undefined;
+    throw new Error(
+      typeof message === 'string'
+        ? message
+        : Array.isArray(message) && typeof message[0] === 'string'
+          ? message[0]
+          : `请求失败 (${res.status})`,
     );
   }
   return res.json();
@@ -91,20 +74,12 @@ export interface RecommendedResponse {
 
 export interface RecipeQuery {
   cuisine?: string;
-  tags?: string;
-  maxTime?: number;
-  keyword?: string;
-  page?: number;
   limit?: number;
 }
 
 export function fetchRecipes(query: RecipeQuery = {}): Promise<PaginatedRecipes> {
   const params = new URLSearchParams();
   if (query.cuisine) params.set('cuisine', query.cuisine);
-  if (query.tags) params.set('tags', query.tags);
-  if (query.maxTime) params.set('maxTime', String(query.maxTime));
-  if (query.keyword) params.set('keyword', query.keyword);
-  if (query.page) params.set('page', String(query.page));
   if (query.limit) params.set('limit', String(query.limit));
   const qs = params.toString();
   return request<PaginatedRecipes>(`/recipes${qs ? `?${qs}` : ''}`);
@@ -141,15 +116,6 @@ export function toggleFavorite(recipeId: string): Promise<string[]> {
   return request<string[]>(`/favorites/${recipeId}`, { method: 'POST' });
 }
 
-export function setFavorite(
-  recipeId: string,
-  saved: boolean,
-): Promise<string[]> {
-  return request<string[]>(`/favorites/${recipeId}`, {
-    method: 'POST',
-    body: JSON.stringify({ saved }),
-  });
-}
 
 /* ---- Preferences API ---- */
 

@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import useSWR from 'swr'
-import { toggleFavorite } from './api'
+import { setFavorite } from './api'
 
 /**
  * 收藏状态(服务端持久化,ADR-0004)。
@@ -19,7 +19,7 @@ export function useFavorites() {
       const cur = data ?? []
       const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]
       // 乐观更新:先展示 next,请求成功用返回值替换,失败回滚
-      await mutate(toggleFavorite(id), {
+      await mutate(setFavorite(id), {
         optimisticData: next,
         revalidate: false,
         rollbackOnError: true,

@@ -53,5 +53,5 @@ export function usePantry() {
 
   const clear = React.useCallback(() => setPantry([]), [setPantry])
 
-  return { pantry, setPantry, addIng, removeAt, toggleSuggest, clear, isLoading }
+  return { pantry, addIng, removeAt, toggleSuggest, clear, isLoading }
 }

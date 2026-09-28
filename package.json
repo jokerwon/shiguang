@@ -1,8 +1,6 @@
 {
   "name": "shiguang",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "食光 — 菜谱推荐应用（pnpm workspace monorepo）",
   "scripts": {
     "dev": "pnpm --parallel --filter @shiguang/web --filter @shiguang/server run dev",
     "dev:mobile": "pnpm --filter @shiguang/mobile start",
@@ -10,8 +8,6 @@
     "recipes:generate": "pnpm --filter @shiguang/server run recipes:generate",
     "seed:long-conversation": "pnpm --filter @shiguang/server run seed:long-conversation"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "packageManager": "pnpm@11.20.0",
   "devDependencies": {

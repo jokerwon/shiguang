@@ -25,8 +25,12 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
-export async function loginApi(input: LoginInput): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/login`, {
+async function authPost(
+  path: 'login' | 'register',
+  input: LoginInput | RegisterInput,
+  fallback: string,
+): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE}/auth/${path}`, {
     method: 'POST',
     credentials: 'include', // 收服务端种的 refresh cookie（ADR-0013）
     headers: { 'Content-Type': 'application/json' },
@@ -34,37 +38,27 @@ export async function loginApi(input: LoginInput): Promise<AuthResponse> {
   });
 
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
+    const data: unknown = await res.json().catch(() => null);
+    const message =
+      data && typeof data === 'object' && 'message' in data
+        ? data.message
+        : undefined;
     throw new Error(
-      (data as { message?: string | string[] }).message
-        ? Array.isArray(data.message)
-          ? data.message[0]
-          : data.message
-        : '登录失败，请稍后重试',
+      typeof message === 'string'
+        ? message
+        : Array.isArray(message) && typeof message[0] === 'string'
+          ? message[0]
+          : fallback,
     );
   }
 
   return res.json();
 }
 
-export async function registerApi(input: RegisterInput): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/register`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
+export function loginApi(input: LoginInput): Promise<AuthResponse> {
+  return authPost('login', input, '登录失败，请稍后重试');
+}
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(
-      (data as { message?: string | string[] }).message
-        ? Array.isArray(data.message)
-          ? data.message[0]
-          : data.message
-        : '注册失败，请稍后重试',
-    );
-  }
-
-  return res.json();
+export function registerApi(input: RegisterInput): Promise<AuthResponse> {
+  return authPost('register', input, '注册失败，请稍后重试');
 }

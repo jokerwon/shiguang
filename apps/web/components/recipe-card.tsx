@@ -3,7 +3,7 @@
 import { Bookmark } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
-import { CUISINE_LABELS, type Recipe } from '@/lib/recipes'
+import { CUISINE_LABELS, type Recipe } from '@shiguang/domain'
 import { RecipeImage } from '@/components/recipe-image'
 import { cn } from '@/lib/utils'
 

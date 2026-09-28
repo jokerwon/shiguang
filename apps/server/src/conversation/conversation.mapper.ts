@@ -15,7 +15,7 @@ export interface MessageRow {
   createdAt: Date;
 }
 
-/** 从一组 UIMessage parts 提取拼接文本（title 生成仍用，见 chat.service.ts 的 messageText） */
+/** 从一组 UIMessage parts 提取拼接文本（会话标题生成用） */
 export function partsToText(parts: AnyPart[]): string {
   return parts
     .filter((p): p is Extract<AnyPart, { type: 'text' }> => p.type === 'text')

@@ -5,6 +5,7 @@
  * 无网不可写（写路径直连在线，无写队列），回网自动刷新。
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as NetInfo from '@react-native-community/netinfo';
 
 /* ---- 缓存键 ---- */
 const CACHE_PREFIX = 'shiguang:cache:';
@@ -18,26 +19,16 @@ function cacheKeyRecipe(id: string) {
 /* ---- 网络状态 ---- */
 let isOnline = true;
 
-// 动态导入 netinfo 以避免启动阻塞和编译依赖
-function initNetInfo() {
-  try {
-    const NetInfo = require('@react-native-community/netinfo');
-    NetInfo.fetch()
-      .then((state: { isConnected: boolean | null }) => {
-        isOnline = state.isConnected ?? true;
-      })
-      .catch(() => {
-        // netinfo 查询失败 → 保持默认在线，避免 unhandled rejection
-      });
-    NetInfo.addEventListener((state: { isConnected: boolean | null }) => {
-      isOnline = state.isConnected ?? true;
-    });
-  } catch {
-    // netinfo 不可用时默认在线
-  }
-}
-
-initNetInfo();
+NetInfo.fetch()
+  .then((state) => {
+    isOnline = state.isConnected ?? true;
+  })
+  .catch(() => {
+    // netinfo 查询失败 → 保持默认在线
+  });
+NetInfo.addEventListener((state) => {
+  isOnline = state.isConnected ?? true;
+});
 
 export function isNetworkOnline(): boolean {
   return isOnline;
@@ -67,14 +58,11 @@ async function writeCache(key: string, data: unknown): Promise<void> {
 interface SWROptions<T> {
   fetcher: () => Promise<T>;
   cacheKey: string;
-  /** 无网时是否返回缓存（默认 true） */
-  fallbackToCache?: boolean;
 }
 
 interface SWRResult<T> {
   data: T | null;
   error: Error | null;
-  isStale: boolean;
 }
 
 /**
@@ -88,10 +76,8 @@ export async function fetchWithCache<T>(opts: SWROptions<T>): Promise<SWRResult<
   const cached = await readCache<T>(opts.cacheKey);
 
   if (!isOnline) {
-    if (cached && opts.fallbackToCache !== false) {
-      return { data: cached, error: null, isStale: true };
-    }
-    return { data: null, error: new Error('离线不可用'), isStale: false };
+    if (cached) return { data: cached, error: null };
+    return { data: null, error: new Error('离线不可用') };
   }
 
   // 有缓存 → 立即返回，后台 revalidate
@@ -102,16 +88,16 @@ export async function fetchWithCache<T>(opts: SWROptions<T>): Promise<SWRResult<
       .catch(() => {
         // 后台刷新失败 → 保留 stale 缓存
       });
-    return { data: cached, error: null, isStale: true };
+    return { data: cached, error: null };
   }
 
   // 无缓存 → 必须等网络
   try {
     const fresh = await opts.fetcher();
     await writeCache(opts.cacheKey, fresh);
-    return { data: fresh, error: null, isStale: false };
+    return { data: fresh, error: null };
   } catch (error) {
-    return { data: null, error: error as Error, isStale: false };
+    return { data: null, error: error as Error };
   }
 }
 

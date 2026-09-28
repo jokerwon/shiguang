@@ -7,14 +7,15 @@ import { Button } from '@/components/ui/button'
 import { RecipeCard } from '@/components/recipe-card'
 import { usePantry } from '@/lib/use-pantry'
 import { useFavorites } from '@/lib/use-favorites'
-import { useAllRecipes } from '@/lib/use-swr-recipes'
-import { matchRecipes, resolveIng, SUGGEST_INGS } from '@/lib/recipes'
+import { useRecipesQuery } from '@/lib/use-swr-recipes'
+import { matchRecipes, resolveIng, SUGGEST_INGS } from '@shiguang/domain'
 import { cn } from '@/lib/utils'
 
 export default function PantryScreen() {
   const { pantry, addIng, removeAt, toggleSuggest, clear } = usePantry()
   const { saved, toggleSave } = useFavorites()
-  const { recipes } = useAllRecipes()
+  const { data } = useRecipesQuery()
+  const recipes = useMemo(() => data?.data ?? [], [data])
   const [field, setField] = useState('')
   const [barW, setBarW] = useState(0)
 

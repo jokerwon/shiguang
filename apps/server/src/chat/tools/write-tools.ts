@@ -9,14 +9,6 @@ import {
 } from './write-tools-logic';
 import type { ChatToolDeps } from './types';
 
-export {
-  runAddPantryItems,
-  runRemovePantryItems,
-  runSetFavorite,
-  runUpdatePreferences,
-  type UpdatePreferenceInput,
-} from './write-tools-logic';
-
 export function createWriteTools(deps: ChatToolDeps, userId: string) {
   const add_pantry_items = tool({
     description:

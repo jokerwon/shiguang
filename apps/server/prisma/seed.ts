@@ -52,38 +52,12 @@ async function main() {
   const recipes: SeedRecipe[] = [...CURATED_RECIPES, ...loadStagedRecipes()];
 
   try {
-    // 幂等：按 name upsert，避免重复 seed 堆叠
-    // update 与 create 分支字段保持一致，确保老库数据被覆盖为新结构
+    // 幂等：按 name upsert；update/create 同用校验过的 SeedRecipe，避免字段手抄漂移
     for (const r of recipes) {
       await prisma.recipe.upsert({
         where: { name: r.name },
-        update: {
-          desc: r.desc,
-          cuisine: r.cuisine,
-          time: r.time,
-          kcal: r.kcal,
-          protein: r.protein,
-          carb: r.carb,
-          fat: r.fat,
-          img: r.img,
-          tags: r.tags,
-          ingredients: r.ingredients,
-          steps: r.steps,
-        },
-        create: {
-          name: r.name,
-          desc: r.desc,
-          cuisine: r.cuisine,
-          time: r.time,
-          kcal: r.kcal,
-          protein: r.protein,
-          carb: r.carb,
-          fat: r.fat,
-          img: r.img,
-          tags: r.tags,
-          ingredients: r.ingredients,
-          steps: r.steps,
-        },
+        update: r,
+        create: r,
       });
     }
     console.log(

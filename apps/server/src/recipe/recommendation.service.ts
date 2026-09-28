@@ -7,9 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   dailySeed,
   dateKeyOf,
-  isBlocked,
-  scoreRecipe,
-  type ScorableRecipe,
+  rankRecipes,
   type ScoreContext,
   type UserSignals,
 } from './recommendation.scoring';
@@ -52,35 +50,13 @@ export class RecommendationService {
       hour: now.getHours(),
       dateKey: dateKeyOf(now),
     };
-    const seed = dailySeed(userId, ctx.dateKey);
 
-    return recipes
-      .filter(
-        (r) =>
-          !isBlocked(
-            (r.ingredients as unknown as ScorableRecipe['ingredients']) ?? [],
-            signals.blocked,
-          ),
-      )
-      .map((r) => ({
-        r,
-        score: scoreRecipe(
-          {
-            id: r.id,
-            time: r.time,
-            kcal: r.kcal,
-            carb: r.carb,
-            protein: r.protein,
-            ingredients:
-              (r.ingredients as unknown as ScorableRecipe['ingredients']) ?? [],
-          },
-          signals,
-          ctx,
-          seed,
-        ),
-      }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map(({ r }) => r);
+    return rankRecipes(
+      recipes,
+      signals,
+      ctx,
+      dailySeed(userId, ctx.dateKey),
+      limit,
+    );
   }
 }

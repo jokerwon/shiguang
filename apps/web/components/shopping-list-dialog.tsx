@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { usePantry } from '@/lib/use-pantry'
-import { missingIngredients, type Recipe } from '@/lib/recipes'
+import { missingIngredients, type Recipe } from '@shiguang/domain'
 import { cn } from '@/lib/utils'
 
 /**

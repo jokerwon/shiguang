@@ -5,7 +5,9 @@ import { useSWRConfig } from 'swr'
 import {
   fetchPreferences,
   updatePreferences,
+  type HealthGoal,
   type PreferenceInput,
+  type PreferenceResponse,
 } from '@/lib/api'
 
 /**
@@ -17,20 +19,12 @@ import {
  * readOnly（历史消息/刷新后）：显示「该草稿已过期」，操作入口锁定。
  */
 
-type HealthGoal = 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN'
-
 interface PreferenceDraft {
   addDisliked?: string[]
   removeDisliked?: string[]
   addAllergens?: string[]
   removeAllergens?: string[]
   setHealthGoal?: HealthGoal
-}
-
-interface PreferenceSnapshot {
-  dislikedIngredients: string[]
-  allergens: string[]
-  healthGoal: HealthGoal
 }
 
 interface ConfirmCardProps {
@@ -49,7 +43,7 @@ const HEALTH_GOAL_LABELS: Record<HealthGoal, string> = {
 /** 按操作集合并出全量三字段（对服务器当前偏好 apply，不用草稿快照） */
 function applyDraft(
   draft: PreferenceDraft,
-  current: PreferenceSnapshot,
+  current: PreferenceResponse,
 ): PreferenceInput {
   const add = (list: string[], incoming?: string[]) => [
     ...new Set([...list, ...(incoming ?? [])]),
@@ -87,7 +81,7 @@ export function ChatConfirmCard({ output, readOnly }: ConfirmCardProps) {
 
   const out = (output ?? {}) as {
     draft?: PreferenceDraft
-    current?: PreferenceSnapshot
+    current?: PreferenceResponse
     note?: string
   }
   const draft = out.draft ?? {}

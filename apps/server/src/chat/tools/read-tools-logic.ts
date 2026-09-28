@@ -2,14 +2,16 @@
 // search_recipes 先过 blocked 硬过滤再排序（ADR-0006 安全红线），
 // 复用 recommendation.scoring 的打分，单一事实源。返回精简字段控制 token。
 import type { Recipe } from 'generated/prisma/client';
+import {
+  CUISINE_LABELS,
+  PREF_LABELS,
+  type Recipe as DomainRecipe,
+} from '@shiguang/domain';
 import { CUISINE_DOWN, TAG_DOWN, toResponse } from '../../recipe/recipe.mapper';
-import { CUISINE_LABELS, PREF_LABELS } from '@shiguang/domain';
 import {
   dateKeyOf,
   dailySeed,
-  isBlocked,
-  scoreRecipe,
-  type ScorableRecipe,
+  rankRecipes,
   type ScoreContext,
 } from '../../recipe/recommendation.scoring';
 import type { ChatToolDeps, RecipeSummary } from './types';
@@ -39,7 +41,7 @@ export interface SearchInput {
   limit?: number;
 }
 
-/** search_recipes 纯逻辑：硬过滤 → 筛选 → 打分排序 → 精简 */
+/** search_recipes 纯逻辑：关键词/菜系/标签/营养筛选 → 打分排序（含 blocked 硬过滤）→ 精简 */
 export async function runSearchRecipes(
   deps: ChatToolDeps,
   userId: string,
@@ -54,14 +56,8 @@ export async function runSearchRecipes(
     deps.findRecipes(),
   ]);
 
-  // 1. 硬过滤：含忌口/过敏原的菜谱一律剔除（ADR-0006 安全红线）
-  let filtered = recipes.filter(
-    (r) =>
-      !isBlocked(
-        (r.ingredients as unknown as ScorableRecipe['ingredients']) ?? [],
-        signals.blocked,
-      ),
-  );
+  // 1. 硬过滤（忌口/过敏原，ADR-0006 安全红线）在末尾 rankRecipes 内完成
+  let filtered = recipes;
 
   // 2. 关键词
   if (input.keyword) {
@@ -100,30 +96,13 @@ export async function runSearchRecipes(
   // 6. 复用打分排序（单一事实源）
   const now = new Date();
   const ctx: ScoreContext = { hour: now.getHours(), dateKey: dateKeyOf(now) };
-  const seed = dailySeed(userId, ctx.dateKey);
-  const limit = input.limit ?? 6;
-
-  const sorted = filtered
-    .map((r) => ({
-      r,
-      score: scoreRecipe(
-        {
-          id: r.id,
-          time: r.time,
-          kcal: r.kcal,
-          carb: r.carb,
-          protein: r.protein,
-          ingredients:
-            (r.ingredients as unknown as ScorableRecipe['ingredients']) ?? [],
-        },
-        signals,
-        ctx,
-        seed,
-      ),
-    }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map(({ r }) => r);
+  const sorted = rankRecipes(
+    filtered,
+    signals,
+    ctx,
+    dailySeed(userId, ctx.dateKey),
+    input.limit ?? 6,
+  );
 
   return {
     count: sorted.length,
@@ -140,24 +119,7 @@ export async function runGetRecipe(
   deps: ChatToolDeps,
   id: string,
 ): Promise<
-  | { found: false; message: string }
-  | {
-      found: true;
-      recipe: {
-        id: string;
-        name: string;
-        desc: string;
-        cuisine: string;
-        time: number;
-        kcal: number;
-        protein: number;
-        carb: number;
-        fat: number;
-        tags: string[];
-        ingredients: { name: string; amount: string }[];
-        steps: string[];
-      };
-    }
+  { found: false; message: string } | { found: true; recipe: DomainRecipe }
 > {
   const r = await deps.findRecipeById(id);
   if (!r) return { found: false, message: '菜谱不存在' };
@@ -177,6 +139,7 @@ export async function runGetRecipe(
       tags: resp.tags.map((t) => PREF_LABELS[t] ?? t),
       ingredients: resp.ingredients,
       steps: resp.steps,
+      img: resp.img,
     },
   };
 }

@@ -81,41 +81,32 @@ export default function DiscoveryScreen() {
         </View>
       )}
 
-      {/* 今日推荐 */}
-      {rec?.today && rec.today.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>今日推荐</Text>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={rec.today}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => router.push(`/recipe/${item.id}`)}>
-                <RecipeCard recipe={item} compact />
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      )}
-
-      {/* 快手菜 */}
-      {rec?.quick && rec.quick.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>快手菜（≤15分钟）</Text>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={rec.quick}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => router.push(`/recipe/${item.id}`)}>
-                <RecipeCard recipe={item} compact />
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      )}
+      {/* 推荐区块：今日推荐 + 快手菜（结构相同，仅标题与数据源不同） */}
+      {[
+        { title: '今日推荐', data: rec?.today },
+        { title: '快手菜（≤15分钟）', data: rec?.quick },
+      ]
+        .filter((s): s is { title: string; data: Recipe[] } =>
+          Boolean(s.data && s.data.length > 0),
+        )
+        .map((s) => (
+          <View key={s.title} style={styles.section}>
+            <Text style={styles.sectionTitle}>{s.title}</Text>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={s.data}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => router.push(`/recipe/${item.id}`)}
+                >
+                  <RecipeCard recipe={item} compact />
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        ))}
 
       {/* 菜系探索 */}
       <View style={styles.section}>

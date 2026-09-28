@@ -35,6 +35,53 @@ export function dateKeyOf(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
+/** 打分排序链（首页 recommend 与 search_recipes 共用，单一事实源） */
+// ponytail: 全量应用层排序，库量级 80-100 道；库膨胀后再加 DB 预筛
+export function rankRecipes<
+  R extends {
+    id: string;
+    time: number;
+    kcal: number;
+    carb: number;
+    protein: number;
+    ingredients: unknown;
+  },
+>(
+  recipes: R[],
+  signals: UserSignals,
+  ctx: ScoreContext,
+  seed: number,
+  limit: number,
+): R[] {
+  return recipes
+    .filter(
+      (r) =>
+        !isBlocked(
+          (r.ingredients as ScorableRecipe['ingredients']) ?? [],
+          signals.blocked,
+        ),
+    )
+    .map((r) => ({
+      r,
+      score: scoreRecipe(
+        {
+          id: r.id,
+          time: r.time,
+          kcal: r.kcal,
+          carb: r.carb,
+          protein: r.protein,
+          ingredients: (r.ingredients as ScorableRecipe['ingredients']) ?? [],
+        },
+        signals,
+        ctx,
+        seed,
+      ),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ r }) => r);
+}
+
 /** FNV-1a 字符串 hash：同输入恒同输出 */
 export function dailySeed(userId: string, dateKey: string): number {
   let h = 0x811c9dc5;

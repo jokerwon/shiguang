@@ -81,51 +81,46 @@ async function deleteUserSnapshot() {
 }
 
 /* ---- 登录/注册 ---- */
-export async function loginApi(input: {
-  email: string;
-  password: string;
-}): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/login`, {
+async function authPost(
+  path: 'login' | 'register',
+  input: { email: string; password: string; displayName?: string },
+  fallback: string,
+): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE}/auth/${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    const msg = (data as { message?: string | string[] }).message;
+    const data: unknown = await res.json().catch(() => null);
+    const message =
+      data && typeof data === 'object' && 'message' in data
+        ? data.message
+        : undefined;
     throw new Error(
-      msg
-        ? Array.isArray(msg)
-          ? msg[0]
-          : msg
-        : '登录失败，请稍后重试',
+      typeof message === 'string'
+        ? message
+        : Array.isArray(message) && typeof message[0] === 'string'
+          ? message[0]
+          : fallback,
     );
   }
   return res.json();
 }
 
-export async function registerApi(input: {
+export function loginApi(input: {
+  email: string;
+  password: string;
+}): Promise<AuthResponse> {
+  return authPost('login', input, '登录失败，请稍后重试');
+}
+
+export function registerApi(input: {
   email: string;
   password: string;
   displayName?: string;
 }): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    const msg = (data as { message?: string | string[] }).message;
-    throw new Error(
-      msg
-        ? Array.isArray(msg)
-          ? msg[0]
-          : msg
-        : '注册失败，请稍后重试',
-    );
-  }
-  return res.json();
+  return authPost('register', input, '注册失败，请稍后重试');
 }
 
 /* ---- 认证状态管理器 ---- */

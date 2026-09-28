@@ -3,7 +3,7 @@
 import { Bookmark, Loader2 } from 'lucide-react'
 import { RecipeCard } from '@/components/recipe-card'
 import { useFavorites } from '@/lib/use-favorites'
-import type { Recipe } from '@/lib/recipes'
+import type { Recipe } from '@shiguang/domain'
 
 export function FavoriteClient({ recipes }: { recipes: Recipe[] }) {
   const { saved, toggleSave, isLoading } = useFavorites()

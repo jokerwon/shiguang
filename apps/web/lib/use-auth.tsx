@@ -16,7 +16,6 @@ import { refreshOnce, RefreshFailedError } from '@/lib/refresh';
 
 interface AuthState {
   user: AuthUser | null;
-  token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (
@@ -46,15 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = localStorage.getItem(USER_KEY);
       const savedToken = localStorage.getItem(TOKEN_KEY);
       if (raw && savedToken) {
-        return { user: JSON.parse(raw) as AuthUser, token: savedToken };
+        return JSON.parse(raw) as AuthUser;
       }
     } catch {
       // ignore
     }
     return null;
   });
-  const [user, setUser] = useState<AuthUser | null>(initial?.user ?? null);
-  const [token, setToken] = useState<string | null>(initial?.token ?? null);
+  const [user, setUser] = useState<AuthUser | null>(initial);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { mutate } = useSWRConfig();
@@ -71,24 +69,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       initial !== null || localStorage.getItem(REFRESH_TOKEN_KEY) !== null;
     if (!hasSession) return;
 
-    refreshOnce()
-      .then(() => {
-        setToken(localStorage.getItem(TOKEN_KEY));
-      })
-      .catch((err) => {
-        if (err instanceof RefreshFailedError) {
-          clearLocal();
-          setUser(null);
-          setToken(null);
-        }
-      });
+    refreshOnce().catch((err) => {
+      if (err instanceof RefreshFailedError) {
+        clearLocal();
+        setUser(null);
+      }
+    });
   }, [initial]);
 
   // 401 拦截链的终点（lib/api.ts refresh 失败时广播）：强制登出
   useEffect(() => {
     const onForceLogout = () => {
       clearLocal();
-      setToken(null);
       setUser(null);
       mutate(() => true, undefined, { revalidate: false });
       router.push('/login');
@@ -101,7 +93,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(TOKEN_KEY, data.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken); // 原生端凭据容器
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-    setToken(data.accessToken);
     setUser(data.user);
   }, []);
 
@@ -136,7 +127,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 网络失败不影响本地登出
     });
     clearLocal();
-    setToken(null);
     setUser(null);
     // 登出时清空所有 SWR 缓存
     mutate(() => true, undefined, { revalidate: false });
@@ -144,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router, mutate]);
 
   return (
-    <AuthContext value={{ user, token, loading, login, register, logout }}>
+    <AuthContext value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext>
   );

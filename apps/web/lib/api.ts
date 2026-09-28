@@ -1,4 +1,4 @@
-import type { Recipe } from './recipes';
+import type { Recipe } from '@shiguang/domain';
 import { API_BASE, getToken } from './constants';
 import { refreshOnce } from './refresh';
 
@@ -90,7 +90,8 @@ export interface RecipeQuery {
 
 /* ---- Recipe API 函数 ---- */
 
-export function fetchRecipes(query: RecipeQuery = {}): Promise<PaginatedRecipes> {
+/** 构建 /recipes 查询串（fetchRecipes 与 SWR key 共用同一序列化） */
+export function recipesUrl(query: RecipeQuery = {}): string {
   const params = new URLSearchParams();
   if (query.cuisine) params.set('cuisine', query.cuisine);
   if (query.tags) params.set('tags', query.tags);
@@ -98,9 +99,12 @@ export function fetchRecipes(query: RecipeQuery = {}): Promise<PaginatedRecipes>
   if (query.keyword) params.set('keyword', query.keyword);
   if (query.page) params.set('page', String(query.page));
   if (query.limit) params.set('limit', String(query.limit));
-
   const qs = params.toString();
-  return request<PaginatedRecipes>(`/recipes${qs ? `?${qs}` : ''}`);
+  return `/recipes${qs ? `?${qs}` : ''}`;
+}
+
+export function fetchRecipes(query: RecipeQuery = {}): Promise<PaginatedRecipes> {
+  return request<PaginatedRecipes>(recipesUrl(query));
 }
 
 export function fetchRecipeById(id: string): Promise<Recipe> {
@@ -127,19 +131,11 @@ export function fetchFavorites(): Promise<string[]> {
   return request<string[]>('/favorites');
 }
 
-/** toggle 收藏,返回最新收藏 id 列表 */
-export function toggleFavorite(recipeId: string): Promise<string[]> {
-  return request<string[]>(`/favorites/${recipeId}`, { method: 'POST' });
-}
-
-/**
- * 幂等 set 收藏（ADR-0009 操作卡片 undo 需要）。
- * 带 `{ saved: boolean }` body 走幂等 set；无 body 维持 toggle 语义。
- */
-export function setFavorite(recipeId: string, saved: boolean): Promise<string[]> {
+/** toggle 收藏（无 saved）；传 saved 走幂等 set（ADR-0009 操作卡片 undo 需要），返回最新收藏 id 列表 */
+export function setFavorite(recipeId: string, saved?: boolean): Promise<string[]> {
   return request<string[]>(`/favorites/${recipeId}`, {
     method: 'POST',
-    body: JSON.stringify({ saved }),
+    body: saved === undefined ? undefined : JSON.stringify({ saved }),
   });
 }
 
@@ -187,9 +183,7 @@ export interface ChatUIMessage {
   parts: { type: string; text?: string; [k: string]: unknown }[];
 }
 
-export function fetchConversations(): Promise<ConversationSummary[]> {
-  return request<ConversationSummary[]>('/conversations');
-}
+
 
 export function fetchConversationMessages(
   id: string,
