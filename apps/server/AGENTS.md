@@ -21,14 +21,13 @@ shiguang/
 ## 常用命令
 
 ```bash
-pnpm start:dev      # 开发模式 (watch)
+pnpm dev            # 开发模式 (watch)
 pnpm start:debug    # 调试模式
 pnpm build          # 生产构建 (nest build)
 pnpm start          # 生产启动
 pnpm lint           # ESLint + Prettier
 pnpm format         # Prettier 格式化
 pnpm test           # 单元测试 (jest)
-pnpm test:e2e       # E2E 测试
 pnpm test:cov       # 测试覆盖率
 ```
 
@@ -63,8 +62,8 @@ pnpm recipes:generate --only sichuan,home # 只生成指定菜系
 
 `.env` 文件位于 `apps/server/`。必须包含：
 
-- `DATABASE_URL` — 运行时连接串（PrismaService 经 adapter 使用），格式：`postgresql://user:password@host:port/dbname`；托管库用事务池（Supabase 为端口 6543）
-- `DIRECT_URL` — Prisma CLI 迁移连接串（`prisma.config.ts` 的 `datasource.url`）。本地与 `DATABASE_URL` 相同；托管库须为会话池（Supabase 为端口 5432），不能走事务池，否则 migrate 挂起
+- `DATABASE_URL` — 运行时连接串（PrismaService 经 adapter 使用），格式：`postgresql://user:password@host:port/dbname`
+- `DIRECT_URL` — Prisma CLI 迁移连接串（`prisma.config.ts` 的 `datasource.url`）。本地与 `DATABASE_URL` 相同即可；迁移必须走直连或会话池，不能走事务池（PGbouncer 事务模式下 migrate 会挂起）
 - `JWT_SECRET` — JWT 签名密钥（开发环境默认值：`shiguang-dev-secret`）
 - `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `MODEL_NAME` — OpenAI-compatible 端点，`/chat` 与 `recipes:generate` 共用
 

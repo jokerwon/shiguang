@@ -77,7 +77,7 @@ docs 根只放全局文档；每 Phase 的工件按类型归目录——实施�
 ```bash
 pnpm dev # 同时启动前端 (3000) 和后端 (3001) 开发服务器
 pnpm --filter @shiguang/web dev # 仅启动前端
-pnpm --filter @shiguang/server start:dev # 仅启动后端
+pnpm --filter @shiguang/server dev # 仅启动后端
 pnpm --filter @shiguang/server db:generate # 生成 Prisma Client
 pnpm build:domain # 构建共享域层 dist 产物（服务端消费）
 pnpm recipes:generate # AI 批量生成菜谱 → staging 待审区（ADR-0003）

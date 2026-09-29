@@ -28,6 +28,7 @@
 | 3.5 自动化验证补齐 | [implementation/phase-3-5-implementation.md](./implementation/phase-3-5-implementation.md) | [phase-2-3-checklist.md](./acceptance/phase-2-3-checklist.md)（G 节） | 已交付——后端纯逻辑/service 测试补齐（preference upsert、seq 不变量、工具 schema 清洗）、迁移备份入流程、pre-existing lint 修复；前端 React 19 lint 留待后续 |
 | 4 认证双轨 | [implementation/phase-4-implementation.md](./implementation/phase-4-implementation.md) | [phase-4-checklist.md](./acceptance/phase-4-checklist.md) | 已交付——短 access + 滑动 refresh、复用检测、cookie/body 双轨、删 User.role（ADR-0013，原生 app 认证前置）；验收全过（API 冒烟 + 浏览器手动走查） |
 | 5 原生 app 首发 | [implementation/phase-5-implementation.md](./implementation/phase-5-implementation.md) | [phase-5-checklist.md](./acceptance/phase-5-checklist.md) | **已移除**（ADR-0016，2026-09-28）——曾交付 Expo/React Native `apps/mobile`（iOS 先行）+ 移动端认证 + 离线只读缓存；`packages/domain` 共享域层保留（ADR-0015 继续有效）。两份工件只读，不再维护 |
+| 6 PostgreSQL 迁移 | [implementation/phase-6-implementation.md](./implementation/phase-6-implementation.md) | 无独立验收清单（一次性迁移，验收证据见实施清单表格） | 已交付——Supabase → 自建 PostgreSQL 16：`public` schema 逻辑迁移 + 9 表内容哈希对账 + 连接串切换 + 运行时冒烟 |
 
 ## 运行层
 
