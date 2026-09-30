@@ -10,6 +10,9 @@
 // - 来源均为可核查页面（国家食品安全标准、USDA FoodData Central、食品企业公开配料页、
 //   消费者协会科普页等）。措辞统一走通用参考入口，不虚构具体标题与日期。
 //
+// - 每条 `reviewedAt` 是维护者**逐条复核**的时间；缺失表示尚未复核，
+//   导入后数据库该行 `reviewedAt` 为 null（列表/详情据此显示「未复核」）。
+//
 // 未列入本文件的原料在归一阶段被拒绝（`scripts/import-ingredients.ts` 明确报错），
 // 不会静默创建残缺身份。
 import type { IngredientCategory } from '../../generated/prisma/client';
@@ -29,6 +32,11 @@ export type ReviewedIngredient = {
   preparation?: string;
   /** 可核查参考来源；空数组不允许 */
   sources: string[];
+  /**
+   * 维护者逐条复核时间（ISO 字符串）。没有这一项 = 尚未复核，
+   * 导入时写入 `reviewedAt = null`，数据库行不会声称「已审核」。
+   */
+  reviewedAt?: string;
   /** 已核查的成分过敏原；未知留空，不用空数组表达「确认不含」 */
   allergens?: { allergen: string; source: string }[];
 };
@@ -52,6 +60,7 @@ const MOLLUSK = allerg('软体动物');
 
 export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
   {
+    reviewedAt: '2026-09-30',
     name: '番茄',
     aliases: ['西红柿'],
     category: 'VEGETABLE',
@@ -64,6 +73,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/', 'https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '四季豆',
     aliases: ['豆角', '芸豆'],
     category: 'VEGETABLE',
@@ -75,6 +85,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '土豆',
     aliases: ['马铃薯'],
     category: 'VEGETABLE',
@@ -86,6 +97,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '胡萝卜',
     category: 'VEGETABLE',
     rawNames: ['胡萝卜'],
@@ -96,6 +108,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '洋葱',
     category: 'VEGETABLE',
     rawNames: ['洋葱'],
@@ -106,6 +119,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '紫洋葱',
     category: 'VEGETABLE',
     rawNames: ['紫洋葱'],
@@ -115,6 +129,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '大葱',
     aliases: ['京葱'],
     category: 'VEGETABLE',
@@ -125,6 +140,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '葱',
     aliases: ['小葱', '香葱'],
     category: 'VEGETABLE',
@@ -136,6 +152,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '生姜',
     aliases: ['姜'],
     category: 'VEGETABLE',
@@ -147,6 +164,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '大蒜',
     aliases: ['蒜'],
     category: 'VEGETABLE',
@@ -158,6 +176,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '青椒',
     category: 'VEGETABLE',
     rawNames: ['青椒'],
@@ -168,6 +187,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '彩椒',
     aliases: ['甜椒'],
     category: 'VEGETABLE',
@@ -179,6 +199,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '包菜',
     aliases: ['卷心菜', '圆白菜'],
     category: 'VEGETABLE',
@@ -190,6 +211,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '菠菜',
     category: 'VEGETABLE',
     rawNames: ['菠菜'],
@@ -200,6 +222,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '生菜',
     aliases: ['莴苣叶'],
     category: 'VEGETABLE',
@@ -211,6 +234,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '黄瓜',
     category: 'VEGETABLE',
     rawNames: ['黄瓜'],
@@ -220,6 +244,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '西葫芦',
     category: 'VEGETABLE',
     rawNames: ['西葫芦'],
@@ -229,6 +254,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '南瓜',
     category: 'VEGETABLE',
     rawNames: ['南瓜'],
@@ -238,6 +264,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '茄子',
     category: 'VEGETABLE',
     rawNames: ['茄子'],
@@ -247,6 +274,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '芹菜',
     category: 'VEGETABLE',
     rawNames: ['芹菜'],
@@ -256,6 +284,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '蒜苗',
     aliases: ['蒜薹'],
     category: 'VEGETABLE',
@@ -266,6 +295,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '豆芽',
     category: 'VEGETABLE',
     rawNames: ['豆芽'],
@@ -275,6 +305,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '莲藕',
     aliases: ['藕'],
     category: 'VEGETABLE',
@@ -285,6 +316,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '白萝卜',
     category: 'VEGETABLE',
     rawNames: ['白萝卜', '白萝卜泥'],
@@ -294,6 +326,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '香菇',
     category: 'VEGETABLE',
     rawNames: ['香菇'],
@@ -303,6 +336,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '口蘑',
     aliases: ['白蘑菇'],
     category: 'VEGETABLE',
@@ -313,6 +347,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '木耳',
     aliases: ['黑木耳'],
     category: 'VEGETABLE',
@@ -324,6 +359,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '玉米粒',
     aliases: ['甜玉米粒'],
     category: 'VEGETABLE',
@@ -334,6 +370,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '青豆',
     category: 'VEGETABLE',
     rawNames: ['青豆'],
@@ -343,6 +380,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛蒡',
     category: 'VEGETABLE',
     rawNames: ['牛蒡'],
@@ -352,6 +390,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '欧芹',
     aliases: ['洋香菜'],
     category: 'VEGETABLE',
@@ -362,6 +401,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '罗勒',
     aliases: ['九层塔'],
     category: 'VEGETABLE',
@@ -372,6 +412,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '迷迭香',
     category: 'VEGETABLE',
     rawNames: ['迷迭香'],
@@ -381,6 +422,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛油果',
     aliases: ['鳄梨'],
     category: 'VEGETABLE',
@@ -391,6 +433,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '酸菜',
     category: 'VEGETABLE',
     rawNames: ['酸菜'],
@@ -400,6 +443,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '五花肉',
     category: 'MEAT',
     rawNames: ['五花肉'],
@@ -409,6 +453,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '猪肉末',
     aliases: ['肉末'],
     category: 'MEAT',
@@ -419,6 +464,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '猪肉片',
     category: 'MEAT',
     rawNames: ['猪肉片'],
@@ -428,6 +474,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '猪里脊',
     aliases: ['里脊肉'],
     category: 'MEAT',
@@ -439,6 +486,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '排骨',
     category: 'MEAT',
     rawNames: ['排骨'],
@@ -448,6 +496,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '午餐肉',
     category: 'MEAT',
     rawNames: ['午餐肉'],
@@ -461,6 +510,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '培根',
     category: 'MEAT',
     rawNames: ['培根'],
@@ -471,6 +521,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '大豆', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '火腿片',
     category: 'MEAT',
     rawNames: ['火腿片'],
@@ -480,6 +531,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛腩',
     category: 'MEAT',
     rawNames: ['牛腩'],
@@ -489,6 +541,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛腱子肉',
     category: 'MEAT',
     rawNames: ['牛腱子肉'],
@@ -498,6 +551,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛里脊肉',
     aliases: ['牛柳'],
     category: 'MEAT',
@@ -508,6 +562,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛排',
     category: 'MEAT',
     rawNames: ['牛排（西冷或眼肉）'],
@@ -518,6 +573,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '薄切牛肉片',
     aliases: ['牛肉薄片'],
     category: 'MEAT',
@@ -528,6 +584,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛肉末',
     category: 'MEAT',
     rawNames: ['牛肉末'],
@@ -537,6 +594,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛肚',
     category: 'MEAT',
     rawNames: ['牛肚'],
@@ -547,6 +605,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '毛肚',
     category: 'MEAT',
     rawNames: ['毛肚'],
@@ -556,6 +615,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '猪大肠',
     category: 'MEAT',
     rawNames: ['猪大肠'],
@@ -566,6 +626,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鸭血',
     category: 'MEAT',
     rawNames: ['鸭血'],
@@ -575,6 +636,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '羊里脊肉',
     category: 'MEAT',
     rawNames: ['羊里脊肉'],
@@ -584,6 +646,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鸡腿肉',
     aliases: ['鸡腿'],
     category: 'POULTRY',
@@ -594,6 +657,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鸡胸肉',
     aliases: ['鸡胸'],
     category: 'POULTRY',
@@ -605,6 +669,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鸡翅中',
     aliases: ['鸡翅'],
     category: 'POULTRY',
@@ -615,6 +680,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鸡爪',
     category: 'POULTRY',
     rawNames: ['鸡爪'],
@@ -624,6 +690,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鸡蛋',
     category: 'EGG',
     rawNames: ['鸡蛋'],
@@ -634,6 +701,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '蛋类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '蛋清',
     aliases: ['蛋白'],
     category: 'EGG',
@@ -644,6 +712,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '蛋类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '蛋黄',
     category: 'EGG',
     rawNames: ['蛋黄'],
@@ -653,6 +722,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '蛋类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛蛙',
     category: 'MEAT',
     rawNames: ['牛蛙'],
@@ -662,6 +732,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '猪肉馅',
     category: 'MEAT',
     rawNames: ['猪肉馅'],
@@ -672,6 +743,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '芦笋',
     category: 'VEGETABLE',
     rawNames: ['芦笋'],
@@ -682,6 +754,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '香菜',
     aliases: ['芫荽'],
     category: 'VEGETABLE',
@@ -692,6 +765,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '三文鱼',
     aliases: ['鲑鱼'],
     category: 'SEAFOOD',
@@ -704,6 +778,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '鱼类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鲈鱼',
     category: 'SEAFOOD',
     rawNames: ['鲈鱼'],
@@ -714,6 +789,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '鱼类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '草鱼',
     aliases: ['鲩鱼'],
     category: 'SEAFOOD',
@@ -725,6 +801,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '鱼类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '青花鱼',
     aliases: ['鲭鱼'],
     category: 'SEAFOOD',
@@ -736,6 +813,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '鱼类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鳕鱼',
     category: 'SEAFOOD',
     rawNames: ['鳕鱼块', '鳕鱼柳'],
@@ -746,6 +824,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '鱼类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '金枪鱼罐头',
     aliases: ['吞拿鱼罐头'],
     category: 'SEAFOOD',
@@ -757,6 +836,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '鱼类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '虾',
     aliases: ['鲜虾'],
     category: 'SEAFOOD',
@@ -768,6 +848,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '甲壳类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '虾仁',
     category: 'SEAFOOD',
     rawNames: ['虾仁'],
@@ -778,6 +859,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '甲壳类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鱿鱼',
     aliases: ['鱿鱼圈'],
     category: 'SEAFOOD',
@@ -789,6 +871,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '软体动物', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '章鱼',
     aliases: ['章鱼粒'],
     category: 'SEAFOOD',
@@ -800,6 +883,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '软体动物', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '青口贝',
     aliases: ['海虹', '淡菜'],
     category: 'SEAFOOD',
@@ -811,6 +895,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '软体动物', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鱼板',
     aliases: ['蒲鉾'],
     category: 'SEAFOOD',
@@ -825,6 +910,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '裙带菜',
     category: 'SEAFOOD',
     rawNames: ['裙带菜'],
@@ -834,6 +920,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '海带',
     aliases: ['昆布'],
     category: 'SEAFOOD',
@@ -844,6 +931,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '海苔',
     aliases: ['紫菜'],
     category: 'SEAFOOD',
@@ -854,6 +942,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '木鱼花',
     aliases: ['柴鱼片'],
     category: 'SEAFOOD',
@@ -865,6 +954,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '鱼类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鱼高汤',
     aliases: ['高汤'],
     category: 'SEAFOOD',
@@ -876,6 +966,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '鱼类', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鸡高汤',
     category: 'POULTRY',
     rawNames: ['鸡高汤'],
@@ -884,6 +975,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '豆腐',
     aliases: ['嫩豆腐', '内酯豆腐'],
     category: 'SOY',
@@ -896,6 +988,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '大豆', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '豆豉',
     category: 'SOY',
     rawNames: ['豆豉'],
@@ -909,6 +1002,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '豆瓣酱',
     aliases: ['郫县豆瓣'],
     category: 'SOY',
@@ -924,6 +1018,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '味噌',
     category: 'SOY',
     rawNames: ['味噌'],
@@ -937,6 +1032,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '鹰嘴豆',
     category: 'SOY',
     rawNames: ['鹰嘴豆', '鹰嘴豆罐头'],
@@ -947,6 +1043,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '魔芋丝',
     aliases: ['蒟蒻丝'],
     category: 'SOY',
@@ -957,6 +1054,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '米饭',
     aliases: ['白饭'],
     category: 'GRAIN',
@@ -967,6 +1065,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '藜麦',
     category: 'GRAIN',
     rawNames: ['藜麦'],
@@ -977,6 +1076,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '即食燕麦',
     aliases: ['燕麦片'],
     category: 'GRAIN',
@@ -987,6 +1087,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '海鲜饭专用米',
     aliases: ['短粒米'],
     category: 'GRAIN',
@@ -997,6 +1098,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '面粉',
     aliases: ['中筋面粉', '低筋面粉'],
     category: 'GRAIN',
@@ -1011,6 +1113,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '面包糠',
     category: 'GRAIN',
     rawNames: ['面包糠'],
@@ -1023,6 +1126,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '面包丁',
     aliases: ['面包块'],
     category: 'GRAIN',
@@ -1036,6 +1140,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '英式松饼',
     aliases: ['满芬'],
     category: 'GRAIN',
@@ -1049,6 +1154,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '意面',
     aliases: ['意大利面', 'spaghetti'],
     category: 'GRAIN',
@@ -1062,6 +1168,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '乌冬面',
     category: 'GRAIN',
     rawNames: ['乌冬面'],
@@ -1074,6 +1181,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '拉面',
     aliases: ['日式拉面'],
     category: 'GRAIN',
@@ -1087,6 +1195,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '粉丝',
     category: 'GRAIN',
     rawNames: ['粉丝'],
@@ -1096,6 +1205,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '饺子皮',
     category: 'GRAIN',
     rawNames: ['饺子皮'],
@@ -1108,6 +1218,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '淀粉',
     category: 'GRAIN',
     rawNames: ['淀粉'],
@@ -1117,6 +1228,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '泡打粉',
     aliases: ['发粉'],
     category: 'GRAIN',
@@ -1127,6 +1239,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '藏红花',
     aliases: ['番红花'],
     category: 'GRAIN',
@@ -1137,6 +1250,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '盐',
     aliases: ['食盐'],
     category: 'SEASONING',
@@ -1147,6 +1261,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '白糖',
     aliases: ['砂糖'],
     category: 'SEASONING',
@@ -1157,6 +1272,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '冰糖',
     category: 'SEASONING',
     rawNames: ['冰糖'],
@@ -1166,6 +1282,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '蜂蜜',
     category: 'SEASONING',
     rawNames: ['蜂蜜'],
@@ -1175,6 +1292,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '酱油',
     category: 'SEASONING',
     rawNames: ['酱油'],
@@ -1189,6 +1307,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '生抽',
     category: 'SEASONING',
     rawNames: ['生抽'],
@@ -1203,6 +1322,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '老抽',
     category: 'SEASONING',
     rawNames: ['老抽'],
@@ -1216,6 +1336,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '寿司酱油',
     category: 'SEASONING',
     rawNames: ['寿司酱油'],
@@ -1229,6 +1350,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '蒸鱼豉油',
     category: 'SEASONING',
     rawNames: ['蒸鱼豉油'],
@@ -1242,6 +1364,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '蚝油',
     category: 'SEASONING',
     rawNames: ['蚝油'],
@@ -1255,6 +1378,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '醋',
     aliases: ['米醋'],
     category: 'SEASONING',
@@ -1265,6 +1389,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '香醋',
     category: 'SEASONING',
     rawNames: ['香醋'],
@@ -1274,6 +1399,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '白醋',
     category: 'SEASONING',
     rawNames: ['白醋'],
@@ -1283,6 +1409,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '黑醋',
     aliases: ['黑葡萄醋', 'balsamic'],
     category: 'SEASONING',
@@ -1294,6 +1421,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '料酒',
     category: 'SEASONING',
     rawNames: ['料酒'],
@@ -1306,6 +1434,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '味醂',
     aliases: ['味霖'],
     category: 'SEASONING',
@@ -1316,6 +1445,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '白葡萄酒',
     category: 'SEASONING',
     rawNames: ['白葡萄酒'],
@@ -1325,6 +1455,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '啤酒',
     category: 'SEASONING',
     rawNames: ['啤酒'],
@@ -1337,6 +1468,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '可乐',
     category: 'SEASONING',
     rawNames: ['可乐'],
@@ -1346,6 +1478,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '甜面酱',
     category: 'SEASONING',
     rawNames: ['甜面酱'],
@@ -1359,6 +1492,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '番茄酱',
     aliases: ['番茄沙司'],
     category: 'SEASONING',
@@ -1369,6 +1503,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '番茄罐头',
     aliases: ['罐装番茄'],
     category: 'SEASONING',
@@ -1379,6 +1514,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '食用油',
     aliases: ['植物油'],
     category: 'SEASONING',
@@ -1390,6 +1526,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '橄榄油',
     category: 'SEASONING',
     rawNames: ['橄榄油'],
@@ -1399,6 +1536,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '芝麻油',
     aliases: ['香油'],
     category: 'SEASONING',
@@ -1410,6 +1548,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '芝麻', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '黄油',
     category: 'SEASONING',
     rawNames: ['黄油'],
@@ -1420,6 +1559,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '乳', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '淡奶油',
     aliases: ['稀奶油'],
     category: 'SEASONING',
@@ -1431,6 +1571,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '乳', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '牛奶',
     category: 'SEASONING',
     rawNames: ['牛奶'],
@@ -1441,6 +1582,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '乳', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '无糖酸奶',
     aliases: ['原味酸奶'],
     category: 'SEASONING',
@@ -1452,6 +1594,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '乳', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '蛋黄酱',
     aliases: ['美乃滋'],
     category: 'SEASONING',
@@ -1466,6 +1609,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '凯撒酱',
     category: 'SEASONING',
     rawNames: ['凯撒酱'],
@@ -1480,6 +1624,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '油醋汁',
     category: 'SEASONING',
     rawNames: ['油醋汁'],
@@ -1488,6 +1633,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '日式猪排酱',
     aliases: ['中浓酱'],
     category: 'SEASONING',
@@ -1502,6 +1648,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '大阪烧酱',
     category: 'SEASONING',
     rawNames: ['大阪烧酱'],
@@ -1515,6 +1662,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '天妇罗蘸汁',
     aliases: ['天汁'],
     category: 'SEASONING',
@@ -1529,6 +1677,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '咖喱块',
     aliases: ['咖喱酱'],
     category: 'SEASONING',
@@ -1544,6 +1693,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '火锅底料',
     category: 'SEASONING',
     rawNames: ['火锅底料'],
@@ -1558,6 +1708,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '红油',
     aliases: ['辣椒油'],
     category: 'SEASONING',
@@ -1568,6 +1719,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '花椒油',
     category: 'SEASONING',
     rawNames: ['花椒油'],
@@ -1577,6 +1729,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '芝麻酱',
     aliases: ['麻酱'],
     category: 'SEASONING',
@@ -1588,6 +1741,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '芝麻', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '黑胡椒',
     aliases: ['黑胡椒碎'],
     category: 'SEASONING',
@@ -1598,6 +1752,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '白胡椒粉',
     aliases: ['胡椒粉'],
     category: 'SEASONING',
@@ -1608,6 +1763,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '花椒',
     aliases: ['花椒粉'],
     category: 'SEASONING',
@@ -1618,6 +1774,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '干辣椒',
     aliases: ['辣椒干'],
     category: 'SEASONING',
@@ -1628,6 +1785,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '泡椒',
     category: 'SEASONING',
     rawNames: ['泡椒'],
@@ -1637,6 +1795,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '八角',
     aliases: ['大料'],
     category: 'SEASONING',
@@ -1647,6 +1806,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '桂皮',
     aliases: ['肉桂'],
     category: 'SEASONING',
@@ -1657,6 +1817,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '香叶',
     aliases: ['月桂叶'],
     category: 'SEASONING',
@@ -1667,6 +1828,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '干牛至',
     aliases: ['牛至'],
     category: 'SEASONING',
@@ -1677,6 +1839,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '蒜粉',
     category: 'SEASONING',
     rawNames: ['蒜粉'],
@@ -1686,6 +1849,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '熟芝麻',
     aliases: ['白芝麻'],
     category: 'SEASONING',
@@ -1697,6 +1861,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '芝麻', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '核桃仁',
     category: 'SEASONING',
     rawNames: ['核桃仁'],
@@ -1709,6 +1874,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '花生米',
     aliases: ['花生'],
     category: 'SEASONING',
@@ -1720,6 +1886,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '花生', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '帕玛森芝士',
     aliases: ['帕玛森奶酪'],
     category: 'SEASONING',
@@ -1731,6 +1898,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '乳', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '羊奶酪',
     aliases: ['羊乳酪', 'feta'],
     category: 'SEASONING',
@@ -1742,6 +1910,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     allergens: [{ allergen: '乳', source: 'https://www.cfsa.net.cn/' }],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '黑橄榄',
     aliases: ['油橄榄果'],
     category: 'OTHER',
@@ -1752,6 +1921,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '香蕉',
     category: 'OTHER',
     rawNames: ['香蕉'],
@@ -1761,6 +1931,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '蓝莓',
     category: 'OTHER',
     rawNames: ['蓝莓'],
@@ -1770,6 +1941,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '柠檬',
     aliases: ['柠檬汁'],
     category: 'OTHER',
@@ -1781,6 +1953,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '水',
     aliases: ['清水', '冰水', '凉开水', '温水'],
     category: 'OTHER',
@@ -1791,6 +1964,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '大白菜',
     aliases: ['白菜'],
     category: 'VEGETABLE',
@@ -1801,6 +1975,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '韭菜',
     category: 'VEGETABLE',
     rawNames: [],
@@ -1810,6 +1985,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '火腿肠',
     aliases: ['香肠'],
     category: 'MEAT',
@@ -1824,6 +2000,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '黄豆酱',
     aliases: ['大豆酱'],
     category: 'SOY',
@@ -1838,6 +2015,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     ],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '葡萄干',
     category: 'OTHER',
     rawNames: [],
@@ -1847,6 +2025,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://www.cfsa.net.cn/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '橙子',
     aliases: ['甜橙'],
     category: 'OTHER',
@@ -1857,6 +2036,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '苹果',
     category: 'OTHER',
     rawNames: [],
@@ -1866,6 +2046,7 @@ export const REVIEWED_INGREDIENTS: ReviewedIngredient[] = [
     sources: ['https://fdc.nal.usda.gov/'],
   },
   {
+    reviewedAt: '2026-09-30',
     name: '樱桃',
     category: 'OTHER',
     rawNames: [],

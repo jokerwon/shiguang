@@ -7,6 +7,7 @@ jest.mock('../prisma/prisma.service', () => ({
 
 import { RecipeSafetyService } from './recipe-safety.service';
 import { validateReviewedIngredient } from '../ingredient/publish-review';
+import { REVIEWED_INGREDIENTS } from '../../prisma/ingredients/published';
 import { IngredientService } from '../ingredient/ingredient.service';
 import { evaluateRecipeSafety, type RecipeIngredientView } from './safety';
 import {
@@ -245,5 +246,24 @@ describe('食材资料导入：发布最低标准', () => {
 
   it('完整条目通过校验', () => {
     expect(validateReviewedIngredient(base)).toEqual([]);
+  });
+});
+
+describe('发布输入：复核标记决定 reviewedAt', () => {
+  it('带标记的条目可解析为合法日期，标记类型为字符串', () => {
+    const withMark = REVIEWED_INGREDIENTS.filter((i) => i.reviewedAt);
+    expect(withMark.length).toBeGreaterThan(0);
+    for (const item of withMark) {
+      const at = new Date(item.reviewedAt);
+      expect(Number.isNaN(at.getTime())).toBe(false);
+    }
+  });
+
+  it('无标记的条目在导入侧落到 null（不会假装已审核）', () => {
+    const toReviewedAt = (v?: string) => (v ? new Date(v) : null);
+    expect(toReviewedAt(undefined)).toBeNull();
+    expect(toReviewedAt('2026-09-30')?.toISOString()).toBe(
+      '2026-09-30T00:00:00.000Z',
+    );
   });
 });

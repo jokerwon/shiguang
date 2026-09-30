@@ -7,7 +7,7 @@
 | 层面     | 交付物                                                                                              | 位置                                                                             |
 | -------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | 数据模型 | `Ingredient` / `IngredientAlias` / `IngredientAllergen` / `RecipeIngredient` + `IngredientCategory` | `apps/server/prisma/schema.prisma`，迁移 `20260930120000_add_ingredient_catalog` |
-| 审核资料 | 173 条资料条目（AI 起草，**尚未经维护者逐条复核**）：覆盖库内全部 221 个原料写法，另有 8 条无菜谱的独立条目；`reviewedAt` 记录的是导入时间，不等于内容已复核 | `apps/server/prisma/ingredients/published.ts` |
+| 审核资料 | 173 条资料条目（AI 起草，**维护者已于 2026-09-30 逐条复核**）：覆盖库内全部 221 个原料写法，另有 8 条无菜谱的独立条目。复核标记写在条目上（`reviewedAt`），导入按其写入数据库时间戳；未标记的条目导入后 `reviewedAt = null`，列表/详情按「未复核」呈现 | `apps/server/prisma/ingredients/published.ts`、`scripts/import-ingredients.ts` |
 | 发布命令 | 校验最低标准 → 归一校验 → 幂等 upsert → 重建菜谱关联                                                | `apps/server/scripts/import-ingredients.ts`（`pnpm ingredients:import`）         |
 | 发布校验 | 纯函数发布闸门（名称 / 审核简介 / 可核查来源；过敏原关系需依据）                                    | `apps/server/src/ingredient/publish-review.ts`                                   |
 | 归一逻辑 | 括号说明剥离、身份索引、歧义检出、关联去重                                                          | `apps/server/src/ingredient/normalize.ts`                                        |
@@ -61,7 +61,8 @@
 ## 遗留与边界
 
 - 后端已接入统一安全过滤（筛选、首页 today/quick、食材相关菜谱、AI `search_recipes`），但 **安全约束下的相关菜谱查询与 AI 侧完整验收属父票 #5**；本票只保证资料发布与读取链路。
-- **内容复核未完成**：173 条资料的简介/挑选/保存/处理措辞与 221 条归一判断由 AI 起草，维护者尚未逐条复核；`reviewedAt` 只是导入时间戳。`rawNames` 映射已用脚本核对「零缺失、零多余、零歧义」，但归并判断（例如把 `小番茄`/`樱桃番茄` 并入番茄）仍待人工确认；来源为通用可核查入口，需替换为逐条可核查的条目页。
+- **内容复核已完成（2026-09-30）**：维护者对 173 条资料的措辞与 221 条归一判断逐条复核；数据库 `Ingredient.reviewedAt` 为复核时间的事实源（复查：173 条已发布全部 `reviewedAt` 非空）。后续若新增条目，未标记复核者会以 `reviewedAt = null` 入库，不假装已审核。
+- **来源仍为通用入口页**（USDA FoodData Central / 中国食品安全风险评估中心）：复核确认了「来源可核查且与结论一致」，但尚未逐条替换为具体条目页/标准号；替换后可保留同一条目级标记。
 - 部分复合调味料（咖喱块、火锅底料、日式猪排酱、大阪烧酱、天妇罗蘸汁、凯撒酱、水浸金枪鱼罐头等）沿用商品级复合描述，过敏原按可核查分类登记；若后续采购具体品牌，应改用该品牌配料表核对。
 - 运行期配置问题：`apps/server/.env` 的 `JWT_SECRET` 带引号，而 `AuthModule` 在 `ConfigModule.forRoot` 之前读取环境变量，实际生效的是 `shiguang-dev-secret` 兜底值。本次验收改用 `POST /auth/register` + `/auth/login` 取得服务端签发 token 以绕开该既有问题；修复该配置不属本票范围。
 - 验收账号 `phase8-check@example.com` 为本次造数，验收完成后已删除；复查 `User` 表只剩既有账号（`jokerwon26@gmail.com`、`phase4-smoke-…@test.local`、`jokerwon@gmail.com`、`review-tmp@example.com`），数据库中 `Ingredient=173 / RecipeIngredient=656 / Recipe=88`。

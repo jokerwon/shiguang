@@ -43,9 +43,10 @@ async function main() {
       throw new Error(`归一存在歧义，未写入任何数据：\n  ${ambiguous.join('\n  ')}`);
     }
 
-    const reviewedAt = new Date();
-
-    // 3. 幂等发布：按规范名 upsert，别名整体重建（别名不承载菜谱关联，改叫法不影响关联）
+    // 3. 幂等发布：按规范名 upsert，别名整体重建（别名不承载菜谱关联，改叫法不影响关联）。
+    //    `reviewedAt` 来自条目自带的复核标记；没有标记就写 null，
+    //    数据库行不会声称「已审核」（文档里的审核状态不是事实源）。
+    const unreviewed: string[] = [];
     for (const item of REVIEWED_INGREDIENTS) {
       const data = {
         category: item.category,
@@ -54,9 +55,10 @@ async function main() {
         storage: item.storage ?? null,
         preparation: item.preparation ?? null,
         sources: item.sources,
-        reviewedAt,
+        reviewedAt: item.reviewedAt ? new Date(item.reviewedAt) : null,
         published: true,
       };
+      if (!item.reviewedAt) unreviewed.push(item.name);
       const ingredient = await prisma.ingredient.upsert({
         where: { name: item.name },
         update: data,
@@ -125,9 +127,17 @@ async function main() {
     const published = await prisma.ingredient.count({
       where: { published: true },
     });
+    const reviewed = published - (await prisma.ingredient.count({
+      where: { published: true, reviewedAt: null },
+    }));
     console.log(
-      `✅ 已发布食材 ${published} 条，覆盖菜谱 ${recipes.length} 道、原料关联 ${links} 条`,
+      `✅ 已发布食材 ${published} 条（逐条复核 ${reviewed} 条，未复核 ${published - reviewed} 条），覆盖菜谱 ${recipes.length} 道、原料关联 ${links} 条`,
     );
+    if (unreviewed.length) {
+      console.warn(
+        `⚠️ 以下 ${unreviewed.length} 条尚未标记复核，已按未复核发布：${unreviewed.join('、')}`,
+      );
+    }
   } finally {
     await prisma.$disconnect();
   }
