@@ -34,37 +34,46 @@ export interface IngredientCatalogEntry {
   rawNames: string[];
 }
 
-/** 把「菜谱原料写法 → 身份」的归一表按规范名建立（重复写法不覆盖，交由调用方查歧义） */
+/** 归一索引要覆盖的写法：规范名本身 + 条目声明的库内写法 */
+function indexKeys(entry: IngredientCatalogEntry): string[] {
+  // 规范名必须可解析：生成侧选材白名单只给规范名，若索引不认它，
+  // 完全按白名单生成的草稿反而会在发布时被判「未收录」。
+  return [entry.name, ...entry.rawNames].map(normalizeIngredientText);
+}
+
+/** 把「菜谱原料写法 → 身份」的归一表建立起来（重复写法不覆盖，交由调用方查歧义） */
 export function buildRawIndex<T extends IngredientCatalogEntry>(
   entries: T[],
 ): Map<string, T> {
   const index = new Map<string, T>();
   for (const entry of entries) {
-    for (const raw of entry.rawNames) {
-      index.set(normalizeIngredientText(raw), entry);
+    for (const key of indexKeys(entry)) {
+      index.set(key, entry);
     }
   }
   return index;
 }
 
-/** 找出指向多个身份的原料写法（归一歧义必须先解决，不能静默取一个） */
+/**
+ * 找出指向多个身份的原料写法（归一歧义必须先解决，不能静默取一个）。
+ * 同一对身份可能由多条写法触发，按消息去重，避免导入报错里重复同一句话。
+ */
 export function findAmbiguousRawNames<T extends IngredientCatalogEntry>(
   entries: T[],
 ): string[] {
   const seen = new Map<string, string>();
-  const ambiguous: string[] = [];
+  const ambiguous = new Set<string>();
   for (const entry of entries) {
-    for (const raw of entry.rawNames) {
-      const key = normalizeIngredientText(raw);
+    for (const key of indexKeys(entry)) {
       const prev = seen.get(key);
       if (prev && prev !== entry.name) {
-        ambiguous.push(`「${raw}」同时指向「${prev}」与「${entry.name}」`);
+        ambiguous.add(`「${key}」同时指向「${prev}」与「${entry.name}」`);
         continue;
       }
       seen.set(key, entry.name);
     }
   }
-  return ambiguous;
+  return [...ambiguous];
 }
 
 export interface RecipeIngredientLink {

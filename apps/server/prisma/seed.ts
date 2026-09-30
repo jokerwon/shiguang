@@ -62,8 +62,10 @@ async function main() {
   try {
     const idByName = new Map<string, string>();
     for (const item of REVIEWED_INGREDIENTS) {
-      const row = await prisma.ingredient.findUnique({
-        where: { name: item.name },
+      // 必须要求 published：仅「存在该行」不等于可发布，
+      // 引用未发布身份的菜谱会下发一个点开即 404 的链接（findById 按 published 查）
+      const row = await prisma.ingredient.findFirst({
+        where: { name: item.name, published: true },
         select: { id: true },
       });
       if (!row?.id) throw new Error(`食材「${item.name}」尚未发布`);
@@ -102,23 +104,27 @@ async function main() {
       );
     }
 
-    // 幂等：按 name upsert；update/create 同用校验过的 SeedRecipe，避免字段手抄漂移
+    // 幂等：按 name upsert；update/create 同用校验过的 SeedRecipe，避免字段手抄漂移。
+    // 正文与关联同一事务提交：分开写会在中断/失败时留下「新正文 + 空关联」，
+    // 那会让按 position 的身份链接与按食材筛选同时失效。
     for (const r of recipes) {
-      const recipe = await prisma.recipe.upsert({
-        where: { name: r.name },
-        update: r,
-        create: r,
-      });
-      // 关联按菜谱重建（身份与用量/说明来自同一份正文，重复运行不产生重复行）
       const built = linksByRecipe.get(r.name) ?? [];
-      await prisma.recipeIngredient.deleteMany({
-        where: { recipeId: recipe.id },
-      });
-      if (built.length) {
-        await prisma.recipeIngredient.createMany({
-          data: built.map((link) => ({ ...link, recipeId: recipe.id })),
+      await prisma.$transaction(async (tx) => {
+        const recipe = await tx.recipe.upsert({
+          where: { name: r.name },
+          update: r,
+          create: r,
         });
-      }
+        // 关联按菜谱重建（身份与用量/说明来自同一份正文，重复运行不产生重复行）
+        await tx.recipeIngredient.deleteMany({
+          where: { recipeId: recipe.id },
+        });
+        if (built.length) {
+          await tx.recipeIngredient.createMany({
+            data: built.map((link) => ({ ...link, recipeId: recipe.id })),
+          });
+        }
+      });
     }
     console.log(
       `✅ Seeded ${recipes.length} recipes（人工精选 ${CURATED_RECIPES.length} + staging ${recipes.length - CURATED_RECIPES.length}），食材关联 ${[...linksByRecipe.values()].reduce((n, l) => n + l.length, 0)} 条`,

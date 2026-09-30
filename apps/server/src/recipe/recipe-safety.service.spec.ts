@@ -66,6 +66,26 @@ describe('归一：同物异名与环境差异', () => {
     expect(ambiguous).toHaveLength(1);
   });
 
+  it('规范名本身也能归一（生成侧只给规范名，不能反被拒绝）', () => {
+    const catalog = [
+      // 「生姜」的库内写法里没有它自己的规范名（真实数据同形）
+      { name: '生姜', rawNames: ['姜', '姜片'] },
+      // 独立收录、没有任何库内写法
+      { name: '苹果', rawNames: [] },
+    ];
+    const catalogIndex = buildRawIndex(catalog);
+    expect(catalogIndex.get('生姜')?.name).toBe('生姜');
+    expect(catalogIndex.get('姜片')?.name).toBe('生姜');
+    expect(catalogIndex.get('苹果')?.name).toBe('苹果');
+    // 规范名撞上别的条目的库内写法仍算歧义，不能静默取一个
+    expect(
+      findAmbiguousRawNames([
+        { name: '生姜', rawNames: ['姜'] },
+        { name: '姜', rawNames: ['姜'] },
+      ]),
+    ).toHaveLength(1);
+  });
+
   it('未收录的原料被拒绝，不静默跳过', () => {
     const { links, rejected } = buildRecipeIngredientLinks(
       [{ name: '不存在的原料', amount: '1份' }],
