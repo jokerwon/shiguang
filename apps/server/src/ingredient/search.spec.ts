@@ -40,13 +40,17 @@ function makeService(catalog: Row[]) {
           Record<string, { contains: string }>
         >;
         if (clauses.length === 0) return Promise.resolve(catalog);
-        const keyword = clauses[0].name.contains;
-        const lower = keyword.toLowerCase();
+        // 每个 OR 项是一个关键词的「名称或别名子串」候选，取并集
+        const keywords = clauses
+          .filter((c) => c.name)
+          .map((c) => c.name.contains.toLowerCase());
         return Promise.resolve(
-          catalog.filter(
-            (r) =>
-              r.name.toLowerCase().includes(lower) ||
-              r.aliases.some((a) => a.alias.toLowerCase().includes(lower)),
+          catalog.filter((r) =>
+            keywords.some(
+              (k) =>
+                r.name.toLowerCase().includes(k) ||
+                r.aliases.some((a) => a.alias.toLowerCase().includes(k)),
+            ),
           ),
         );
       },
@@ -88,9 +92,18 @@ describe('IngredientService.findAll 关键词', () => {
     expect(fuzzy.meta.exactMatches).toBe(0);
   });
 
-  it('身份命中排在子串候选前（多个输入词）', async () => {
-    // 「番茄 食用油」：食用油整串命中身份，番茄酱/番茄罐头只被子串带上
-    const out = await makeService(CATALOG).findAll({ keyword: '食用油' });
-    expect(names(out)).toEqual(['食用油']);
+  it('多个词分别取候选：整串命中的身份不会被并集查询挤掉', async () => {
+    // 回归：候选检索必须按词拆分，否则「番茄 食用油」会因整体子串查不到而空手
+    const out = await makeService(CATALOG).findAll({
+      keyword: '番茄 食用油',
+    });
+    expect(names(out).sort()).toEqual(['番茄', '食用油']);
+    expect(out.meta.exactMatches).toBe(2);
+  });
+
+  it('没有关键词时 exactMatches=0，不冒充搜索命中', async () => {
+    const out = await makeService(CATALOG).findAll({});
+    expect(out.meta.total).toBe(CATALOG.length);
+    expect(out.meta.exactMatches).toBe(0);
   });
 });

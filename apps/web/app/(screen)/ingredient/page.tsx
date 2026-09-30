@@ -19,6 +19,7 @@ type Resolution =
   | { kind: 'identified'; ingredient: IngredientSummary }
   | { kind: 'ambiguous'; candidates: IngredientSummary[] }
   | { kind: 'unidentified' }
+  | { kind: 'failed' }
 
 /**
  * 食材浏览入口（ADR-0018）：一层平铺分类 + 名称/别名搜索。
@@ -37,12 +38,16 @@ export default function IngredientScreen() {
   )
   const { data, error, isValidating } = useIngredients(query)
   const items = data?.data ?? []
-  // 有整串身份命中时后端只返回这些身份；没有命中才可能是子串候选
-  const fuzzy = data !== undefined && data.meta.exactMatches === 0
+  // 只在「有搜索词但只会子串命中」时提示相近候选；浏览全部/分类不算
+  const fuzzy =
+    submitted !== '' && data !== undefined && data.meta.exactMatches === 0
+  // 只认最后一次搜索：先发的慢响应不得覆盖后发的结果
+  const searchSeq = React.useRef(0)
 
   const search = async (term: string) => {
     setSubmitted(term)
     setCategory(undefined)
+    const seq = ++searchSeq.current
     if (!term) {
       setResolution({ kind: 'idle' })
       return
@@ -50,16 +55,18 @@ export default function IngredientScreen() {
     setResolution({ kind: 'checking' })
     try {
       const { matched, ambiguous } = await fetchIngredientIdentify([term])
-      setResolution(
-        matched
-          ? { kind: 'identified', ingredient: matched }
-          : ambiguous.length > 0
-            ? { kind: 'ambiguous', candidates: ambiguous }
-            : { kind: 'unidentified' },
-      )
+      if (seq !== searchSeq.current) return
+      if (matched) {
+        setResolution({ kind: 'identified', ingredient: matched })
+      } else if (ambiguous.length > 0) {
+        setResolution({ kind: 'ambiguous', candidates: ambiguous })
+      } else {
+        setResolution({ kind: 'unidentified' })
+      }
     } catch {
-      // 解析失败按「没有身份命中」处理：结果区仍会显示请求失败本身
-      setResolution({ kind: 'unidentified' })
+      if (seq !== searchSeq.current) return
+      // 解析失败 ≠ 没有身份命中：单独标记，不冒充「没有完全同名的食材」
+      setResolution({ kind: 'failed' })
     }
   }
 
@@ -147,6 +154,12 @@ export default function IngredientScreen() {
           {resolution.kind === 'unidentified' && (
             <p className="text-muted-foreground">
               没有与「{submitted}」完全同名的食材资料。
+            </p>
+          )}
+
+          {resolution.kind === 'failed' && (
+            <p className="text-muted-foreground">
+              身份确认失败，无法判断「{submitted}」是否是库内食材；请稍后重试。
             </p>
           )}
         </div>

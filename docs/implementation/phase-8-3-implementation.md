@@ -33,7 +33,7 @@
 | 7   | 无命中与失败分别呈现     | 无命中：「没有与『番茄酱罐头』完全同名的食材资料」+「没有匹配的食材」；失败（浏览器阻断 `*/ingredients?*`）：「食材资料加载失败：Failed to fetch / 请稍后重试，或检查网络连接」 |
 | 8   | 真实浏览器完整路径       | 搜「西红柿」→ 身份命中链接 → `/ingredient/<番茄>`（简介/挑选/保存/处理/来源/相关菜谱）；列表卡 → 详情；详情 → `/filter?ingredients=<id>` 只选中该食材（`aria-pressed=番茄`、`已选 1 种`、8 道经安全过滤的排除说明） |
 | 9   | 移动端 390 与键盘焦点    | 视口 390：`scrollWidth=390`（无横向溢出）、Tabbar 可见；Tab 从搜索框→身份链接（outline `solid`）→分类→食材卡，Enter 打开资料          |
-| 10  | 后端测试与全库 lint      | `pnpm --filter @shiguang/server test`：13 套件 / 123 例全过；`pnpm -r lint`：server 与 web 均通过；Web 类型检查仍 7 条错误，全部在未改动的 `components/ai-elements/prompt-input.tsx`（Phase 3.5 已记录的既有限制） |
+| 10  | 后端测试与全库 lint      | `pnpm --filter @shiguang/server test`：13 套件 / 124 例全过；`pnpm -r lint`：server 与 web 均通过；Web 类型检查仍 7 条错误，全部在未改动的 `components/ai-elements/prompt-input.tsx`（Phase 3.5 已记录的既有限制） |
 
 ### 浏览器走查（真实 Chromium，ego-browser 空间 14，登录账号 jokerwon26@gmail.com）
 
@@ -47,6 +47,21 @@
 | 详情→筛选    | 番茄资料「去筛选页查看（8 道）」→ 仅选中番茄；因当前账号有大豆过敏设置，8 道被保守排除并解释原因    |
 | 移动端 390   | 布局无横向溢出；身份命中链接、分类 chip、卡片均在窄屏可用                                         |
 | 键盘         | 从搜索框 Tab 一次到身份链接（可见 solid outline），Enter 打开资料；无鼠标完成搜索→发现全链路       |
+
+### 代码审查后的修正（同轮，逐条复现）
+
+独立审查（`ocr review`）提出 10 条后，以下按真实复现修正，其余按取舍保留：
+
+1. **多词关键词查不到任何候选**（复现：`keyword=番茄 鸡蛋` → 0 条）：候选查询用整串子串匹配，而命中判定按词拆分。修复为先拆词、每个词各取子串候选取并集；实测 `keyword=番茄 鸡蛋` → 番茄 + 鸡蛋（`exactMatches=2`）。
+2. **无关键词时 `exactMatches` 报成 176**：与「整串命中数量」契约不符。修复为 `keyword ? matched.length : 0`；实测浏览「全部」返回 `total=176, exactMatches=0`，页面标题仍为「食材」（相近候选提示改为仅在有搜索词时出现）。
+3. **多词输入被误判为歧义**：`identifyIn` 汇总所有词，两个各自唯一的词会被当成歧义，而响应形状无法表达逐词映射。修复为按单一名词解析（取第一个非空词）；实测 `terms=番茄&terms=鸡蛋` → `matched=番茄`。
+4. **解析失败被说成「没有完全同名」**：单独标记 `failed` 并提示「身份确认失败，无法判断…请稍后重试」，不再冒充无命中；浏览器阻断 `/ingredients/identify` 实测显示该文案。
+5. **连续搜索的响应乱序**：加 `searchSeq` 守卫，只接受最后一次搜索的结果。
+6. **解析请求全表 + 多查过敏原**：`identify` 改为 `select` 只取 id/名称/分类/别名。
+7. **`terms[x]=y` 形态输入**：真实响应为 200 空结果（`ValidationPipe` 的 `whitelist` 会剥离嵌套键），不会 500；仍按防御加上字符串过滤与 `@IsOptional()`。
+8. **嵌套三元与分号风格**：按审查建议改为 if/else 与统一分号。
+
+未采纳：审查建议把「相近候选」标题限制为 `items.length > 0`；实测「相近候选」标题 + 「没有匹配的食材」并置在语义上仍准确（搜索无结果但确实存在相近项时才提示），不改。
 
 ## 遗留与边界
 

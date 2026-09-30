@@ -55,13 +55,12 @@ export interface IngredientIdentifyResult {
   ambiguous: IngredientIdentityView[];
 }
 
-/** 身份查询形状：别名与过敏原够用，不多查字段 */
+/** 身份解析形状：只含 id/名称/分类/别名 */
 type IdentityRow = {
   id: string;
   name: string;
   category: IngredientCategory;
   aliases: { alias: string }[];
-  allergens: { allergen: string }[];
 };
 
 /** 稳定排序：同分类内按名称，分类顺序按固定表 */
@@ -104,6 +103,14 @@ function keywordFilter(keyword: string) {
       },
     },
   ];
+}
+
+/** 关键词拆分：空白或半/全角逗号、顿号分隔；每个词各自命中身份 */
+function keywordTokens(keyword: string): string[] {
+  return keyword
+    .split(/[\s,，、]+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
 }
 
 /** 本次输入整串命中的身份及排名：名称相等得 100，别名相等得 50，写法越长越靠前 */
@@ -161,16 +168,17 @@ export class IngredientService {
     const limit = params.limit ?? 24;
     const keyword = params.keyword?.trim();
 
+    const tokens = keyword ? keywordTokens(keyword) : [];
     const rows = await this.prisma.ingredient.findMany({
       where: {
         published: true,
         ...(params.category ? { category: params.category } : {}),
-        ...(keyword ? { OR: keywordFilter(keyword) } : {}),
+        // 每个词各取子串候选；是否构成身份命中在代码里按整串相等判定
+        ...(tokens.length ? { OR: tokens.flatMap(keywordFilter) } : {}),
       },
       include: ingredientInclude,
     });
 
-    const tokens = keyword ? keyword.split(/[\s,，、]+/) : [];
     const ranks = hitRanks(rows.map(toIdentity), tokens);
     const matched = keyword ? rows.filter((row) => ranks.has(row.id)) : rows;
     const visible = matched.length > 0 ? matched : rows;
@@ -192,7 +200,7 @@ export class IngredientService {
         page,
         limit,
         totalPages: Math.ceil(sorted.length / limit),
-        exactMatches: matched.length,
+        exactMatches: keyword ? matched.length : 0,
       },
     };
   }
@@ -203,23 +211,31 @@ export class IngredientService {
    * 无命中返回空结果，不做子串猜测（子串候选由列表页的模糊区呈现）。
    */
   async identify(terms: string[]): Promise<IngredientIdentifyResult> {
+    const term = terms.find((t) => t.trim().length > 0)?.trim();
+    if (!term) return { matched: null, ambiguous: [] };
     const rows = await this.prisma.ingredient.findMany({
       where: { published: true },
-      include: ingredientInclude,
+      // 身份解析只用 id/name/category/别名：不加载与解析无关的过敏原
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        aliases: { select: { alias: true } },
+      },
       orderBy: { name: 'asc' },
     });
     return this.identifyIn(
       rows.map((row) => toIdentity(row)),
-      terms,
+      term,
     );
   }
 
   /** 解析的纯逻辑部分：同一批身份可被列表页复用，避免重复查询 */
   identifyIn(
     identities: IngredientIdentityView[],
-    terms: string[],
+    term: string,
   ): IngredientIdentifyResult {
-    const ranks = hitRanks(identities, terms);
+    const ranks = hitRanks(identities, [term]);
     const hits = identities
       .filter((i) => ranks.has(i.id))
       .sort((a, b) => (ranks.get(b.id) ?? 0) - (ranks.get(a.id) ?? 0));

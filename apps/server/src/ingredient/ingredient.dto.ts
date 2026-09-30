@@ -40,10 +40,12 @@ export class QueryIngredientsDto {
   limit?: number = 24;
 }
 
-/** 身份解析入参：`terms` 逗号分隔或多个同名参数，均由 DTO 归一为字符串数组 */
+/** 身份解析入参：`terms` 逗号分隔或多个同名参数；非字符串（嵌套对象等）一律忽略 */
 export class IdentifyIngredientsDto {
+  @IsOptional()
   @Transform(({ value }) =>
-    (Array.isArray(value) ? (value as string[]) : [value as string])
+    (Array.isArray(value) ? value : [value])
+      .filter((v): v is string => typeof v === 'string')
       .flatMap((v) => v.split(','))
       .map((t) => t.trim())
       .filter(Boolean)

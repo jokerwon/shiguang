@@ -143,8 +143,8 @@ export interface IngredientListResult {
 
 /** 输入名称的身份解析结果（歧义给出候选，不擅自映射） */
 export interface IngredientIdentifyResult {
-  matched: IngredientSummary | null
-  ambiguous: IngredientSummary[]
+  matched: IngredientSummary | null;
+  ambiguous: IngredientSummary[];
 }
 
 /** 食材列表查询串（列表页与 SWR key 共用同一序列化） */
