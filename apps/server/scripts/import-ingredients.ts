@@ -26,7 +26,9 @@ async function main() {
   const prisma = new PrismaClient({ adapter: new PrismaPg(url) });
 
   try {
-    // 1. 结构校验：任何一条不满足发布标准就整体失败，不做部分发布
+    // 1. 结构校验：任何一条不满足发布标准就整体失败，不做部分发布。
+    //    复核标记同属发布前置：没有 `reviewedAt` 的条目一律不发布
+    //    （ADR-0018「未审核时不发布」），留给维护者复核后再标记。
     const rejected: string[] = [];
     for (const item of REVIEWED_INGREDIENTS) {
       const errors = validateReviewedIngredient(item);
@@ -44,8 +46,7 @@ async function main() {
     }
 
     // 3. 幂等发布：按规范名 upsert，别名整体重建（别名不承载菜谱关联，改叫法不影响关联）。
-    //    `reviewedAt` 来自条目自带的复核标记；没有标记就写 null，
-    //    数据库行不会声称「已审核」（文档里的审核状态不是事实源）。
+    //    `reviewedAt` 来自条目自带的复核标记（上面已断言存在）。
     const unreviewed: string[] = [];
     for (const item of REVIEWED_INGREDIENTS) {
       const data = {
@@ -134,8 +135,9 @@ async function main() {
       `✅ 已发布食材 ${published} 条（逐条复核 ${reviewed} 条，未复核 ${published - reviewed} 条），覆盖菜谱 ${recipes.length} 道、原料关联 ${links} 条`,
     );
     if (unreviewed.length) {
+      // 上面的闸门已拦住无标记条目；保留兜底，避免将来放宽校验时静默发布
       console.warn(
-        `⚠️ 以下 ${unreviewed.length} 条尚未标记复核，已按未复核发布：${unreviewed.join('、')}`,
+        `⚠️ 以下 ${unreviewed.length} 条缺少复核标记却已写入：${unreviewed.join('、')}`,
       );
     }
   } finally {

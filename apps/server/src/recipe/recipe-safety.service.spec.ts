@@ -222,6 +222,7 @@ describe('食材资料导入：发布最低标准', () => {
     rawNames: ['番茄'],
     summary: '简介',
     sources: ['https://fdc.nal.usda.gov/'],
+    reviewedAt: '2026-09-30',
   };
 
   it('缺少名称、审核简介或来源时拒绝发布并给出原因', () => {
@@ -234,6 +235,14 @@ describe('食材资料导入：发布最低标准', () => {
     expect(errors.join('；')).toContain('缺少名称');
     expect(errors.join('；')).toContain('缺少经人工审核的简介');
     expect(errors.join('；')).toContain('缺少可核查参考来源');
+  });
+
+  it('未标注维护者复核时间时拒绝发布（未审核不发布）', () => {
+    const errors = validateReviewedIngredient({
+      ...base,
+      reviewedAt: undefined,
+    });
+    expect(errors.join('；')).toContain('缺少维护者复核时间');
   });
 
   it('过敏原关系缺少可核查依据时拒绝', () => {
