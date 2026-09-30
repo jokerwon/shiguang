@@ -124,7 +124,7 @@ export default function SettingsScreen() {
   )
 }
 
-/** 标签式列表编辑：回车/点按钮添加，点 chip 移除（交互仿 pantry 页） */
+/** 标签式列表编辑：回车/点按钮添加，点 chip 移除。 */
 function ChipEditor({
   title,
   desc,

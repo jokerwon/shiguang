@@ -3,6 +3,7 @@
 - **状态**:已接受
 - **日期**:2026-07-29
 - **决策者**:Kai(经 grill 会话确认)
+- **取代说明**：PantryItem 与现有食材持久化部分已被 [ADR-0017](./0017-remove-pantry-and-shopping-list.md) 取代；Favorite / UserPreference 决策继续有效。原文保留。
 
 ## 背景 (Context)
 

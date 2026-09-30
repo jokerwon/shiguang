@@ -130,11 +130,10 @@ export default function ChatScreen() {
 
   const isStreaming = status === 'submitted' || status === 'streaming'
 
-  // 流结束后兜底刷新 pantry/favorites/conversations（写工具可能改了数据 + 会话 updatedAt 变化，ADR-0009/0011 一致性）
+  // 流结束后兜底刷新收藏与会话（写工具可能改了数据 + 会话 updatedAt 变化）。
   const prevStatus = React.useRef(status)
   React.useEffect(() => {
     if (prevStatus.current === 'streaming' && status === 'ready') {
-      globalMutate('/pantry')
       globalMutate('/favorites')
       globalMutate('/conversations')
     }

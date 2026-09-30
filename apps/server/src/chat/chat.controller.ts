@@ -13,7 +13,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { ChatService } from './chat.service';
 
-// ADR-0006：上下文注入需要用户身份（偏好/pantry），/chat 从公开改为需认证
+// ADR-0006：偏好上下文注入需要用户身份，/chat 从公开改为需认证
 // ADR-0009/0010：body 改为 { conversationId?, message }，后端从 DB 组装历史
 @Controller('chat')
 @UseGuards(JwtAuthGuard)

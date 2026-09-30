@@ -1,6 +1,5 @@
-// 个性化推荐服务（ADR-0005）：首页 /recipes/personalized 与 AI 上下文注入（ADR-0006）
-// 共用的单一事实源。只依赖 PrismaService（PrismaModule 全局），不 import
-// Pantry/Preference 模块，保持零模块间耦合。
+// 个性化推荐服务（ADR-0005）：首页与 AI 检索共用的单一事实源。
+// 只依赖 PrismaService（PrismaModule 全局），保持零模块间耦合。
 import { Injectable } from '@nestjs/common';
 import type { Recipe } from 'generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -16,17 +15,12 @@ import {
 export class RecommendationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** 加载用户信号：pantry 食材 + 忌口/过敏原 + 健康目标 */
+  /** 加载用户信号：忌口/过敏原 + 健康目标 */
   async loadSignals(userId: string): Promise<UserSignals> {
-    const [pantryItems, pref] = await Promise.all([
-      this.prisma.pantryItem.findMany({
-        where: { userId },
-        select: { name: true },
-      }),
-      this.prisma.userPreference.findUnique({ where: { userId } }),
-    ]);
+    const pref = await this.prisma.userPreference.findUnique({
+      where: { userId },
+    });
     return {
-      pantry: pantryItems.map((p) => p.name),
       blocked: [
         ...(pref?.dislikedIngredients ?? []),
         ...(pref?.allergens ?? []),

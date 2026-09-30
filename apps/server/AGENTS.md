@@ -96,8 +96,8 @@ src/
     recipe.controller.ts      # GET /recipes（分页筛选）、GET /recipes/personalized（需认证）、GET /recipes/:id
     recipe.service.ts         # 查询 + 响应组装
     recipe.mapper.ts          # Prisma 枚举 ↔ 前端小写映射、toResponse、中文标签（CUISINE_ZH/TAG_ZH）
-    recommendation.service.ts # 个性化推荐（ADR-0005）：首页与 AI 注入共用的单一事实源
-    recommendation.scoring.ts # 打纯正函数：硬过滤 + pantry/时间/目标/轮换加权（0.45/0.15/0.15/0.25）
+    recommendation.service.ts # 个性化推荐（ADR-0005/0017）：首页与 AI search_recipes 共用的单一事实源
+    recommendation.scoring.ts # 纯函数：忌口/过敏原硬过滤 + 时间/目标/轮换加权（3/11、3/11、5/11）
     recipe-draft.ts           # AI 生成菜谱的校验纯函数（generate 脚本与 seed 共用）
 
   chat/
@@ -108,16 +108,15 @@ src/
     tools/                    # AI 工具（ADR-0009）：read-tools / write-tools（*-logic.ts 为纯逻辑，单测友好）+ index 工厂；write-tools 含 update_preferences 草稿工具（ADR-0012）
 
   conversation/               # 会话持久化（ADR-0010）：Conversation/Message CRUD + 滑窗上下文 + UIMessage↔DB mapper
-  pantry/                     # GET/PUT /pantry（整体替换，string[]）；exports PantryService 供 chat 写工具复用
   favorite/                   # GET /favorites、POST /favorites/:recipeId（无 body=toggle，{saved} body=幂等 set）
   preference/                 # GET/PUT /preferences（忌口/过敏原/健康目标）；exports PreferenceService 供 chat 只读工具复用
 ```
 
 ### AI 对话（ADR-0006/0009/0010）
 
-- **注入演进（ADR-0009）**：保留偏好/pantry/季节/用户名注入；候选菜谱注入已移除，改为 `search_recipes` 工具按需查询。`ChatService` 不再调 `recommend(userId, 8)`，但仍用 `loadSignals` 取 blocked/pantry/healthGoal（注入与硬过滤共用）。
-- **tool-loop**：`streamText({ tools, stopWhen: stepCountIs(5) })`，工具经 `createChatTools(deps, userId)` 工厂闭包捕获 userId。`search_recipes` 先过 `blocked` 硬过滤再打分排序（复用 `recommendation.scoring`，单一事实源）。
-- **写工具幂等**：`add_pantry_items`/`remove_pantry_items` 基于 `findAll + replace` 组合实现去重幂等；`set_favorite` 用幂等 set 语义（`FavoriteService.set`，toggle 对 AI 危险）。
+- **注入演进（ADR-0009/0017）**：保留偏好上下文；候选菜谱由 `search_recipes` 工具按需查询；库存上下文与库存工具已移除。`search_recipes` 先过忌口/过敏原硬过滤再排序。
+- **tool-loop**：`streamText({ tools, stopWhen: stepCountIs(5) })`，工具经 `createChatTools(deps, userId)` 工厂闭包捕获 userId。按原料检索使用菜谱自身 `Recipe.ingredients`，不读取用户库存。
+- **写工具幂等**：`set_favorite` 用幂等 set 语义（`FavoriteService.set`，toggle 对 AI 危险）。库存写工具已由 ADR-0017 删除。
 - **偏好草稿（ADR-0012）**：`update_preferences` 工具**结构上不落库**——`execute` 只产出「操作集草稿」（`addDisliked`/`removeDisliked`/`addAllergens`/`removeAllergens`/`setHealthGoal`），读当前偏好仅作快照，不接触任何写 service；E4 红线（「你看着办直接改」不得绕过确认）由架构保证，确认只认前端按钮。prompt 规范禁止声称「已保存/已记住」。
 - **持久化（ADR-0010/0011）**：body 只带 `conversationId? + message`，后端从 DB 取最近 20 条组装上下文（不信客户端全量，按 `seq desc` 滑窗）。无 conversationId 则创建会话（title = 首条消息截断 ~20 字），id 经响应头 `x-conversation-id` 回传前端。`toUIMessageStream` 的 `onFinish` 落库 assistant 消息（含 tool parts）；`appendMessage` 由应用层算 `seq = max(seq)+1`，配 `@@unique` 冲突重试。
 - **会话摘要（ADR-0012）**：`onFinish` 落库后 fire-and-forget 检查溢出区（`seq ≤ maxSeq−滑窗` 且 `seq > summaryUpToSeq`），攒够 `SUMMARY_TRIGGER_THRESHOLD` 条调 `summary.ts` 增量拼接（压缩 旧摘要 + 新溢出），写回 `Conversation.summary`/`summaryUpToSeq`；LLM 失败仅记日志、保持旧摘要，降级 = 纯滑窗。`buildSystemPrompt` 注入「会话摘要」段。
@@ -125,9 +124,9 @@ src/
 
 ### 个性化推荐（ADR-0005/0006）
 
-- `RecommendationService` 只注入 PrismaService（PrismaModule 全局），**不 import Pantry/Preference 模块**，零模块间耦合
-- 算法：硬过滤（忌口 ∪ 过敏原，与前端 matchScore 同语义的双向 includes）→ 加权排序（pantry 匹配 0.45 + 时间适配 0.15 + 健康目标 0.15 + 新鲜度轮换 0.25）；轮换种子 = FNV-1a(userId + 当天日期)，无状态、当天稳定按天轮换
-- **依赖方向**：ChatModule → RecipeModule / PantryModule / FavoriteModule / PreferenceModule / ConversationModule（单向，无循环）。推荐打分仍是首页与 `search_recipes` 工具的单一事实源。
+- `RecommendationService` 只注入 PrismaService（PrismaModule 全局），硬过滤读取 UserPreference；不 import 已移除的 Pantry 模块。
+- 算法：硬过滤（忌口 ∪ 过敏原）→ 时间适配 3/11 + 健康目标 3/11 + 新鲜度轮换 5/11；轮换种子 = FNV-1a(userId + 当天日期)，无状态、当天稳定按天轮换（ADR-0017）。
+- **依赖方向**：ChatModule → RecipeModule / FavoriteModule / PreferenceModule / ConversationModule（单向，无循环）。推荐打分仍是首页与 `search_recipes` 工具的单一事实源。
 
 ### 数据库 — PostgreSQL + Prisma
 
@@ -139,7 +138,7 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 - **Recipe** — 菜谱（id, name, desc, cuisine, time, kcal, protein/carb/fat, img, tags, ingredients, steps）。ingredients 为 Json（`{name, amount}[]`），steps 为 Json（string[]）。索引：cuisine, time
 - **User** — 用户（id, email, passwordHash, displayName, avatarUrl）
 - **RefreshToken** — refresh token 轮换登记（ADR-0013；id, userId, tokenHash 唯一(bcrypt 哈希不落明文), expiresAt, createdAt；级联 FK；userId 索引）。一次一换，30 天滑动过期
-- **PantryItem** — 食材清单（userId + name 唯一）
+- **（已移除）PantryItem** — Phase 7 删除库存实体与表；Recipe.ingredients 仍是菜谱内容，不是库存。
 - **Favorite** — 收藏（userId + recipeId 唯一）
 - **UserPreference** — 偏好档案（userId 唯一；dislikedIngredients/allergens/healthGoal）
 - **Conversation** — 会话（ADR-0010/0012；userId, title, summary, summaryUpToSeq, updatedAt。summary 为滑窗外消息的压缩摘要，summaryUpToSeq 为摘要已覆盖到的消息 seq）。索引：userId + updatedAt

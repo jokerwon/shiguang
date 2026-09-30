@@ -7,7 +7,7 @@ import { CUISINE_LABELS, type Recipe } from '@shiguang/domain'
 import { RecipeImage } from '@/components/recipe-image'
 import { cn } from '@/lib/utils'
 
-export function RecipeCard({ r, score, saved, onToggle }: { r: Recipe; score?: number; saved: boolean; onToggle: () => void }) {
+export function RecipeCard({ r, saved, onToggle }: { r: Recipe; saved: boolean; onToggle: () => void }) {
   const name = r.name
   const motionOn = !useReducedMotion()
 
@@ -17,7 +17,6 @@ export function RecipeCard({ r, score, saved, onToggle }: { r: Recipe; score?: n
     >
       <div className="relative aspect-4/3 overflow-hidden bg-muted">
         <RecipeImage r={r} />
-        {score ? <span className="absolute top-2 left-2 rounded-full bg-primary px-2 py-0.5 font-mono text-xs font-bold text-primary-foreground">{score}% 匹配</span> : null}
         <button
           type="button"
           onClick={onToggle}

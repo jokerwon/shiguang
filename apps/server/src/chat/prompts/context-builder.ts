@@ -7,7 +7,7 @@ import { GUARDRAILS } from './guardrails';
  * 运行时注入的动态上下文（每次请求重新构建，不落 service 单例）。
  *
  * ADR-0009 注入演进：候选菜谱注入已移除，改为 search_recipes 工具按需查询。
- * 保留偏好/pantry/季节/用户名注入（便宜、每轮都需要，是推荐与安全的基准上下文）。
+ * 保留偏好、季节、用户名与会话摘要注入。
  */
 export interface PromptContext {
   /** 用户显示名称 */
@@ -16,8 +16,6 @@ export interface PromptContext {
   dietaryRestrictions?: string[];
   /** 健康目标 */
   healthGoal?: 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
-  /** pantry 现有食材 */
-  pantryIngredients?: string[];
   /** 当前季节（用于推荐时令菜） */
   season?: 'spring' | 'summer' | 'autumn' | 'winter';
   /** 会话摘要（滑窗之外消息的压缩，ADR-0012） */
@@ -61,9 +59,6 @@ export function buildSystemPrompt(context?: PromptContext): string {
       dynamicParts.push(
         `健康目标：${HEALTH_GOAL_LABELS[context.healthGoal] ?? context.healthGoal}`,
       );
-    }
-    if (context.pantryIngredients?.length) {
-      dynamicParts.push(`现有食材：${context.pantryIngredients.join('、')}`);
     }
     if (context.season) {
       dynamicParts.push(`当前季节：${SEASON_LABELS[context.season]}`);

@@ -8,7 +8,7 @@
 ### Recipe(菜谱)
 一道可烹饪的菜。系统的核心内容单元。
 - 名称用于 upsert 与 AI 生成去重
-- 食材带用量(非纯字符串数组)，是匹配与缺料计算的基础
+- 食材带用量（`{name, amount}`），用于详情展示与按原料检索；不等同于用户库存。
 - 营养三要素为估算值(见「营养估算值」)
 - 图片不使用真图，统一走占位符(ADR-0003)
 
@@ -20,8 +20,8 @@
 ### RefreshToken(刷新令牌登记)
 refresh token 的轮换登记表（ADR-0013）。一次一换、30 天滑动过期；已作废 token 再提交触发整族吊销。字段见 `apps/server/prisma/schema.prisma`。
 
-### PantryItem(食材清单项)
-用户"现有食材"的一条记录。存储于服务端，是个性化推荐的输入。
+### PantryItem(已移除的库存项)
+Phase 7 前曾表示用户“现有食材”的服务端持久化记录。该实体、API 与功能链已由 [ADR-0017](./adr/0017-remove-pantry-and-shopping-list.md) 移除；普通对话中的临时食材描述不创建库存记录。
 
 ### Favorite(收藏)
 用户收藏的菜谱。存储于服务端。
@@ -34,21 +34,21 @@ refresh token 的轮换登记表（ADR-0013）。一次一换、30 天滑动过�
 ## 派生概念 (Derived Concepts)
 
 ### 匹配度 (Match Score)
-菜谱与用户 pantry 的食材重叠度。首页个性化由服务端计算；前端仅保留给食材页本地即时反馈。
-
-> 算法实现见 `apps/server/src/recipe/recommendation.scoring.ts` 与 `apps/web/lib/recipes.ts`。
+Phase 7 前曾表示菜谱与用户库存的食材重叠度；该派生概念、UI 与算法已由 [ADR-0017](./adr/0017-remove-pantry-and-shopping-list.md) 移除。不要与 Recipe.ingredients 的原料内容或按原料搜索混淆。
 
 ### 缺料 (Missing Ingredients)
-菜谱食材中、pantry 未覆盖的部分。是 pantry 与菜谱用量的**纯函数**,不持久化。在菜谱详情页以"购物清单"快照形式呈现。
+Phase 7 前曾表示菜谱原料中未被用户库存覆盖的部分；库存移除后该派生概念不再存在。
 
 ### 购物清单 (Shopping List)
-菜谱详情页内,基于缺料即时生成的可勾选快照,**不持久化**。pantry 变化时清单自动重算。
+Phase 7 前曾是基于缺料的详情页即时快照；该 UI 与纯函数已由 [ADR-0017](./adr/0017-remove-pantry-and-shopping-list.md) 移除，不持久化的历史决策仅保留在旧 ADR 中。
 
 ### 个性化推荐 (Personalized Recommendation)
-首页"今日推荐"的升级版。服务端 `GET /recipes/personalized` 计算,流程:
-1. **硬过滤**:排除含忌口食材、过敏原的菜谱
-2. **加权排序**:pantry 匹配度 + 时间适配 + 新鲜度轮换
+首页“今日推荐”的升级版。服务端 `GET /recipes/personalized` 计算，流程:
+1. **硬过滤**：排除含忌口食材、过敏原的菜谱
+2. **加权排序**：时间适配（3/11）+ 健康目标（3/11）+ 新鲜度轮换（5/11）
 3. 返回成品列表
+
+推荐排序与 AI `search_recipes` 共用同一事实源；不读取或维护用户库存。
 
 ### 时间适配 (Time Adaptation)
 根据当前时段推导的隐式排序信号(如晚间优先 ≤30min 的菜),无需用户配置。
@@ -60,19 +60,19 @@ refresh token 的轮换登记表（ADR-0013）。一次一换、30 天滑动过�
 
 ### 上下文注入 (Context Injection)
 后端在构建 system prompt 时注入用户上下文,使 AI 推荐**约束在真实数据上**。
-- Phase 1 注入:偏好档案(忌口/过敏原/健康目标)、pantry 现有食材、top 5–8 候选菜谱(ADR-0006)。
-- Phase 2 演进(ADR-0009):偏好 + pantry 保留注入;**候选菜谱不再每轮注入,改为 `search_recipes` 工具按需查询**。
+- Phase 1 注入：偏好档案（忌口/过敏原/健康目标）与 top 5–8 候选菜谱（ADR-0006）。
+- Phase 2 演进（ADR-0009）：候选菜谱不再每轮注入，改为 `search_recipes` 工具按需查询；库存上下文已由 ADR-0017 移除。
 
 ### 工具调用 (Tool Calling)
-Phase 2 起 AI 对话的架构(ADR-0009)。模型通过 function calling 主动调用后端工具:只读工具(`search_recipes` / `get_recipe` / `get_pantry` / `get_favorites` / `get_preferences`)与写工具(pantry/收藏直接执行;偏好档案走待确认草稿)。推荐算法仍是工具背后的单一事实源。
+Phase 2 起 AI 对话的架构（ADR-0009）。模型通过 function calling 主动调用后端工具：只读工具（`search_recipes` / `get_recipe` / `get_favorites` / `get_preferences`）与写工具（收藏直接执行；偏好档案走待确认草稿）。推荐算法仍是工具背后的单一事实源；按原料搜索使用菜谱自身的 `Recipe.ingredients`，不读取库存。
 
 ### 分级确认 (Tiered Confirmation)
-写工具按误操作后果分两级处理(ADR-0009):
-- **直接执行 + 可撤销**:pantry、收藏 —— AI 直接落库,UI 给 undo 入口。
-- **显式确认**:偏好档案 —— 工具只产出待确认草稿,用户在前端确认卡片上点击才生效。
+写工具按误操作后果分两级处理（ADR-0009）：
+- **直接执行 + 可撤销**：收藏 —— AI 直接落库，UI 给 undo 入口。
+- **显式确认**：偏好档案 —— 工具只产出待确认草稿，用户在前端确认卡片上点击才生效。
 
 ### 操作卡片 (Action Card)
-AI 执行写操作后,前端在消息流中渲染的结果卡片(如「已添加 牛腩 到食材清单」),附「撤销」按钮,撤销调同一 API 逆向操作。渲染数据随消息持久化,刷新后仍可显示。操作可用性边界:**刷新前可操作,刷新后只读**(验收原则;确认卡片同此边界,ADR-0012)。
+AI 执行仍在产品范围内的写操作后，前端在消息流中渲染的结果卡片（如收藏结果），附“撤销”按钮；库存操作卡片与库存撤销链已由 ADR-0017 移除。偏好确认卡片沿用“刷新前可操作、刷新后只读”的边界。
 
 ### 待确认草稿 (Pending Draft)
 偏好写工具的返回物:一份**未生效**的偏好变更,内容是**操作集**(`addDisliked` / `removeDisliked` / `addAllergens` / `removeAllergens` / `setHealthGoal`),不是目标快照(ADR-0012)。前端渲染确认卡片展示变更 diff;点「确认」后前端读当前偏好、apply 操作集、调偏好落库接口——并行修改不会被快照覆盖。**确认动作不经过 AI**,是确定性的 UI 路径(过敏原安全红线;E4 由架构保证——工具结构上无落库能力)。与操作卡片共用边界:**刷新前可确认,刷新后卡片只读**,过期草稿引导用户重新发起;确认状态不持久化(消息 parts 不可变)。

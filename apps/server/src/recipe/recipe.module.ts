@@ -8,7 +8,7 @@ import { RecommendationService } from './recommendation.service';
   imports: [AuthModule],
   controllers: [RecipeController],
   providers: [RecipeService, RecommendationService],
-  // ChatModule（AI 上下文注入，ADR-0006）复用 RecommendationService
+  // ChatModule 复用 RecommendationService。
   exports: [RecommendationService],
 })
 export class RecipeModule {}

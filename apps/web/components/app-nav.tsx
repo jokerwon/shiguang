@@ -5,13 +5,12 @@ import { usePathname } from 'next/navigation'
 
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu'
 import { cn } from '@/lib/utils'
-import { Bookmark, Ham, Home, MessageCircle, Settings } from 'lucide-react'
+import { Bookmark, Home, MessageCircle, Settings } from 'lucide-react'
 
 import type { LucideIcon } from 'lucide-react'
 
 const links: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/', label: '发现', icon: Home },
-  { href: '/pantry', label: '食材', icon: Ham },
   { href: '/chat', label: '对话', icon: MessageCircle },
   { href: '/favorite', label: '收藏', icon: Bookmark },
   { href: '/settings', label: '我的', icon: Settings },

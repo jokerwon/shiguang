@@ -5,9 +5,8 @@ import type { Recipe } from 'generated/prisma/client';
 
 /** 只读工具 + 写工具需要的 service 能力 */
 export interface ChatToolDeps {
-  /** 加载用户信号（pantry/blocked/healthGoal），search_recipes 硬过滤用 */
+  /** 加载用户信号（blocked/healthGoal），search_recipes 硬过滤用 */
   loadSignals: (userId: string) => Promise<{
-    pantry: string[];
     blocked: string[];
     healthGoal: 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
   }>;
@@ -15,10 +14,6 @@ export interface ChatToolDeps {
   findRecipes: () => Promise<Recipe[]>;
   /** 单道菜谱详情 */
   findRecipeById: (id: string) => Promise<Recipe | null>;
-  /** pantry 当前列表 */
-  pantryFindAll: (userId: string) => Promise<string[]>;
-  /** pantry 整体替换（add/remove 工具基于此实现幂等） */
-  pantryReplace: (userId: string, names: string[]) => Promise<string[]>;
   /** 收藏列表 */
   favoriteFindAll: (userId: string) => Promise<string[]>;
   /** 幂等 set 收藏（ADR-0009 写工具语义） */

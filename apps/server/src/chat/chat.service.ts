@@ -11,7 +11,6 @@ import {
 } from 'ai';
 import { PrismaService } from '../prisma/prisma.service';
 import { RecommendationService } from '../recipe/recommendation.service';
-import { PantryService } from '../pantry/pantry.service';
 import { FavoriteService } from '../favorite/favorite.service';
 import { PreferenceService } from '../preference/preference.service';
 import {
@@ -51,7 +50,6 @@ export class ChatService {
     @Inject('CHAT_MODEL') private readonly model: LanguageModel,
     private readonly recommendation: RecommendationService,
     private readonly prisma: PrismaService,
-    private readonly pantry: PantryService,
     private readonly favorite: FavoriteService,
     private readonly preference: PreferenceService,
     private readonly conversation: ConversationService,
@@ -86,7 +84,7 @@ export class ChatService {
       this.conversation.summary(userId, conversationId),
     ]);
 
-    // 4. 偏好/pantry 注入（仍需 loadSignals 拿 blocked + pantry + healthGoal）
+    // 4. 偏好注入（loadSignals 提供硬过滤与健康目标）
     const [signals, user] = await Promise.all([
       this.recommendation.loadSignals(userId),
       this.prisma.user.findUnique({
@@ -99,7 +97,6 @@ export class ChatService {
       userName: user?.displayName ?? undefined,
       dietaryRestrictions: signals.blocked,
       healthGoal: signals.healthGoal,
-      pantryIngredients: signals.pantry,
       season: currentSeason(),
       conversationSummary: conversationSummary ?? undefined,
     });
@@ -210,8 +207,6 @@ export class ChatService {
       findRecipes: () => this.prisma.recipe.findMany(),
       findRecipeById: async (id) =>
         this.prisma.recipe.findUnique({ where: { id } }),
-      pantryFindAll: (uid) => this.pantry.findAll(uid),
-      pantryReplace: (uid, names) => this.pantry.replace(uid, names),
       favoriteFindAll: (uid) => this.favorite.findAll(uid),
       favoriteSet: (uid, recipeId, saved) =>
         this.favorite.set(uid, recipeId, saved),

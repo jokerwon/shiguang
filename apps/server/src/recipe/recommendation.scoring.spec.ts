@@ -4,7 +4,6 @@ import {
   goalBonus,
   ingredientHit,
   isBlocked,
-  pantryOverlap,
   scoreRecipe,
   seededJitter,
   timeFit,
@@ -23,7 +22,6 @@ const recipe = (over: Partial<ScorableRecipe> = {}): ScorableRecipe => ({
 });
 
 const signals = (over: Partial<UserSignals> = {}): UserSignals => ({
-  pantry: [],
   blocked: [],
   healthGoal: 'BALANCED',
   ...over,
@@ -77,18 +75,6 @@ describe('ingredientHit / isBlocked', () => {
     expect(isBlocked(recipe().ingredients, [])).toBe(false);
   });
 });
-
-describe('pantryOverlap', () => {
-  it('空 pantry 返回 0', () => {
-    expect(pantryOverlap(recipe().ingredients, [])).toBe(0);
-  });
-
-  it('按命中占比计分', () => {
-    expect(pantryOverlap(recipe().ingredients, ['鸡蛋', '番茄', '盐'])).toBe(1);
-    expect(pantryOverlap(recipe().ingredients, ['鸡蛋'])).toBeCloseTo(1 / 3);
-  });
-});
-
 describe('timeFit', () => {
   it('晚间 ≤30min 满分', () => {
     expect(timeFit(15, 19)).toBe(1);
@@ -129,16 +115,14 @@ describe('goalBonus', () => {
 describe('scoreRecipe', () => {
   const ctx = { hour: 19, dateKey: '2026-08-04' };
 
-  it('pantry 全命中排序高于零命中', () => {
+  it('按 3/11、3/11、5/11 加权时间、目标与轮换', () => {
     const seed = dailySeed('u1', ctx.dateKey);
-    const full = scoreRecipe(
-      recipe(),
-      signals({ pantry: ['鸡蛋', '番茄', '盐'] }),
-      ctx,
-      seed,
+    const value = scoreRecipe(recipe(), signals(), ctx, seed);
+    expect(value).toBeCloseTo(
+      (3 / 11) * timeFit(20, 19) +
+        (3 / 11) * goalBonus(recipe(), 'BALANCED') +
+        (5 / 11) * seededJitter(seed, 'r1'),
     );
-    const none = scoreRecipe(recipe(), signals(), ctx, seed);
-    expect(full).toBeGreaterThan(none);
   });
 
   it('同输入排序确定（可重复）', () => {

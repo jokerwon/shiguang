@@ -4,7 +4,6 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { ChatModule } from './chat/chat.module';
-import { PantryModule } from './pantry/pantry.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { PreferenceModule } from './preference/preference.module';
 import { ConversationModule } from './conversation/conversation.module';
@@ -18,7 +17,6 @@ import { ConversationModule } from './conversation/conversation.module';
     AuthModule,
     RecipeModule,
     ChatModule,
-    PantryModule,
     FavoriteModule,
     PreferenceModule,
     ConversationModule,

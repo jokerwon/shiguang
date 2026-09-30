@@ -4,21 +4,17 @@ import * as React from 'react'
 import { ChevronLeft, Clock, Bookmark } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { usePantry } from '@/lib/use-pantry'
 import { useFavorites } from '@/lib/use-favorites'
-import { CUISINE_LABELS, matchScore, type Recipe } from '@shiguang/domain'
+import { CUISINE_LABELS, type Recipe } from '@shiguang/domain'
 import { RecipeImage } from '@/components/recipe-image'
-import { ShoppingListDialog } from '@/components/shopping-list-dialog'
 import { cn } from '@/lib/utils'
 
 export function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const router = useRouter()
-  const { pantry } = usePantry()
   const { saved, toggleSave } = useFavorites()
   const [tab, setTab] = React.useState<'steps' | 'ings'>('steps')
 
   const r = recipe
-  const m = matchScore(r, pantry)
   const isSaved = saved.has(r.id)
   const name = r.name
 
@@ -76,32 +72,6 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
 
           <p className="mt-3 text-sm text-muted-foreground">{r.desc}</p>
 
-          {pantry.length > 0 && (
-            <div className="mt-4 rounded-lg border border-border bg-muted p-4">
-              <div className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
-                {`食材匹配 · ${m.score}%`}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {r.ingredients.map((i) => {
-                  const got = m.have.includes(i.name)
-                  return (
-                    <span
-                      key={i.name}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-xs',
-                        got
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border bg-background text-muted-foreground',
-                      )}
-                    >
-                      {got ? '✓ ' : ''}
-                      {i.name}
-                    </span>
-                  )
-                })}
-              </div>
-            </div>
-          )}
 
           {/* tabs */}
           <div className="mt-6 flex gap-1 border-b border-border">
@@ -168,7 +138,6 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
           <Bookmark size={18} fill={isSaved ? 'currentColor' : 'none'} />
           {isSaved ? '已收藏' : '收藏'}
         </Button>
-        <ShoppingListDialog recipe={r} />
       </div>
     </section>
   )

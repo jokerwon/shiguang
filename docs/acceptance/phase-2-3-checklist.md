@@ -1,8 +1,8 @@
 # Phase 2 + 3 验收走查清单
 
-- **依据**:[ADR-0008](../adr/0008-theme-ai-capability-leap.md) / [0009](../adr/0009-ai-tool-calling-agent.md) / [0010](../adr/0010-persistent-conversations.md) / [0011](../adr/0011-conversation-state-ownership-and-message-schema.md)
+- **依据**:[ADR-0008](../adr/0008-theme-ai-capability-leap.md) / [0009](../adr/0009-ai-tool-calling-agent.md) / [0010](../adr/0010-persistent-conversations.md) / [0011](../adr/0011-conversation-state-ownership-and-message-schema.md)；库存链路已由 [ADR-0017](../adr/0017-remove-pantry-and-shopping-list.md) 取代
 - **验收方式**:手动场景走查，每条场景须可复现、通过条件明确
-- **制定方式**:经 grill 会话确认(2026-08-04)
+- **制定方式**:经 grill 会话确认(2026-08-04)；库存相关历史条目仅作追溯，当前按 Phase 7 清单验收。
 
 ## 验收原则(已确认的边界)
 
@@ -32,7 +32,7 @@
 
 | # | 场景 | 通过条件 |
 |---|------|---------|
-| B1 | 「我现有食材能做什么快手菜?」 | AI 调 `get_pantry` + `search_recipes`,推荐落在库内真实菜谱 |
+| B1 | 「我现有食材能做什么快手菜?」 | **退役**：不再读取库存；普通对话中的临时食材描述与按原料搜索按 [Phase 7 B2/B4](./phase-7-checklist.md) 验收 |
 | B2 | 「我收藏了哪些菜?」 | `get_favorites` 回答与实际一致 |
 | B3 | 对话中途改条件(「换成 30 分钟内的」) | AI 重新检索，答案随条件变化——注入演进要解锁的核心能力,**此场景必须过** |
 
@@ -40,8 +40,8 @@
 
 | # | 场景 | 通过条件 |
 |---|------|---------|
-| C1 | 「我买了 2 斤牛腩」 | pantry 出现牛腩，操作卡片渲染，食材页同步可见 |
-| C2 | 点「撤销」 | 逆向调用真实生效(食材页验证),卡片状态更新 |
+| C1 | 「我买了 2 斤牛腩」 | **退役**：不写入库存、不渲染库存操作卡片；普通对话能力按 [Phase 7 B4](./phase-7-checklist.md) 验收 |
+| C2 | 点「撤销」 | **退役**：库存撤销链已移除；收藏撤销仍按 C3 验收 |
 | C3 | 「收藏这道菜」 | 收藏落库，卡片可撤销 |
 
 ## D. 失败路径(三类必验)

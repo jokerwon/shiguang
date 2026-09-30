@@ -1,6 +1,5 @@
 'use client'
 
-import * as React from 'react'
 import { Shimmer } from './shimmer'
 import { ChatActionCard } from '@/components/chat-action-card'
 import { ChatConfirmCard } from '@/components/chat-confirm-card'
@@ -24,17 +23,11 @@ export interface ToolPart {
 const TOOL_LABELS: Record<string, string> = {
   search_recipes: '搜索菜谱',
   get_recipe: '查看菜谱详情',
-  get_pantry: '查看食材清单',
   get_favorites: '查看收藏',
   get_preferences: '查看偏好',
-  add_pantry_items: '添加食材',
-  remove_pantry_items: '移除食材',
   set_favorite: '收藏操作',
   update_preferences: '偏好变更',
 }
-
-/** 写工具名集合（操作卡片渲染范围） */
-const WRITE_TOOLS = new Set(['add_pantry_items', 'remove_pantry_items', 'set_favorite'])
 
 export function ToolPartView({ part, readOnly }: { part: ToolPart; readOnly?: boolean }) {
   const name = part.type.startsWith('tool-') ? part.type.slice(5) : part.type
@@ -42,16 +35,8 @@ export function ToolPartView({ part, readOnly }: { part: ToolPart; readOnly?: bo
   const isRunning = !part.state || part.state === 'input-streaming' || part.state === 'input-available'
   const isError = part.state === 'output-error'
 
-  // 写工具完成态 → 操作卡片
-  if (!isRunning && !isError && WRITE_TOOLS.has(name)) {
-    return (
-      <ChatActionCard
-        toolName={name}
-        input={part.input}
-        output={part.output}
-        readOnly={readOnly}
-      />
-    )
+  if (!isRunning && !isError && name === 'set_favorite') {
+    return <ChatActionCard input={part.input} output={part.output} readOnly={readOnly} />
   }
 
   // 偏好草稿完成态 → 确认卡片（独立于 WRITE_TOOLS：它不是写工具，不渲染操作卡片）
@@ -64,7 +49,7 @@ export function ToolPartView({ part, readOnly }: { part: ToolPart; readOnly?: bo
     <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
       <span className={cn('inline-block size-1.5 rounded-full', isError ? 'bg-destructive' : 'bg-primary/60')} />
       {isRunning ? (
-        <Shimmer>{label}中…</Shimmer>
+        <Shimmer>{`${label}中…`}</Shimmer>
       ) : isError ? (
         <span>{label}失败</span>
       ) : (

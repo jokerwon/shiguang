@@ -1,13 +1,11 @@
 // 个性化推荐打分（ADR-0005）：纯函数，可单测。
 // 硬过滤（isBlocked）+ 三维加权排序：
-//   pantry 匹配度 0.45 / 时间适配 0.15 / 健康目标 0.15 / 新鲜度轮换 0.25
+//   时间适配 3/11 / 健康目标 3/11 / 新鲜度轮换 5/11
 // 所有信号确定性：同用户同天同库 → 同结果；dateKey 变化 → 轮换生效。
 
 export type HealthGoalKey = 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
 
 export interface UserSignals {
-  /** pantry 现有食材名 */
-  pantry: string[];
   /** 忌口食材 ∪ 过敏原（硬过滤） */
   blocked: string[];
   healthGoal: HealthGoalKey;
@@ -96,7 +94,7 @@ export function dailySeed(userId: string, dateKey: string): number {
 const norm = (s: string) => s.trim().toLowerCase();
 
 /**
- * 食材命中：与前端 matchScore 同语义（norm 后双向 includes）。
+ * 食材命中：规范化后双向 includes。
  * 已知限制：「鸡蛋」会命中「鸡蛋干」——行为统一优先于精确。
  */
 export function ingredientHit(a: string, b: string): boolean {
@@ -111,18 +109,6 @@ export function isBlocked(
   blocked: string[],
 ): boolean {
   return ingredients.some((i) => blocked.some((b) => ingredientHit(i.name, b)));
-}
-
-/** pantry 匹配度：命中食材占比，0..1 */
-export function pantryOverlap(
-  ingredients: { name: string }[],
-  pantry: string[],
-): number {
-  if (ingredients.length === 0 || pantry.length === 0) return 0;
-  const hit = ingredients.filter((i) =>
-    pantry.some((p) => ingredientHit(i.name, p)),
-  ).length;
-  return hit / ingredients.length;
 }
 
 /** 时间适配：晚间（≥17 点）优先 ≤30min 的快菜；非晚间中性 0.5 */
@@ -166,9 +152,8 @@ export function scoreRecipe(
   seed: number,
 ): number {
   return (
-    0.45 * pantryOverlap(r.ingredients, s.pantry) +
-    0.15 * timeFit(r.time, c.hour) +
-    0.15 * goalBonus(r, s.healthGoal) +
-    0.25 * seededJitter(seed, r.id)
+    (3 / 11) * timeFit(r.time, c.hour) +
+    (3 / 11) * goalBonus(r, s.healthGoal) +
+    (5 / 11) * seededJitter(seed, r.id)
   );
 }

@@ -58,7 +58,7 @@ export class RecipeService {
 
   /**
    * 个性化首页（ADR-0005）：today 来自 RecommendationService
-   * （硬过滤忌口/过敏原 + pantry/时间/目标/轮换加权排序）；
+   * （硬过滤忌口/过敏原 + 时间/目标/轮换加权排序）；
    * quick 保留「15 分钟快手」逻辑。
    */
   async findPersonalized(userId: string): Promise<RecommendedResponse> {

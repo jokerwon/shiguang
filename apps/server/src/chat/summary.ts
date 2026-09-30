@@ -16,11 +16,8 @@ export interface SummaryModel {
 const TOOL_LABELS: Record<string, string> = {
   search_recipes: '搜索菜谱',
   get_recipe: '查看菜谱详情',
-  get_pantry: '查看食材清单',
   get_favorites: '查看收藏',
   get_preferences: '查看偏好',
-  add_pantry_items: '添加食材',
-  remove_pantry_items: '移除食材',
   set_favorite: '收藏操作',
   update_preferences: '偏好变更',
 };
@@ -48,12 +45,6 @@ function partToLine(part: {
     const name = part.type.slice('tool-'.length);
     const label = TOOL_LABELS[name] ?? name;
     const input = (part.input ?? {}) as Record<string, unknown>;
-    if (Array.isArray(input.names)) {
-      const names = (input.names as unknown[])
-        .filter((n) => typeof n === 'string')
-        .join('、');
-      return `[操作] ${label}${names ? `：${names}` : ''}`;
-    }
     if (typeof input.recipeId === 'string') {
       return `[操作] ${label}：${input.recipeId}`;
     }

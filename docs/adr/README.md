@@ -9,10 +9,10 @@
 | [ADR-0001](./0001-theme-content-depth-personalization.md) | 主题:内容深度 + 个性化,分两 Phase 交付 | — |
 | [ADR-0002](./0002-recipe-schema-depth.md) | 菜谱 schema 扩展:食材用量 + 营养三要素 | 1 |
 | [ADR-0003](./0003-recipe-content-expansion.md) | 菜谱扩充:人工 + AI 混合,图片走占位符 | 1 |
-| [ADR-0004](./0004-server-side-user-data.md) | 用户数据服务端持久化:Pantry / Favorite / UserPreference | 1 |
-| [ADR-0005](./0005-personalized-recommendation.md) | 个性化推荐:服务端 `/recipes/personalized` | 1 |
-| [ADR-0006](./0006-ai-context-injection.md) | AI 对话升级:上下文注入(非 tool-calling)。候选注入部分已被 ADR-0009 取代 | 1 |
-| [ADR-0007](./0007-shopping-list-snapshot.md) | 缺料购物清单:详情页即时快照,不持久化 | 1 |
+| [ADR-0004](./0004-server-side-user-data.md) | 用户数据服务端持久化：Favorite / UserPreference 继续有效；PantryItem 与现有食材部分已被 ADR-0017 取代 | 1 |
+| [ADR-0005](./0005-personalized-recommendation.md) | 个性化推荐：服务端 `/recipes/personalized`；pantry 排序部分已被 ADR-0017 取代 | 1 |
+| [ADR-0006](./0006-ai-context-injection.md) | AI 对话升级：上下文注入；pantry 注入部分已被 ADR-0017 取代 | 1 |
+| [ADR-0007](./0007-shopping-list-snapshot.md) | 缺料购物清单：决策全文已被 ADR-0017 取代 | 1 |
 | [ADR-0008](./0008-theme-ai-capability-leap.md) | 主题:AI 能力跃迁(动嘴不动手),分两 Phase 交付 | — |
 | [ADR-0009](./0009-ai-tool-calling-agent.md) | AI tool-calling:工具清单、注入演进、分级确认 | 2 / 3 |
 | [ADR-0010](./0010-persistent-conversations.md) | 持久化多会话:Conversation/Message 表、最小会话列表、滑窗+摘要(部分被 ADR-0011 取代) | 2 / 3 |
@@ -22,24 +22,25 @@
 | [ADR-0014](./0014-theme-mobile-first-native-app.md) | ~~主题:原生 app 首发,移动主战场~~（**已作废**,被 ADR-0016 取代） | 5 |
 | [ADR-0015](./0015-shared-domain-layer.md) | 共享域层 `packages/domain`:Web 与服务端共用的领域类型与纯函数（移动端动机已作废,决策继续有效） | 5 |
 | [ADR-0016](./0016-remove-mobile-client.md) | 移除移动客户端:删 `apps/mobile`,平台回归 Web 单客户端;保留 `packages/domain` 与 body 双轨 | — |
+| [ADR-0017](./0017-remove-pantry-and-shopping-list.md) | 移除库存与购物清单：纯偏好排序、首页筛选入口、备份及历史 JSON 清理的一次性例外 | 7 |
 
 ## Phase 总览
 
 **Phase 1(内容深度 + 个性化,已交付)** — 主题见 ADR-0001
 - 菜谱 schema 扩展 + 12 道老菜回填(ADR-0002)
-- 新增 PantryItem / Favorite / UserPreference 三表,收藏/食材迁服务端(ADR-0004)
+- Favorite / UserPreference 服务端持久化继续有效；PantryItem 与现有食材功能已由 Phase 7 移除(ADR-0004, ADR-0017)
 - 菜谱扩至 80–100 道(ADR-0003)
 - 偏好设置页 + 首页软提示(ADR-0005)
-- 个性化首页 `/recipes/personalized`(ADR-0005)
-- 缺料购物清单(ADR-0007)
-- AI 上下文注入(ADR-0006)
+- 个性化首页 `/recipes/personalized`(ADR-0005；排序规则由 ADR-0017 更新)
+- 缺料购物清单(ADR-0007；已由 ADR-0017 移除)
+- AI 上下文注入(ADR-0006；pantry 注入已由 ADR-0017 移除)
 - 占位符视觉升级 + 详情页营养区块(ADR-0003)
 
 **Phase 2(会动手,已交付)** — AI 从顾问变代理(ADR-0008)
 - 持久化多会话 + 最小会话列表(ADR-0010)
-- 只读工具:查菜谱 / 查用户数据(ADR-0009)
-- 写 pantry / 收藏:直接执行 + 操作卡片可撤销(ADR-0009)
-- 注入演进:偏好+pantry 保留注入,候选菜谱改工具按需查询(ADR-0009)
+- 只读工具:查菜谱 / 查用户数据(ADR-0009；库存工具已由 ADR-0017 移除)
+- 写收藏:直接执行 + 操作卡片可撤销(ADR-0009；库存写工具已由 ADR-0017 移除)
+- 注入演进:偏好保留注入,候选菜谱改工具按需查询(ADR-0009, ADR-0017)
 - 历史上下文:简单滑窗(ADR-0010)
 - 实施清单:[implementation/phase-2-implementation.md](../implementation/phase-2-implementation.md)
 
@@ -66,5 +67,9 @@
 - 实施清单:[implementation/phase-4-implementation.md](../implementation/phase-4-implementation.md)
 
 **Phase 2 / 3 验收标准**见 [acceptance/phase-2-3-checklist.md](../acceptance/phase-2-3-checklist.md)(手动场景走查制);**Phase 4** 见 [acceptance/phase-4-checklist.md](../acceptance/phase-4-checklist.md)。
+
+**Phase 7(库存与购物清单下线,已交付)** — ADR-0017
+- 实施清单:[implementation/phase-7-implementation.md](../implementation/phase-7-implementation.md)（含迁移、回滚、运行时与质量检查证据）
+- 验收清单:[acceptance/phase-7-checklist.md](../acceptance/phase-7-checklist.md)（已验收；既有 Web 质量限制如实记录）
 
 **术语**见 [glossary.md](../glossary.md)。

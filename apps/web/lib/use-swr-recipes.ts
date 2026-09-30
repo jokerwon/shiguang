@@ -3,17 +3,13 @@
 import useSWR from 'swr';
 import { recipesUrl } from './api';
 import type {
-  RecipeQuery,
   PaginatedRecipes,
+  RecipeQuery,
   RecommendedResponse,
 } from './api';
 
 /* ---- SWR Hooks ---- */
 
-// 获取全量菜谱（limit=100），供 Pantry / Chat 使用
-export function useRecipesQuery() {
-  return useSWR<PaginatedRecipes>(recipesUrl({ limit: 100 }));
-}
 
 // 获取个性化首页推荐（需认证；token 在 localStorage，只能 client 端取）
 export function usePersonalized() {

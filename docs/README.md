@@ -14,7 +14,7 @@
 
 | 文档 | 状态 | 说明 |
 |------|------|------|
-| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0016，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
+| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0017，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
 
 ## 实施层（按 Phase）
 
@@ -30,6 +30,7 @@
 | 4 认证双轨 | [implementation/phase-4-implementation.md](./implementation/phase-4-implementation.md) | [phase-4-checklist.md](./acceptance/phase-4-checklist.md) | 已交付——短 access + 滑动 refresh、复用检测、cookie/body 双轨、删 User.role（ADR-0013，原生 app 认证前置）；验收全过（API 冒烟 + 浏览器手动走查） |
 | 5 原生 app 首发 | [implementation/phase-5-implementation.md](./implementation/phase-5-implementation.md) | [phase-5-checklist.md](./acceptance/phase-5-checklist.md) | **已移除**（ADR-0016，2026-09-28）——曾交付 Expo/React Native `apps/mobile`（iOS 先行）+ 移动端认证 + 离线只读缓存；`packages/domain` 共享域层保留（ADR-0015 继续有效）。两份工件只读，不再维护 |
 | 6 PostgreSQL 迁移 | [implementation/phase-6-implementation.md](./implementation/phase-6-implementation.md) | 无独立验收清单（一次性迁移，验收证据见实施清单表格） | 已交付——Supabase → 自建 PostgreSQL 16：`public` schema 逻辑迁移 + 9 表内容哈希对账 + 连接串切换 + 运行时冒烟 |
+| 7 库存与购物清单下线 | [implementation/phase-7-implementation.md](./implementation/phase-7-implementation.md) | [phase-7-checklist.md](./acceptance/phase-7-checklist.md) | 已交付——删除库存、匹配度、缺料与购物清单；纯偏好排序、筛选入口、备份恢复演练与历史 JSON 清理边界均已验收（ADR-0017）。全库 Web 质量门既有限制见 Phase 7 实施清单。 |
 
 ## 运行层
 

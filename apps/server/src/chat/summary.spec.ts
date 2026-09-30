@@ -52,14 +52,14 @@ describe('serializeMessages 序列化规则', () => {
     const text = serializeMessages([
       msg('assistant', [
         {
-          type: 'tool-add_pantry_items',
+          type: 'tool-set_favorite',
           toolCallId: 't1',
           state: 'input-available',
-          input: { names: ['牛腩', '鸡蛋'] },
+          input: { recipeId: 'r1', saved: true },
         },
       ]),
     ]);
-    expect(text).toContain('[操作] 添加食材：牛腩、鸡蛋');
+    expect(text).toContain('[操作] 收藏操作：r1');
   });
 
   it('混合 text/tool parts 保序，reasoning 等结构噪音被跳过', () => {

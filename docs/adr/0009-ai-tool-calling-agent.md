@@ -3,6 +3,7 @@
 - **状态**:已接受
 - **日期**:2026-08-04
 - **决策者**:Kai(经 grill 会话确认)
+- **取代说明**：pantry 工具、pantry 注入及其可撤销写操作部分已被 [ADR-0017](./0017-remove-pantry-and-shopping-list.md) 取代；收藏与偏好确认继续有效。原文保留。
 
 ## 背景 (Context)
 

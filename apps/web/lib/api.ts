@@ -111,19 +111,6 @@ export function fetchRecipeById(id: string): Promise<Recipe> {
   return request<Recipe>(`/recipes/${id}`);
 }
 
-/* ---- Pantry API ---- */
-
-export function fetchPantry(): Promise<string[]> {
-  return request<string[]>('/pantry');
-}
-
-/** 整体替换当前用户的食材清单 */
-export function replacePantry(names: string[]): Promise<string[]> {
-  return request<string[]>('/pantry', {
-    method: 'PUT',
-    body: JSON.stringify(names),
-  });
-}
 
 /* ---- Favorites API ---- */
 

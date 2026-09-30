@@ -60,13 +60,6 @@ export function createReadTools(deps: ChatToolDeps, userId: string) {
     }),
     execute: async ({ id }: { id: string }) => runGetRecipe(deps, id),
   });
-
-  const get_pantry = tool({
-    description: '获取当前用户的食材清单。',
-    inputSchema: jsonSchema<Record<string, never>>({ type: 'object' }),
-    execute: async () => ({ pantry: await deps.pantryFindAll(userId) }),
-  });
-
   const get_favorites = tool({
     description: '获取当前用户收藏的菜谱 id 列表。',
     inputSchema: jsonSchema<Record<string, never>>({ type: 'object' }),
@@ -89,7 +82,6 @@ export function createReadTools(deps: ChatToolDeps, userId: string) {
   return {
     search_recipes,
     get_recipe,
-    get_pantry,
     get_favorites,
     get_preferences,
   };

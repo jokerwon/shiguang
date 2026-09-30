@@ -1,13 +1,8 @@
 /* eslint-disable @typescript-eslint/require-await */
-// 工具单测（W1.9）：execute 纯逻辑——硬过滤生效、add/remove 幂等与去重、set_favorite 幂等。
+// 工具单测（W1.9）：execute 纯逻辑——硬过滤生效、set_favorite 幂等。
 // 零 DB 风格，注入 fake deps（参考 recommendation.scoring.spec.ts）。
 // 直接测抽出的纯函数（runXxx），避免导入 ai（ESM，ts-jest 不转换 node_modules）。
-import {
-  runAddPantryItems,
-  runRemovePantryItems,
-  runSetFavorite,
-  runUpdatePreferences,
-} from './write-tools-logic';
+import { runSetFavorite, runUpdatePreferences } from './write-tools-logic';
 import { runSearchRecipes, runGetRecipe } from './read-tools-logic';
 import type { ChatToolDeps } from './types';
 import type { Recipe } from 'generated/prisma/client';
@@ -33,10 +28,9 @@ const recipe = (over: Partial<Recipe> = {}): Recipe => ({
   ...over,
 });
 
-/** 构造 fake deps，pantry/favorites 可初始化 */
+/** 构造 fake deps，favorites 可初始化 */
 function makeDeps(
   opts: {
-    pantry?: string[];
     favorites?: string[];
     recipes?: Recipe[];
     blocked?: string[];
@@ -46,25 +40,18 @@ function makeDeps(
       healthGoal: 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
     };
   } = {},
-): { deps: ChatToolDeps; state: { pantry: string[]; favorites: string[] } } {
+): { deps: ChatToolDeps; state: { favorites: string[] } } {
   const state = {
-    pantry: [...(opts.pantry ?? [])],
     favorites: [...(opts.favorites ?? [])],
   };
   const recipes = opts.recipes ?? [recipe()];
   const deps: ChatToolDeps = {
     loadSignals: async () => ({
-      pantry: state.pantry,
       blocked: opts.blocked ?? [],
       healthGoal: opts.pref?.healthGoal ?? 'BALANCED',
     }),
     findRecipes: async () => recipes,
     findRecipeById: async (id) => recipes.find((r) => r.id === id) ?? null,
-    pantryFindAll: async () => [...state.pantry],
-    pantryReplace: async (_uid, names) => {
-      state.pantry = [...names];
-      return [...state.pantry];
-    },
     favoriteFindAll: async () => [...state.favorites],
     favoriteSet: async (_uid, recipeId, saved) => {
       const exists = state.favorites.includes(recipeId);
@@ -143,44 +130,6 @@ describe('chat tools', () => {
       expect(result.found).toBe(false);
     });
   });
-
-  describe('add_pantry_items 幂等与去重', () => {
-    it('已存在的跳过，返回实际新增', async () => {
-      const { deps, state } = makeDeps({ pantry: ['鸡蛋'] });
-      const result = await runAddPantryItems(deps, 'u1', [
-        '鸡蛋',
-        '牛腩',
-        '牛腩',
-        '  ',
-      ]);
-      expect(result.added).toEqual(['牛腩']);
-      expect(state.pantry).toEqual(['鸡蛋', '牛腩']);
-    });
-
-    it('全部已存在时 added 为空，pantry 不变', async () => {
-      const { deps, state } = makeDeps({ pantry: ['鸡蛋'] });
-      const result = await runAddPantryItems(deps, 'u1', ['鸡蛋']);
-      expect(result.added).toEqual([]);
-      expect(state.pantry).toEqual(['鸡蛋']);
-    });
-  });
-
-  describe('remove_pantry_items 幂等', () => {
-    it('只移除存在的，不存在的忽略', async () => {
-      const { deps, state } = makeDeps({ pantry: ['鸡蛋', '牛腩'] });
-      const result = await runRemovePantryItems(deps, 'u1', ['牛腩', '不存在']);
-      expect(result.removed).toEqual(['牛腩']);
-      expect(state.pantry).toEqual(['鸡蛋']);
-    });
-
-    it('移除不存在的食材时 removed 为空，pantry 不变', async () => {
-      const { deps, state } = makeDeps({ pantry: ['鸡蛋'] });
-      const result = await runRemovePantryItems(deps, 'u1', ['牛腩']);
-      expect(result.removed).toEqual([]);
-      expect(state.pantry).toEqual(['鸡蛋']);
-    });
-  });
-
   describe('set_favorite 幂等', () => {
     it('已收藏时 saved=true 不产生翻转', async () => {
       const { deps, state } = makeDeps({ favorites: ['r1'] });
@@ -210,16 +159,14 @@ describe('chat tools', () => {
   });
 
   describe('update_preferences 草稿零副作用（E4 红线）', () => {
-    it('返回操作集草稿，不触碰任何写 dep', async () => {
+    it('返回操作集草稿，不触碰收藏写入', async () => {
       const pref = {
         dislikedIngredients: [] as string[],
         allergens: [] as string[],
         healthGoal: 'BALANCED' as const,
       };
-      const pantryReplace = jest.fn();
       const favoriteSet = jest.fn();
       const { deps } = makeDeps({ pref });
-      deps.pantryReplace = pantryReplace;
       deps.favoriteSet = favoriteSet;
 
       const result = await runUpdatePreferences(deps, 'u1', {
@@ -228,8 +175,6 @@ describe('chat tools', () => {
 
       expect(result.draft.addDisliked).toEqual(['香菜']);
       expect(result.draft.setHealthGoal).toBeUndefined();
-      // 零写副作用：结构上无偏好写能力，写 dep 也确未被调用
-      expect(pantryReplace).not.toHaveBeenCalled();
       expect(favoriteSet).not.toHaveBeenCalled();
     });
 
@@ -319,44 +264,6 @@ describe('chat tools', () => {
       });
       expect(result.draft).toEqual({});
       expect(result.note).toBeDefined();
-    });
-  });
-
-  // W1.2：写工具空入参路径——空数组走零副作用早返回，不触发写 dep、不抛异常。
-  // （缺省必填字段属 JSON Schema 层校验，由模型 provider 端在生成 tool call args
-  // 时执行，不在 execute 运行时；ai SDK 的 jsonSchema() tool 不带运行时 validate，
-  // 故该路径在纯函数测试层不可及，留待 D2 手动走查。）
-  describe('写工具空入参零副作用', () => {
-    it('add_pantry_items 空数组不触发 pantryReplace，返回空 added', async () => {
-      const pantryReplace = jest.fn();
-      const { deps, state } = makeDeps({ pantry: ['鸡蛋'] });
-      deps.pantryReplace = pantryReplace;
-
-      const result = await runAddPantryItems(deps, 'u1', []);
-      expect(result.added).toEqual([]);
-      expect(state.pantry).toEqual(['鸡蛋']);
-      expect(pantryReplace).not.toHaveBeenCalled();
-    });
-
-    it('add_pantry_items 仅空白/空串归一为空，不触发写', async () => {
-      const pantryReplace = jest.fn();
-      const { deps } = makeDeps({ pantry: [] });
-      deps.pantryReplace = pantryReplace;
-
-      const result = await runAddPantryItems(deps, 'u1', ['  ', '']);
-      expect(result.added).toEqual([]);
-      expect(pantryReplace).not.toHaveBeenCalled();
-    });
-
-    it('remove_pantry_items 空数组不触发 pantryReplace', async () => {
-      const pantryReplace = jest.fn();
-      const { deps, state } = makeDeps({ pantry: ['鸡蛋'] });
-      deps.pantryReplace = pantryReplace;
-
-      const result = await runRemovePantryItems(deps, 'u1', []);
-      expect(result.removed).toEqual([]);
-      expect(state.pantry).toEqual(['鸡蛋']);
-      expect(pantryReplace).not.toHaveBeenCalled();
     });
   });
 });

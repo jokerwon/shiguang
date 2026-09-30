@@ -38,14 +38,14 @@ export function DiscoveryClient() {
       <div className="gap-y-2 p-4 md:grid md:grid-cols-[1.1fr_0.9fr] md:gap-x-10 md:pt-10">
         <div>
           <h1 className="text-[26px] leading-[1.15] font-bold tracking-tight md:text-[clamp(28px,3.2vw,40px)]">今天想做点什么？</h1>
-          <p className="mt-1.5 text-[17px] text-muted-foreground md:mt-0">告诉我手边有什么，我来给你挑一道。</p>
+          <p className="mt-1.5 text-[17px] text-muted-foreground md:mt-0">按口味挑一道，或和食光聊聊</p>
           <Link
-            href="/pantry"
-            aria-label="搜索菜名，或按食材匹配"
+            href="/filter"
+            aria-label="筛选菜谱"
             className="mt-4 flex w-full items-center gap-2.5 rounded-lg border border-border bg-muted px-3.5 py-3 text-left text-[15px] transition-[color,border-color,transform] motion-safe:active:scale-[0.96] hover:border-foreground md:max-w-md"
           >
             <Search size={18} strokeWidth={1.5} className="text-muted-foreground" />
-            <span className="text-muted-foreground">搜索菜名，或按食材匹配…</span>
+            <span className="text-muted-foreground">筛选菜谱</span>
           </Link>
         </div>
 
