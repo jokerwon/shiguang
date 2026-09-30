@@ -136,8 +136,12 @@ export class RecipeService {
     return this.findAll({ ingredients: ingredientId, limit: 12 }, userId);
   }
 
+  /** 详情必须带稳定身份：原料链接按 `ingredientId` 跳转，不做名称猜测（ADR-0018） */
   async findById(id: string): Promise<DomainRecipe> {
-    const recipe = await this.prisma.recipe.findUnique({ where: { id } });
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id },
+      include: ingredientLinkInclude,
+    });
     if (!recipe) {
       throw new NotFoundException('菜谱不存在');
     }

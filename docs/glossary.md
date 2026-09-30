@@ -101,6 +101,8 @@ Phase 2 起新增的核心实体(ADR-0010,表 schema 经 ADR-0011 重审)。一�
 ### 食材身份与归一 (Ingredient Identity)
 食材以数据库中的稳定身份存在（`Ingredient`），别名（`IngredientAlias`）指向该身份；菜谱原料通过 `RecipeIngredient` 关联身份，并保留菜谱内用量与说明。维护者用审核资料文件 + `pnpm ingredients:import` 发布，已发布列表与详情只读数据库。身份与过敏原关系分开：`IngredientAllergen` 无记录表示「信息未核查」，不等于「确认不含」。字段事实见 `apps/server/prisma/schema.prisma`。
 
+菜谱接口的 `ingredients[]` 直接携带 `ingredientId`（稳定身份）与 `note`（括号说明），消费方按 id 跳转资料页，**不按名称二次猜测身份**；未关联身份的写法不带 id，前端只做「有 id 才可跳转」的降级。菜谱入库与 `pnpm db:seed` 走同一套归一校验：未收录、未发布的写法整批拒绝；同一身份的多种写法（如「花椒」+「花椒粉」）保留第一条并逐条告警，被合并项的用量不在关联表中。
+
 ### 待审区 (Staging Area)
 AI 批量生成菜谱的缓冲区。生成的菜谱**先入待审区(JSON / staging 表),人工抽检 + 校验后再导入 Recipe 表**,不直接入库。
 

@@ -49,8 +49,10 @@ export default function ChatScreen() {
   const routeId = useRouteConversationId()
   const [field, setField] = React.useState('')
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
-  // 标记切换会话时的「正在加载历史」状态，避免 useChat 初始空消息闪现
-  const [loadingHistory, setLoadingHistory] = React.useState(false)
+  // 切换会话时的「正在加载历史」状态：直接由 routeId 派生（routeId 变化 → 自动回到 true），
+  // 只有「已加载到哪条 routeId」是 state。空转 state 可避免 effect 体同步 setState（react-hooks 规则）。
+  const [loadedRouteId, setLoadedRouteId] = React.useState<string | undefined>(undefined)
+  const loadingHistory = !!routeId && loadedRouteId !== routeId
   // 越权/不存在会话的提示：存出错的 routeId，routeId 变化后自动失效，无需 effect 主动清
   const [notFoundId, setNotFoundId] = React.useState<string | undefined>(undefined)
   // 历史消息 id 集合（ADR-0012 决策 2）：拉取历史时记录，历史消息的操作/确认卡片只读。
@@ -150,8 +152,7 @@ export default function ChatScreen() {
       return
     }
     let cancelled = false
-    setLoadingHistory(true)
-    // 先清空避免上一会话消息闪现
+    // 先清空避免上一会话消息闪现（loadingHistory 由 loadedRouteId !== routeId 派生，此处无需 setState）
     setMessages([])
     fetchConversationMessages(routeId)
       .then((history) => {
@@ -169,7 +170,7 @@ export default function ChatScreen() {
         }
       })
       .finally(() => {
-        if (!cancelled) setLoadingHistory(false)
+        if (!cancelled) setLoadedRouteId(routeId)
       })
     return () => {
       cancelled = true

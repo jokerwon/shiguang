@@ -9,10 +9,13 @@ import { join } from 'node:path';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
 import { validateRecipeDraft } from '../src/recipe/recipe-draft';
+import { REVIEWED_INGREDIENTS } from './ingredients/published';
 import {
-  CURATED_RECIPES,
-  type SeedRecipe,
-} from './recipes-curated';
+  buildRawIndex,
+  resolveRecipeLinks,
+  type RecipeIngredientLink,
+} from '../src/ingredient/normalize';
+import { CURATED_RECIPES, type SeedRecipe } from './recipes-curated';
 
 const STAGING_PATH = join(__dirname, 'staging/recipes-staging.json');
 
@@ -29,7 +32,7 @@ function loadStagedRecipes(): SeedRecipe[] {
     if (!result.ok) {
       const name = (raw as Record<string, unknown>)?.['name'];
       console.warn(
-        `⚠️ staging 条目「${String(name ?? '(未知)')}」校验失败，跳过：${result.errors.join('；')}`,
+        `⚠️ staging 条目「${typeof name === 'string' ? name : '(未知)'}」校验失败，跳过：${result.errors.join('；')}`,
       );
       continue;
     }
@@ -51,17 +54,80 @@ async function main() {
 
   const recipes: SeedRecipe[] = [...CURATED_RECIPES, ...loadStagedRecipes()];
 
+  // 食材身份归一（ADR-0018）：发布菜谱前先确认每条原料命中唯一已发布身份，
+  // 并把关联一并写入——菜谱与身份来自同一份审核内容，不保留第二套事实源。
+  // 未收录/未发布的写法一律拒绝整批导入，不静默跳过、不写半套关联。
+  const byRaw = buildRawIndex(REVIEWED_INGREDIENTS);
+
   try {
-    // 幂等：按 name upsert；update/create 同用校验过的 SeedRecipe，避免字段手抄漂移
+    const idByName = new Map<string, string>();
+    for (const item of REVIEWED_INGREDIENTS) {
+      // 必须要求 published：仅「存在该行」不等于可发布，
+      // 引用未发布身份的菜谱会下发一个点开即 404 的链接（findById 按 published 查）
+      const row = await prisma.ingredient.findFirst({
+        where: { name: item.name, published: true },
+        select: { id: true },
+      });
+      if (!row?.id) throw new Error(`食材「${item.name}」尚未发布`);
+      idByName.set(item.name, row.id);
+    }
+
+    const rejected: string[] = [];
+    const merged: string[] = [];
+    const linksByRecipe = new Map<string, RecipeIngredientLink[]>();
     for (const r of recipes) {
-      await prisma.recipe.upsert({
-        where: { name: r.name },
-        update: r,
-        create: r,
+      const outcome = resolveRecipeLinks<RecipeIngredientLink>(
+        { label: r.name, ingredients: r.ingredients },
+        byRaw,
+        idByName,
+        (built, ingredientId) => ({ recipeId: '', ingredientId, ...built }),
+      );
+      if (outcome.rejected.length) {
+        rejected.push(...outcome.rejected);
+        continue;
+      }
+      for (const m of outcome.merged) {
+        merged.push(
+          `「${r.name}」的「${m.name}」与「${m.into}」指向同一食材身份，已合并为一条关联（被合并项的用量不写进关联表）`,
+        );
+      }
+      linksByRecipe.set(r.name, outcome.links);
+    }
+    if (rejected.length) {
+      throw new Error(
+        `菜谱原料存在无法归一的写法，未写入任何数据：\n  ${rejected.join('\n  ')}`,
+      );
+    }
+    if (merged.length) {
+      console.warn(
+        `⚠️ 同身份多写法合并 ${merged.length} 处：\n  ${merged.join('\n  ')}`,
+      );
+    }
+
+    // 幂等：按 name upsert；update/create 同用校验过的 SeedRecipe，避免字段手抄漂移。
+    // 正文与关联同一事务提交：分开写会在中断/失败时留下「新正文 + 空关联」，
+    // 那会让按 position 的身份链接与按食材筛选同时失效。
+    for (const r of recipes) {
+      const built = linksByRecipe.get(r.name) ?? [];
+      await prisma.$transaction(async (tx) => {
+        const recipe = await tx.recipe.upsert({
+          where: { name: r.name },
+          update: r,
+          create: r,
+        });
+        // 关联按菜谱重建（身份与用量/说明来自同一份正文，重复运行不产生重复行）
+        await tx.recipeIngredient.deleteMany({
+          where: { recipeId: recipe.id },
+        });
+        if (built.length) {
+          await tx.recipeIngredient.createMany({
+            data: built.map((link) => ({ ...link, recipeId: recipe.id })),
+          });
+        }
       });
     }
     console.log(
-      `✅ Seeded ${recipes.length} recipes（人工精选 ${CURATED_RECIPES.length} + staging ${recipes.length - CURATED_RECIPES.length}）`,
+      `✅ Seeded ${recipes.length} recipes（人工精选 ${CURATED_RECIPES.length} + staging ${recipes.length - CURATED_RECIPES.length}），食材关联 ${[...linksByRecipe.values()].reduce((n, l) => n + l.length, 0)} 条`,
     );
   } finally {
     await prisma.$disconnect();
