@@ -56,7 +56,7 @@ app/
     ingredient/[id]/page.tsx # 食材详情 — 审核资料、参考来源、相关菜谱与保守安全排除说明
     favorite/page.tsx     # 收藏夹 — 已收藏菜谱列表
     settings/page.tsx     # 我的 — 偏好档案（忌口/过敏原/健康目标）
-    recipe/[id]/page.tsx  # 菜谱详情页 — 步骤/Recipe.ingredients 用量、营养
+    recipe/[id]/page.tsx  # 菜谱详情页 — 步骤/Recipe.ingredients 用量、营养；原料按接口携带的 ingredientId 链接资料页
 ```
 
 ## 认证机制（ADR-0013：双 token）

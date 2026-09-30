@@ -10,15 +10,16 @@ import { dirname, join } from 'node:path';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { CURATED_RECIPES } from '../prisma/recipes-curated';
+import { REVIEWED_INGREDIENTS } from '../prisma/ingredients/published';
 import {
   validateRecipeDraft,
   type RecipeDraft,
 } from '../src/recipe/recipe-draft';
 
-const STAGING_PATH = join(
-  process.cwd(),
-  'prisma/staging/recipes-staging.json',
-);
+/** 已发布食材的规范名：生成时的选材白名单（未收录写法在发布阶段会被直接拒绝） */
+const INGREDIENT_WHITELIST = REVIEWED_INGREDIENTS.map((i) => i.name);
+
+const STAGING_PATH = join(process.cwd(), 'prisma/staging/recipes-staging.json');
 
 const CUISINES = ['HOME', 'WESTERN', 'JAPANESE', 'SICHUAN', 'LIGHT'] as const;
 type CuisineKey = (typeof CUISINES)[number];
@@ -82,7 +83,7 @@ function buildPrompt(
   const sameCuisine = CURATED_RECIPES.filter((r) => r.cuisine === cuisine);
   const examples = (sameCuisine.length > 0 ? sameCuisine : CURATED_RECIPES)
     .slice(0, 2)
-    .map(({ name, ...rest }) => ({ ...rest, name: '示例菜名' }));
+    .map((recipe) => ({ ...recipe, name: '示例菜名' }));
 
   return `你是中文菜谱内容编辑。请生成 ${count} 道「${CUISINE_LABEL[cuisine]}」菜谱，输出为 JSON 数组（不要输出任何其他文字）。
 
@@ -94,13 +95,16 @@ function buildPrompt(
 - kcal / protein / carb / fat: 每份的估算营养（kcal 千卡，其余克）。必须满足 kcal ≈ 4*protein + 4*carb + 9*fat（偏差不超过 20%）
 - img: 固定为空字符串 ""
 - tags: 从白名单中选 0-3 个：${TAGS.join(', ')}（QUICK 仅当 time ≤ 15）
-- ingredients: 至少 3 项，每项 { "name": "食材名", "amount": "用量（如 200g / 2个 / 适量）" }
+- ingredients: 至少 3 项，每项 { "name": "食材名", "amount": "用量（如 200g / 2个 / 适量）" }；name 必须从下方选材白名单中逐字选取，不得自造写法、别名或带括号说明
 - steps: 至少 3 条，每条一句话，口语化、可执行
 
 要求：
 - 菜名必须真实存在、常见，不编造黑暗料理
 - 食材用量要具体合理，steps 与 ingredients 对应
+- 同一身份的两种写法不要同时出现（如「花椒」与「花椒粉」），选一个即可
 - ${count} 道菜之间口味、主材尽量不重复
+
+选材白名单（ingredients 的 name 只能取自这里）：${INGREDIENT_WHITELIST.join('、')}
 
 菜名黑名单（禁止使用）：${existingNames.join('、')}
 
@@ -139,7 +143,9 @@ function parseArgs(argv: string[]) {
         .map((s) => s.trim().toUpperCase());
       for (const c of list) {
         if (!CUISINES.includes(c as CuisineKey)) {
-          throw new Error(`--only 含非法菜系: ${c}（可选：${CUISINES.join(', ')}）`);
+          throw new Error(
+            `--only 含非法菜系: ${c}（可选：${CUISINES.join(', ')}）`,
+          );
         }
       }
       args.only = list as CuisineKey[];
@@ -180,12 +186,9 @@ async function main() {
       console.log(
         `▶ 生成 ${CUISINE_LABEL[cuisine]}（${cuisine}）第 ${batch}/${args.batches} 批，每批 ${args.perBatch} 道…`,
       );
-      const rawList = await generateBatch(
-        model,
-        cuisine,
-        args.perBatch,
-        [...seen],
-      );
+      const rawList = await generateBatch(model, cuisine, args.perBatch, [
+        ...seen,
+      ]);
       if (rawList.length === 0) {
         console.warn('  ✗ 本批解析失败，整批跳过');
         continue;
@@ -206,6 +209,16 @@ async function main() {
           console.log(`  ⏭ 重复跳过：${draft.name}`);
           duplicated++;
           continue;
+        }
+        // 选材白名单外的写法在发布阶段会被整批拒绝，这里先列出让人工处理：
+        // 要么改用已发布规范名，要么先补审核资料（ADR-0018）。
+        const unknown = draft.ingredients
+          .map((i) => i.name)
+          .filter((n) => !INGREDIENT_WHITELIST.includes(n));
+        if (unknown.length) {
+          console.warn(
+            `  ⚠️ ${draft.name} 使用了未发布食材写法（发布前需归一）：${unknown.join('、')}`,
+          );
         }
         draft.img = ''; // 图片全走占位符策略
         seen.add(draft.name);

@@ -34,6 +34,7 @@
 | 7 库存与购物清单下线 | [implementation/phase-7-implementation.md](./implementation/phase-7-implementation.md) | [phase-7-checklist.md](./acceptance/phase-7-checklist.md) | 已交付——删除库存、匹配度、缺料与购物清单；纯偏好排序、筛选入口、备份恢复演练与历史 JSON 清理边界均已验收（ADR-0017）。全库 Web 质量门既有限制见 Phase 7 实施清单。 |
 | 8 食材资料库与按食材筛选 | [implementation/phase-8-implementation.md](./implementation/phase-8-implementation.md) | [phase-8-checklist.md](./acceptance/phase-8-checklist.md) | 活跃——[Spec #5](https://github.com/jokerwon/shiguang/issues/5)；A–C 组（身份/迁移、审核资料与发布、统一安全过滤）已实施，安全约束下的相关菜谱与 AI 完整验收仍待完成 |
 | 8-1 发布并查阅食材资料 | [implementation/phase-8-1-implementation.md](./implementation/phase-8-1-implementation.md)（含验收证据与遗留边界） | 证据并入上方 phase-8 清单（A/B 组） | 已交付——[#6](https://github.com/jokerwon/shiguang/issues/6)：稳定身份入库、审核资料导入发布、已发布读取接口、食材列表与详情及真实浏览器走查 |
+| 8-2 菜谱关联稳定食材身份 | [implementation/phase-8-2-implementation.md](./implementation/phase-8-2-implementation.md)（含验收证据与遗留边界）；逐项核对材料见 [phase-8-2-ingredient-mapping-review.md](./implementation/phase-8-2-ingredient-mapping-review.md) | 证据并入上方 phase-8 清单（A 组） | 已交付（内容复核待签字）——[#7](https://github.com/jokerwon/shiguang/issues/7)：菜谱载荷携带身份 id、详情按 id 跳转、seed 发布共用归一校验、生成侧选材白名单；220 行逐项核对表待维护者确认 |
 
 ## 运行层
 

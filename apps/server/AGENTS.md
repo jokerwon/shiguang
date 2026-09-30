@@ -53,7 +53,7 @@ pnpm recipes:generate --batches 2         # 每个菜系生成 2 批（每批默
 pnpm recipes:generate --only sichuan,home # 只生成指定菜系
 ```
 
-生成结果**先入 staging 待审区，不直接入库**：脚本做字段/营养/去重校验（`src/recipe/recipe-draft.ts`），人工抽检 staging JSON 后，`pnpm db:seed` 合并「`prisma/recipes-curated.ts` 人工精选 + staging」upsert 入库（seed 时再过一遍校验兜底）。
+生成结果**先入 staging 待审区，不直接入库**：脚本做字段/营养/去重校验（`src/recipe/recipe-draft.ts`），提示词把食材名限定在已发布选材白名单内（白名单外写法当场打印待处理）；人工抽检 staging JSON 后，`pnpm db:seed` 合并「`prisma/recipes-curated.ts` 人工精选 + staging」upsert 入库，并**同步重建 `RecipeIngredient` 关联**——seed 与 `ingredients:import` 共用 `normalize.ts` 的归一校验：未收录/未发布写法整批拒绝，同身份多写法保留第一条并逐条告警。重复运行不产生重复关联。
 
 ### 长会话种子（Phase 3 验收前置，ADR-0012）
 
@@ -96,13 +96,13 @@ src/
   ingredient/
     ingredient.controller.ts  # GET /ingredients（名称/别名 + 单层分类）、GET /ingredients/:id、GET /ingredients/:id/recipes
     ingredient.service.ts     # 已发布资料读取（发布状态与资料来自数据库）
-    normalize.ts              # 纯函数：原料写法 → 稳定身份、括号说明剥离、歧义检出、关联去重
+    normalize.ts              # 纯函数：原料写法 → 稳定身份、括号说明剥离、歧义检出、关联去重、发布链路共用的 resolveRecipeLinks
     publish-review.ts         # 纯函数：发布闸门（名称/审核简介/来源；过敏原关系需依据）
 
   recipe/
     recipe.controller.ts      # GET /recipes（分页筛选，可选认证以应用安全设置）、GET /recipes/personalized（需认证）、GET /recipes/:id
-    recipe.service.ts         # 查询 + 响应组装
-    recipe.mapper.ts          # Prisma 枚举 ↔ 前端小写映射、toResponse、中文标签（CUISINE_ZH/TAG_ZH）
+    recipe.service.ts         # 查询 + 响应组装；详情带 ingredientLinks 以携带原料稳定身份
+    recipe.mapper.ts          # Prisma 枚举 ↔ 前端小写映射、toResponse（原料按 position 配身份）、中文标签（CUISINE_ZH/TAG_ZH）
     recipe-safety.service.ts  # 统一安全判断（ADR-0018）：身份/别名共用、过敏原关系独立、信息不足保守排除
     safety.ts                 # 纯函数：单个菜谱的安全判定与可解释原因
     recommendation.service.ts # 个性化推荐（ADR-0005/0017/0018）：首页与 AI search_recipes 共用的单一事实源

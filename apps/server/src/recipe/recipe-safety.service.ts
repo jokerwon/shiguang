@@ -12,6 +12,10 @@ import {
 /** 带稳定身份的菜谱原料行（关联表 + 身份 + 过敏原关系） */
 export interface RecipeIngredientLinkRow {
   name: string;
+  /** 正文数组下标（建立关联时写入）：详情按它把身份配回正文项 */
+  position: number;
+  /** 括号内的必要说明（如「西冷或眼肉」） */
+  note: string | null;
   ingredient: {
     id: string;
     name: string;

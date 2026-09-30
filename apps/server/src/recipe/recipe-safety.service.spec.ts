@@ -141,6 +141,8 @@ describe('RecipeSafetyService：设置来自当前用户服务端上下文', () 
     ingredientLinks: [
       {
         name: '鸡蛋',
+        position: 0,
+        note: null,
         ingredient: {
           id: 'egg',
           name: '鸡蛋',
