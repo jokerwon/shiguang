@@ -1,5 +1,5 @@
 import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import type { IngredientCategory } from 'generated/prisma/client';
 
 /** 一层浏览分类取值（与 prisma/schema.prisma 的 IngredientCategory 对应） */
@@ -38,4 +38,17 @@ export class QueryIngredientsDto {
   @Min(1)
   @Max(100)
   limit?: number = 24;
+}
+
+/** 身份解析入参：`terms` 逗号分隔或多个同名参数，均由 DTO 归一为字符串数组 */
+export class IdentifyIngredientsDto {
+  @Transform(({ value }) =>
+    (Array.isArray(value) ? (value as string[]) : [value as string])
+      .flatMap((v) => v.split(','))
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 20),
+  )
+  @IsString({ each: true })
+  terms: string[] = [];
 }

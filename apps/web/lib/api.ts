@@ -131,7 +131,20 @@ export function fetchRecipeById(id: string): Promise<Recipe> {
 
 export interface IngredientListResult {
   data: IngredientListItem[];
-  meta: { total: number; page: number; limit: number; totalPages: number };
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    /** 关键词整串命中身份的数量（0 表示当前只有子串候选或没有结果） */
+    exactMatches: number;
+  };
+}
+
+/** 输入名称的身份解析结果（歧义给出候选，不擅自映射） */
+export interface IngredientIdentifyResult {
+  matched: IngredientSummary | null
+  ambiguous: IngredientSummary[]
 }
 
 /** 食材列表查询串（列表页与 SWR key 共用同一序列化） */
@@ -160,11 +173,13 @@ export function fetchIngredientById(id: string): Promise<IngredientDetail> {
   return request<IngredientDetail>(`/ingredients/${id}`);
 }
 
-/** 食材身份搜索候选（歧义返回多个候选，由用户确认） */
-export function fetchIngredientCandidates(
-  keyword: string,
-): Promise<IngredientListResult> {
-  return request<IngredientListResult>(ingredientsUrl({ keyword, limit: 20 }));
+/** 名称 → 稳定身份：整串相等才命中，多命中返回候选供确认 */
+export function fetchIngredientIdentify(
+  terms: string[],
+): Promise<IngredientIdentifyResult> {
+  const params = new URLSearchParams()
+  for (const term of terms) params.append('terms', term)
+  return request<IngredientIdentifyResult>(`/ingredients/identify?${params}`)
 }
 
 export type { IngredientSummary };

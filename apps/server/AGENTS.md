@@ -94,8 +94,8 @@ src/
     current-user.decorator.ts # @CurrentUser() 取 userId（sub）
 
   ingredient/
-    ingredient.controller.ts  # GET /ingredients（名称/别名 + 单层分类）、GET /ingredients/:id、GET /ingredients/:id/recipes
-    ingredient.service.ts     # 已发布资料读取（发布状态与资料来自数据库）
+    ingredient.controller.ts  # GET /ingredients（身份优先搜索 + 单层分类）、GET /ingredients/identify（名称→身份）、GET /ingredients/:id、GET /ingredients/:id/recipes
+    ingredient.service.ts     # 已发布资料读取（发布状态与资料来自数据库）；整串相等才算身份命中，子串只作显式候选
     normalize.ts              # 纯函数：原料写法 → 稳定身份、括号说明剥离、歧义检出、关联去重、发布链路共用的 resolveRecipeLinks
     publish-review.ts         # 纯函数：发布闸门（名称/审核简介/来源；过敏原关系需依据）
 

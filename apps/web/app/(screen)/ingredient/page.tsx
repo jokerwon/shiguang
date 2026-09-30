@@ -5,20 +5,31 @@ import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { useIngredients } from '@/lib/use-swr-recipes'
+import { fetchIngredientIdentify } from '@/lib/api'
 import {
   INGREDIENT_CATEGORIES,
   INGREDIENT_CATEGORY_LABELS,
+  type IngredientSummary,
 } from '@shiguang/domain'
 import { cn } from '@/lib/utils'
 
+type Resolution =
+  | { kind: 'idle' }
+  | { kind: 'checking' }
+  | { kind: 'identified'; ingredient: IngredientSummary }
+  | { kind: 'ambiguous'; candidates: IngredientSummary[] }
+  | { kind: 'unidentified' }
+
 /**
  * 食材浏览入口（ADR-0018）：一层平铺分类 + 名称/别名搜索。
- * 资料入口不依赖菜谱存在；无相关菜谱的食材仍可查阅。
+ * 搜索先做身份解析（整串相等）：唯一命中直接打开资料，歧义列出候选由用户确认，
+ * 没有身份命中才显示「相近候选」（资料页用另一行提示，不混进结果）。
  */
 export default function IngredientScreen() {
   const [keyword, setKeyword] = React.useState('')
   const [submitted, setSubmitted] = React.useState('')
   const [category, setCategory] = React.useState<string | undefined>(undefined)
+  const [resolution, setResolution] = React.useState<Resolution>({ kind: 'idle' })
 
   const query = React.useMemo(
     () => ({ keyword: submitted || undefined, category, limit: 60 }),
@@ -26,6 +37,36 @@ export default function IngredientScreen() {
   )
   const { data, error, isValidating } = useIngredients(query)
   const items = data?.data ?? []
+  // 有整串身份命中时后端只返回这些身份；没有命中才可能是子串候选
+  const fuzzy = data !== undefined && data.meta.exactMatches === 0
+
+  const search = async (term: string) => {
+    setSubmitted(term)
+    setCategory(undefined)
+    if (!term) {
+      setResolution({ kind: 'idle' })
+      return
+    }
+    setResolution({ kind: 'checking' })
+    try {
+      const { matched, ambiguous } = await fetchIngredientIdentify([term])
+      setResolution(
+        matched
+          ? { kind: 'identified', ingredient: matched }
+          : ambiguous.length > 0
+            ? { kind: 'ambiguous', candidates: ambiguous }
+            : { kind: 'unidentified' },
+      )
+    } catch {
+      // 解析失败按「没有身份命中」处理：结果区仍会显示请求失败本身
+      setResolution({ kind: 'unidentified' })
+    }
+  }
+
+  const clearSearch = () => {
+    setKeyword('')
+    void search('')
+  }
 
   return (
     <section className="animate-in fade-in slide-in-from-bottom-1.5 duration-200">
@@ -43,7 +84,7 @@ export default function IngredientScreen() {
           role="search"
           onSubmit={(e) => {
             e.preventDefault()
-            setSubmitted(keyword.trim())
+            void search(keyword.trim())
           }}
           className="flex items-center gap-2"
         >
@@ -59,11 +100,60 @@ export default function IngredientScreen() {
         </form>
       </div>
 
+      {resolution.kind !== 'idle' && (
+        <div className="px-4 pt-3 text-sm" aria-live="polite">
+          {resolution.kind === 'checking' && (
+            <p className="text-muted-foreground">正在确认食材…</p>
+          )}
+
+          {resolution.kind === 'identified' && (
+            <p>
+              名称「{submitted}」对应
+              <Link
+                href={`/ingredient/${resolution.ingredient.id}`}
+                className="font-semibold underline"
+              >
+                {resolution.ingredient.name}
+              </Link>
+              {resolution.ingredient.aliases.length > 0 &&
+                `（又叫 ${resolution.ingredient.aliases.join('、')}）`}
+              ，打开资料查看。
+            </p>
+          )}
+
+          {resolution.kind === 'ambiguous' && (
+            <div>
+              <p className="text-muted-foreground">
+                「{submitted}」对应多种食材，请选择要查看的一种；系统不替你猜：
+              </p>
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {resolution.candidates.map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      href={`/ingredient/${c.id}`}
+                      className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[13px] hover:border-foreground"
+                    >
+                      {c.name}
+                      <span className="font-mono text-[11px] text-muted-foreground">
+                        {INGREDIENT_CATEGORY_LABELS[c.category] ?? c.category}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {resolution.kind === 'unidentified' && (
+            <p className="text-muted-foreground">
+              没有与「{submitted}」完全同名的食材资料。
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="mt-4 flex flex-wrap gap-2 px-4">
-        <CategoryChip
-          on={category === undefined}
-          onClick={() => setCategory(undefined)}
-        >
+        <CategoryChip on={category === undefined} onClick={() => setCategory(undefined)}>
           全部
         </CategoryChip>
         {INGREDIENT_CATEGORIES.map((c) => (
@@ -78,13 +168,19 @@ export default function IngredientScreen() {
       </div>
 
       <div className="flex items-baseline justify-between px-4 pt-5 pb-3">
-        <h3 className="text-[19px] font-bold tracking-tight">食材</h3>
+        <h3 className="text-[19px] font-bold tracking-tight">
+          {fuzzy ? '相近候选' : '食材'}
+        </h3>
         {data && (
-          <span className="text-[13px] text-muted-foreground">
-            {data.meta.total} 种
-          </span>
+          <span className="text-[13px] text-muted-foreground">{data.meta.total} 种</span>
         )}
       </div>
+
+      {fuzzy && (
+        <p className="px-4 pb-2 text-xs text-muted-foreground">
+          以下只是名称相近的食材，不是对「{submitted}」的精确身份结果。
+        </p>
+      )}
 
       {error && (
         <div className="px-4 pb-16 pt-6 text-center text-sm text-muted-foreground">
@@ -96,6 +192,15 @@ export default function IngredientScreen() {
       {!error && items.length === 0 && (
         <div className="px-4 pb-16 pt-6 text-center text-sm text-muted-foreground">
           <p>没有匹配的食材，换个名称或常见叫法试试。</p>
+          {submitted && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="mt-3 rounded-full border border-border px-3 py-1.5 text-xs hover:border-foreground"
+            >
+              清除搜索，浏览全部食材
+            </button>
+          )}
         </div>
       )}
 
@@ -126,9 +231,7 @@ export default function IngredientScreen() {
       )}
 
       {isValidating && !error && (
-        <p className="px-4 pt-4 text-center text-xs text-muted-foreground">
-          加载中…
-        </p>
+        <p className="px-4 pt-4 text-center text-xs text-muted-foreground">加载中…</p>
       )}
     </section>
   )
@@ -149,7 +252,7 @@ function CategoryChip({
       aria-pressed={on}
       onClick={onClick}
       className={cn(
-        'rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-[color,border-color,transform] active:scale-[0.96]',
+        'rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors',
         on
           ? 'border-foreground bg-foreground text-background'
           : 'border-border bg-background hover:border-foreground',

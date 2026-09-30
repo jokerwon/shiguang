@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { IngredientService } from './ingredient.service';
-import { QueryIngredientsDto } from './ingredient.dto';
+import { IdentifyIngredientsDto, QueryIngredientsDto } from './ingredient.dto';
 import { RecipeService } from '../recipe/recipe.service';
 
 @Controller('ingredients')
@@ -12,10 +12,22 @@ export class IngredientController {
     private readonly recipes: RecipeService,
   ) {}
 
-  /** 已发布食材列表：名称/别名搜索 + 单层分类过滤 */
+  /**
+   * 已发布食材列表：名称/别名搜索 + 单层分类过滤。
+   * 关键词整串命中身份时只返回这些身份，否则返回子串候选（meta.exactMatches 区分）。
+   */
   @Get()
   findAll(@Query() query: QueryIngredientsDto) {
     return this.ingredients.findAll(query);
+  }
+
+  /**
+   * 名称解析为稳定身份：整串相等才命中，命中多个身份返回候选供用户确认，
+   * 不做子串猜测。必须在 :id 之前声明，避免被当作 id 匹配。
+   */
+  @Get('identify')
+  identify(@Query() query: IdentifyIngredientsDto) {
+    return this.ingredients.identify(query.terms);
   }
 
   /**

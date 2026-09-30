@@ -2,7 +2,7 @@
 
 - **依据**：[ADR-0018](../adr/0018-ingredient-catalog-and-filtering.md#最终共识确认)、[实施清单](../implementation/phase-8-implementation.md)。
 - **完整规格**：[GitHub Issue #5](https://github.com/jokerwon/shiguang/issues/5)。
-- **状态**：[#6](https://github.com/jokerwon/shiguang/issues/6)（发布并查阅食材资料）已实施并记录证据（见 [phase-8-1-implementation.md](../implementation/phase-8-1-implementation.md)）；其余条目待实施。**勾选表示已有可复核证据，未勾选表示尚未验证或依赖未交付能力。**
+- **状态**：[#6](https://github.com/jokerwon/shiguang/issues/6)（发布并查阅食材资料）、[#8](https://github.com/jokerwon/shiguang/issues/8)（按别名和分类发现食材）已实施并记录证据；其余条目待实施。**勾选表示已有可复核证据，未勾选表示尚未验证或依赖未交付能力。**
 - **已确认测试边界**：真实应用外部入口（浏览器、HTTP／AI 工具、导入命令）为主；复用既有 Jest 保留必要行为回归，不新增持久化 e2e／组件测试框架。
 - **证据纪律**：记录输入、实际返回／可见状态、运行命令或截图；测试必须验证外部行为，不以 mock 回显、源码文本、私有方法调用次数或固定文案作为通过条件。
 
@@ -87,6 +87,8 @@
 C6/C7（逐入口一致安全）、D 组全部包含与查询契约、E 组 Web 表面、F1–F3（AI 搜索）与 G1–G3 仍未勾选：安全判断与筛选已在真实浏览器核对，但 AI 侧多食材工具契约未交付（#11），Web 交互细节与全库质量门仍需在对应子票内补证据。G2 本轮实际结果：`pnpm --filter @shiguang/server test` 10 套件 109 例全过，`pnpm -r lint` server 与 web 均通过；Web 类型检查仍有 7 条错误，全部位于未改动的 `components/ai-elements/prompt-input.tsx`（Phase 3.5 记录的既有限制），不计作本票通过。
 
 **2026-09-30（#7 核对轮，身份拆分与 import 行为补齐）**：核对表复核落地三项维护者决策（苹果醋/红酒醋 独立身份、面粉拆为低筋/中筋、三道菜「姜蒜」拆为姜+蒜），并补齐 import 的合并如实上报、关联重建事务与离场清理（清掉旧「面粉」僵尸行）。重跑 seed+import 后库内 88 道菜谱 / 176 条已发布身份 / 659 条关联，核对表更新为 219 行 + 34 组；`pnpm --filter @shiguang/server test` 11 套件 113 例全过，`pnpm -r lint` 通过。证据与备份路径见实施清单「核对轮修正」。
+
+**2026-09-30（#8，按别名和分类发现食材）**：B1 的「按名称、别名和单层分类可找到同一发布食材」补充为**身份优先**语义，证据见 [phase-8-3-implementation.md](../implementation/phase-8-3-implementation.md)——`identify?terms=西红柿` → 番茄、`keyword=番茄` 仅返回番茄且 `meta.exactMatches=1`、`keyword=大豆` 只作「相近候选」、调味品分类 57 种含盐与食用油、无命中与请求失败两种状态、移动端 390 与键盘走查。G1/G2 本轮实跑：`pnpm --filter @shiguang/server test` 13 套件 123 例全过，`pnpm -r lint` 通过，Web 类型检查 7 条错误全在未改动的 `components/ai-elements/prompt-input.tsx`。当前数据无整串歧义（`油` 无身份、别名无冲突），候选界面由防御性单测锁定；内容与归一签字的既有边界不变。
 
 > **内容复核状态**：Phase 8-1 复核的 173 条之外，2026-09-30 核对轮新增/改写 5 条（苹果醋、红酒醋、低筋面粉 新增；中筋面粉 由「面粉」改名并重写简介；黑醋 删去混并句）——身份拆分由维护者拍板，但这 5 条**文案与来源待维护者过目**。复核时间写入条目并由导入写库（事实源为 `Ingredient.reviewedAt`）；无标记条目会被发布闸门拒绝。**来源是复核所用的通用入口页**（USDA FoodData Central / 中国食品安全风险评估中心），尚未逐条替换为具体条目页。
 

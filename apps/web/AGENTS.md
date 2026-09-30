@@ -81,7 +81,8 @@ app/
 | `usePersonalized()` | `/recipes/personalized` | 首页个性化推荐（需认证） |
 | `useConversations()` | `/conversations` | 会话列表（ADR-0010/0011，按 updatedAt 倒序；`remove` 乐观删除 + 失败回滚 + 抛错供调用方提示） |
 | `useFilters()` | localStorage | 筛选草稿（菜系/偏好/时间/食材，唯一仍走本地存储的状态） |
-| `useIngredients()` | `/ingredients` | 食材资料列表（名称/别名搜索 + 一层分类） |
+| （无 Hook） | `/ingredients/identify` | 名称→稳定身份解析（`fetchIngredientIdentify`）：唯一命中直达详情，多命中给候选，子串不算命中 |
+| `useIngredients()` | `/ingredients` | 食材资料列表（身份优先搜索：整串命中只返回该身份，否则子串候选 + `meta.exactMatches`；一层分类） |
 
 - **`lib/api.ts`** — `request<T>()` 自动拼 `API_BASE` + 附 Bearer；失败抛 `ApiError`（带 `status`，401 可识别 → logout）
 - **`lib/fetcher.ts`** — SWR fetcher 复用 `request()`，所有 SWR key 天然带鉴权
