@@ -1,18 +1,28 @@
 'use client'
 
 import * as React from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { RecipeCard } from '@/components/recipe-card'
-import { useFilters, type Filters } from '@/lib/use-filters'
+import { readFilters, useFilters, type Filters } from '@/lib/use-filters'
 import { useFavorites } from '@/lib/use-favorites'
-import { CUISINE_LABELS, CUISINES, PREF_LABELS, PREFS, TIME_LABELS, TIMES } from '@shiguang/domain'
-import { useRecipesFilter } from '@/lib/use-swr-recipes'
+import {
+  CUISINE_LABELS,
+  CUISINES,
+  PREF_LABELS,
+  PREFS,
+  TIME_LABELS,
+  TIMES,
+  COMMON_SEASONING_NAMES,
+} from '@shiguang/domain'
+import { useIngredients, useRecipesFilter } from '@/lib/use-swr-recipes'
 import type { RecipeQuery } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 export default function FilterScreen() {
   const { filters, setFilters } = useFilters()
+  const searchParams = useSearchParams()
   const { saved, toggleSave } = useFavorites()
   const [applied, setApplied] = React.useState<Filters>(filters)
   const [lastSynced, setLastSynced] = React.useState<Filters>(filters)
@@ -41,12 +51,43 @@ export default function FilterScreen() {
     })
   const setTime = (t: string) => setApplied((prev) => ({ ...prev, time: t }))
 
+  // 食材多选：身份 id 去重，别名不产生重复条件
+  const toggleIngredient = (id: string) =>
+    setApplied((prev) => ({
+      ...prev,
+      ingredients: prev.ingredients.includes(id)
+        ? prev.ingredients.filter((x) => x !== id)
+        : [...prev.ingredients, id],
+    }))
+
+  // 食材候选：按名称/别名搜索（通用调味品不在默认快捷区出现，但可搜索到）
+  const [ingKeyword, setIngKeyword] = React.useState('')
+  const { data: candidateData } = useIngredients(
+    ingKeyword.trim()
+      ? { keyword: ingKeyword.trim(), limit: 12 }
+      : { limit: 12 },
+  )
+  const quickCandidates = React.useMemo(() => {
+    const list = candidateData?.data ?? []
+    return ingKeyword.trim()
+      ? list
+      : list.filter((i) => !COMMON_SEASONING_NAMES.includes(i.name))
+  }, [candidateData, ingKeyword])
+  const selectedIngredients = React.useMemo(
+    () =>
+      (candidateData?.data ?? []).filter((i) =>
+        applied.ingredients.includes(i.id),
+      ),
+    [candidateData, applied.ingredients],
+  )
+
   const buildQuery = (f: Filters): RecipeQuery => {
     const query: RecipeQuery = {}
     if (f.cuisine.length) query.cuisine = f.cuisine.join(',')
     if (f.pref.length) query.tags = f.pref.join(',')
     if (f.time === 'le15') query.maxTime = 15
     if (f.time === 'le30') query.maxTime = 30
+    if (f.ingredients.length) query.ingredients = f.ingredients.join(',')
     return query
   }
 
@@ -55,13 +96,21 @@ export default function FilterScreen() {
     setActiveQuery(buildQuery(applied))
   }
 
-  // 首次进入时自动应用当前筛选条件
+  // 首次进入时自动应用当前筛选条件。
+  // 从食材资料入口进来（?ingredients=…）时只保留当前食材，清除旧菜系/标签/时间；
+  // 安全设置始终生效，因此这里不清用户偏好。
   const didApply = React.useRef(false)
   React.useEffect(() => {
-    if (!didApply.current) {
-      didApply.current = true
-      setActiveQuery(buildQuery(applied))
-    }
+    if (didApply.current) return
+    didApply.current = true
+    const fromProfile = searchParams.getAll('ingredients').flatMap((v) => v.split(',')).filter(Boolean)
+    const initial: Filters = fromProfile.length
+      ? { cuisine: [], pref: [], time: 'any', ingredients: fromProfile }
+      : readFilters()
+    setApplied(initial)
+    setLastSynced(initial)
+    if (fromProfile.length) setFilters(initial)
+    setActiveQuery(buildQuery(initial))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -80,6 +129,34 @@ export default function FilterScreen() {
       </div>
 
       <div className="flex flex-col gap-6 p-4">
+        <FilterGroup title="食材（需同时包含全部所选）">
+          <input
+            type="search"
+            value={ingKeyword}
+            onChange={(e) => setIngKeyword(e.target.value)}
+            placeholder="搜索食材名称或叫法"
+            aria-label="搜索食材名称或别名"
+            className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring"
+          />
+          <div className="mt-2 flex flex-wrap gap-2">
+            {quickCandidates.map((i) => (
+              <Chip
+                key={i.id}
+                on={applied.ingredients.includes(i.id)}
+                onClick={() => toggleIngredient(i.id)}
+              >
+                {i.name}
+              </Chip>
+            ))}
+          </div>
+          {applied.ingredients.length > 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              已选 {applied.ingredients.length} 种：
+              {selectedIngredients.map((i) => i.name).join('、') || '加载中…'}
+              　（结果需同时包含全部所选，可含其他食材）
+            </p>
+          )}
+        </FilterGroup>
         <FilterGroup title="菜系">
           {CUISINES.map((c) => (
             <Chip
@@ -125,6 +202,16 @@ export default function FilterScreen() {
         </div>
       )}
 
+      {!error && results && results.excluded.count > 0 && (
+        <div className="mx-4 mb-2 rounded-lg border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
+          <p>
+            另有 {results.excluded.count} 道菜谱因你的忌口或过敏设置被排除
+            {results.excluded.hasUnknown ? '（含成分信息不足、无法判断的菜谱）' : ''}
+            ：{results.excluded.reasons.join('；')}
+          </p>
+        </div>
+      )}
+
       {!error && loading && (
         <div className="flex min-h-[30vh] items-center justify-center">
           <Loader2 size={32} className="animate-spin text-muted-foreground" />
@@ -146,7 +233,11 @@ export default function FilterScreen() {
 
       {!error && !loading && recipes.length === 0 && (
         <div className="px-4 pb-16 pt-6 text-center text-sm text-muted-foreground">
-          <p>没有匹配的菜谱，试试放宽筛选条件。</p>
+          <p>
+            {results && results.excluded.count > 0
+              ? '筛选条件与安全设置共同排除了全部结果；食材资料仍可查阅。'
+              : '没有匹配的菜谱，试试放宽筛选条件。'}
+          </p>
         </div>
       )}
     </section>

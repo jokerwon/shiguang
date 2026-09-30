@@ -11,6 +11,10 @@ import {
 } from 'ai';
 import { PrismaService } from '../prisma/prisma.service';
 import { RecommendationService } from '../recipe/recommendation.service';
+import {
+  RecipeSafetyService,
+  type RecipeWithIngredientLinks,
+} from '../recipe/recipe-safety.service';
 import { FavoriteService } from '../favorite/favorite.service';
 import { PreferenceService } from '../preference/preference.service';
 import {
@@ -49,6 +53,7 @@ export class ChatService {
   constructor(
     @Inject('CHAT_MODEL') private readonly model: LanguageModel,
     private readonly recommendation: RecommendationService,
+    private readonly safety: RecipeSafetyService,
     private readonly prisma: PrismaService,
     private readonly favorite: FavoriteService,
     private readonly preference: PreferenceService,
@@ -200,11 +205,30 @@ export class ChatService {
     };
   }
 
+  /** 全量菜谱 + 稳定身份与过敏原关系（工具安全过滤与食材语义都需要） */
+  private async recipeSafetyRecipes(): Promise<RecipeWithIngredientLinks[]> {
+    return this.prisma.recipe.findMany({
+      include: {
+        ingredientLinks: {
+          include: {
+            ingredient: {
+              include: {
+                aliases: { select: { alias: true } },
+                allergens: { select: { allergen: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   /** 构造工具依赖（uid 由各方法入参传入） */
   private toolDeps(): ChatToolDeps {
     return {
       loadSignals: (uid) => this.recommendation.loadSignals(uid),
-      findRecipes: () => this.prisma.recipe.findMany(),
+      safety: this.safety,
+      findRecipes: () => this.recipeSafetyRecipes(),
       findRecipeById: async (id) =>
         this.prisma.recipe.findUnique({ where: { id } }),
       favoriteFindAll: (uid) => this.favorite.findAll(uid),

@@ -5,6 +5,8 @@
 
 ## 核心实体 (Core Entities)
 
+食材、食材别名、食材用途、食材资料与按食材筛选的定义见根 [CONTEXT.md](../CONTEXT.md)。本文的“按原料检索／搜索”指已有原料关键词查询，不等同于“按食材筛选”中选择明确食材并要求全部包含的语义；二者都不表示库存匹配。
+
 ### Recipe(菜谱)
 一道可烹饪的菜。系统的核心内容单元。
 - 名称用于 upsert 与 AI 生成去重
@@ -95,6 +97,9 @@ Phase 2 起新增的核心实体(ADR-0010,表 schema 经 ADR-0011 重审)。一�
 - **增量更新**:新摘要 = 压缩(旧摘要 + 新溢出消息),不做全量重算
 - **存储**:`Conversation` 表 `summary` + `summaryUpToSeq` 两列
 - **失败降级**:保持旧摘要、下轮重试,最坏退回纯滑窗(现状)
+
+### 食材身份与归一 (Ingredient Identity)
+食材以数据库中的稳定身份存在（`Ingredient`），别名（`IngredientAlias`）指向该身份；菜谱原料通过 `RecipeIngredient` 关联身份，并保留菜谱内用量与说明。维护者用审核资料文件 + `pnpm ingredients:import` 发布，已发布列表与详情只读数据库。身份与过敏原关系分开：`IngredientAllergen` 无记录表示「信息未核查」，不等于「确认不含」。字段事实见 `apps/server/prisma/schema.prisma`。
 
 ### 待审区 (Staging Area)
 AI 批量生成菜谱的缓冲区。生成的菜谱**先入待审区(JSON / staging 表),人工抽检 + 校验后再导入 Recipe 表**,不直接入库。

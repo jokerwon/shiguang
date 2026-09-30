@@ -2,15 +2,19 @@
 
 import * as React from 'react'
 import { ChevronLeft, Clock, Bookmark } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useFavorites } from '@/lib/use-favorites'
 import { CUISINE_LABELS, type Recipe } from '@shiguang/domain'
 import { RecipeImage } from '@/components/recipe-image'
+import { useIngredients } from '@/lib/use-swr-recipes'
 import { cn } from '@/lib/utils'
 
 export function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const router = useRouter()
+  // 原料名称 → 食材资料链接（ADR-0018）：按名称/别名定位稳定身份
+  const { data: ingredientIndex } = useIngredients({ limit: 100 })
   const { saved, toggleSave } = useFavorites()
   const [tab, setTab] = React.useState<'steps' | 'ings'>('steps')
 
@@ -113,15 +117,26 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
             </div>
           ) : (
             <ul className="flex flex-col pt-4">
-              {r.ingredients.map((i) => (
-                <li
-                  key={i.name}
-                  className="flex justify-between border-b border-border py-2.5 text-sm last:border-b-0"
-                >
-                  <span>{i.name}</span>
-                  <span className="font-mono text-muted-foreground">{i.amount}</span>
-                </li>
-              ))}
+              {r.ingredients.map((i) => {
+                const matched = ingredientIndex?.data.find((x) =>
+                  x.name === i.name || x.aliases.includes(i.name),
+                )
+                return (
+                  <li
+                    key={i.name}
+                    className="flex justify-between border-b border-border py-2.5 text-sm last:border-b-0"
+                  >
+                    {matched ? (
+                      <Link href={`/ingredient/${matched.id}`} className="underline">
+                        {i.name}
+                      </Link>
+                    ) : (
+                      <span>{i.name}</span>
+                    )}
+                    <span className="font-mono text-muted-foreground">{i.amount}</span>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>

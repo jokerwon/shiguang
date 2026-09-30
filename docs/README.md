@@ -6,6 +6,7 @@
 
 | 文档 | 状态 | 说明 |
 |------|------|------|
+| 根 [CONTEXT.md](../CONTEXT.md) | 常驻 | 食材领域术语、别名、浏览分类与安全约束；已确认设计的实施状态见 ADR-0018，其他术语见 glossary.md |
 | [glossary.md](./glossary.md) | 常驻 | 领域术语表（Ubiquitous Language）。⚠️ 字段级事实以 `apps/server/prisma/schema.prisma` 为准，本表只定义概念语义 |
 | 根 [AGENTS.md](../AGENTS.md) / [apps/web/AGENTS.md](../apps/web/AGENTS.md) / [apps/server/AGENTS.md](../apps/server/AGENTS.md) | 常驻 | Agent 工作指令。各层 `AGENTS.md` 是唯一事实源；同层 `CLAUDE.md` 均为 `@AGENTS.md` 指针文件 |
 | [agents/](./agents/) | 常驻 | 工程技能配置：`issue-tracker.md`（GitHub Issues）／`triage-labels.md`（五个 triage 角色标签）／`domain.md`（域文档消费规则，single-context）。由 setup-matt-pocock-skills 生成，可直接手改 |
@@ -14,7 +15,7 @@
 
 | 文档 | 状态 | 说明 |
 |------|------|------|
-| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0017，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
+| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0018，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
 
 ## 实施层（按 Phase）
 
@@ -31,6 +32,8 @@
 | 5 原生 app 首发 | [implementation/phase-5-implementation.md](./implementation/phase-5-implementation.md) | [phase-5-checklist.md](./acceptance/phase-5-checklist.md) | **已移除**（ADR-0016，2026-09-28）——曾交付 Expo/React Native `apps/mobile`（iOS 先行）+ 移动端认证 + 离线只读缓存；`packages/domain` 共享域层保留（ADR-0015 继续有效）。两份工件只读，不再维护 |
 | 6 PostgreSQL 迁移 | [implementation/phase-6-implementation.md](./implementation/phase-6-implementation.md) | 无独立验收清单（一次性迁移，验收证据见实施清单表格） | 已交付——Supabase → 自建 PostgreSQL 16：`public` schema 逻辑迁移 + 9 表内容哈希对账 + 连接串切换 + 运行时冒烟 |
 | 7 库存与购物清单下线 | [implementation/phase-7-implementation.md](./implementation/phase-7-implementation.md) | [phase-7-checklist.md](./acceptance/phase-7-checklist.md) | 已交付——删除库存、匹配度、缺料与购物清单；纯偏好排序、筛选入口、备份恢复演练与历史 JSON 清理边界均已验收（ADR-0017）。全库 Web 质量门既有限制见 Phase 7 实施清单。 |
+| 8 食材资料库与按食材筛选 | [implementation/phase-8-implementation.md](./implementation/phase-8-implementation.md) | [phase-8-checklist.md](./acceptance/phase-8-checklist.md) | 活跃——[Spec #5](https://github.com/jokerwon/shiguang/issues/5)；A–C 组（身份/迁移、审核资料与发布、统一安全过滤）已实施，安全约束下的相关菜谱与 AI 完整验收仍待完成 |
+| 8-1 发布并查阅食材资料 | [implementation/phase-8-1-implementation.md](./implementation/phase-8-1-implementation.md)（含验收证据与遗留边界） | 证据并入上方 phase-8 清单（A/B 组） | 已交付——[#6](https://github.com/jokerwon/shiguang/issues/6)：稳定身份入库、审核资料导入发布、已发布读取接口、食材列表与详情及真实浏览器走查 |
 
 ## 运行层
 

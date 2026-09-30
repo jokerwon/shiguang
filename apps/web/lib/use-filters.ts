@@ -6,9 +6,16 @@ export interface Filters {
   cuisine: string[]
   pref: string[]
   time: string
+  /** 选中的食材身份 id（全部包含语义）；资料入口进入时只保留当前食材 */
+  ingredients: string[]
 }
 
-export const DEFAULT_FILTERS: Filters = { cuisine: [], pref: [], time: 'any' }
+export const DEFAULT_FILTERS: Filters = {
+  cuisine: [],
+  pref: [],
+  time: 'any',
+  ingredients: [],
+}
 
 const STORAGE_KEY = 'shiguang:filters'
 
@@ -16,7 +23,13 @@ function read(): Filters {
   if (typeof window === 'undefined') return DEFAULT_FILTERS
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    return raw ? { ...DEFAULT_FILTERS, ...(JSON.parse(raw) as Partial<Filters>) } : DEFAULT_FILTERS
+    if (!raw) return DEFAULT_FILTERS
+    const parsed = JSON.parse(raw) as Partial<Filters>
+    return {
+      ...DEFAULT_FILTERS,
+      ...parsed,
+      ingredients: Array.isArray(parsed.ingredients) ? parsed.ingredients : [],
+    }
   } catch {
     return DEFAULT_FILTERS
   }
@@ -28,7 +41,12 @@ function write(f: Filters) {
   window.dispatchEvent(new CustomEvent('shiguang:filters-change'))
 }
 
-/** 跨页面共享的筛选条件（菜系 / 偏好 / 时间）。 */
+/** 读取当前已保存的临时筛选条件（供首帧同步使用，SSR 安全）。 */
+export function readFilters(): Filters {
+  return read()
+}
+
+/** 跨页面共享的筛选条件（菜系 / 偏好 / 时间 / 食材）。 */
 export function useFilters() {
   // 初始用空值，保证 SSR 与客户端首次 hydration 一致；
   // 真实数据在 effect 挂载后从 localStorage 读取，避免 hydration mismatch。

@@ -26,7 +26,7 @@ export function DiscoveryClient() {
   }, [error, logout])
 
   const filterByCuisine = (c: string) => {
-    setFilters({ cuisine: [c], pref: [], time: 'any' })
+    setFilters({ cuisine: [c], pref: [], time: 'any', ingredients: [] })
     router.push('/filter')
   }
 

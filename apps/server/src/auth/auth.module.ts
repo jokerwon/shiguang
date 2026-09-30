@@ -1,9 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { OptionalJwtAuthGuard } from './optional-jwt-auth.guard';
 
+@Global()
 @Module({
   imports: [
     // ADR-0013：access token 15 分钟短命，长效续期走 refresh token（opaque，不挂 JwtModule）
@@ -13,7 +15,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
-  exports: [AuthService, JwtModule, JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, OptionalJwtAuthGuard],
+  exports: [AuthService, JwtModule, JwtAuthGuard, OptionalJwtAuthGuard],
 })
 export class AuthModule {}

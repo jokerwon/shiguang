@@ -8,9 +8,24 @@ datasource db {
   provider = "postgresql"
 }
 
+model RecipeIngredient {
+  recipeId     String
+  ingredientId String
+  // 菜谱内的用量与必要说明（如「1块(约150g)」「西冷或眼肉」），归一后原样保留
+  name         String
+  amount       String
+  note         String?
+  position     Int
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@id([recipeId, ingredientId])
+  @@index([ingredientId])
+}
+
 model Recipe {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String     @id @default(cuid())
+  name        String     @unique
   desc        String
   cuisine     Cuisine
   time        Int
@@ -18,27 +33,28 @@ model Recipe {
   protein     Int
   carb        Int
   fat         Int
-  img         String   @default("")
+  img         String     @default("")
   tags        Tag[]
   ingredients Json
   steps       Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  favorites   Favorite[]
 
-  favorites Favorite[]
+  ingredientLinks RecipeIngredient[]
 
   @@index([cuisine])
   @@index([time])
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  passwordHash  String
-  displayName   String?
-  avatarUrl     String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String?
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   favorites     Favorite[]
   preference    UserPreference?
@@ -100,13 +116,78 @@ model Favorite {
 }
 
 model UserPreference {
-  id                  String      @id @default(cuid())
-  userId              String      @unique
+  id                  String     @id @default(cuid())
+  userId              String     @unique
   dislikedIngredients String[]
   allergens           String[]
-  healthGoal          HealthGoal  @default(BALANCED)
-  updatedAt           DateTime    @updatedAt
-  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  healthGoal          HealthGoal @default(BALANCED)
+  updatedAt           DateTime   @updatedAt
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// 食材稳定身份（ADR-0018）。发布状态由数据库承载，审核资料文件是发布输入。
+model Ingredient {
+  id          String             @id @default(cuid())
+  /// 展示主名；与别名的解析共用归一规则
+  name        String             @unique
+  /// 一层主要浏览分类，每食材归属一个
+  category    IngredientCategory
+  /// 经人工审核的简介；未审核不发布
+  summary     String?
+  /// 简要挑选说明（无可靠依据则缺省）
+  selection   String?
+  /// 简要保存说明（无可靠依据则缺省；不编造精确保存时长）
+  storage     String?
+  /// 简要处理说明（无可靠依据则缺省）
+  preparation String?
+  /// 可核查参考来源；未填写不发布
+  sources     String[]
+  /// 人工审核通过标记与时间
+  reviewedAt  DateTime?
+  published   Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  aliases     IngredientAlias[]
+  allergens   IngredientAllergen[]
+  recipeLinks RecipeIngredient[]
+
+  @@index([category])
+}
+
+/// 食材别名（ADR-0018）：同物异名归入同一身份，相近/可替代原料不合并
+model IngredientAlias {
+  id           String     @id @default(cuid())
+  ingredientId String
+  alias        String     @unique
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@index([ingredientId])
+}
+
+/// 食材过敏原关系（ADR-0018）：与别名分离；成分信息不足时不写行，
+/// 不写行表示「信息不足」，不等于「确认不含」。
+model IngredientAllergen {
+  id           String     @id @default(cuid())
+  ingredientId String
+  allergen     String
+  /// 可核查依据（来源链接或说明），发布过敏原关系必需
+  source       String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([ingredientId, allergen])
+}
+
+enum IngredientCategory {
+  VEGETABLE
+  MEAT
+  POULTRY
+  EGG
+  SEAFOOD
+  SOY
+  GRAIN
+  SEASONING
+  OTHER
 }
 
 enum Cuisine {

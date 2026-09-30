@@ -23,6 +23,7 @@
 | [ADR-0015](./0015-shared-domain-layer.md) | 共享域层 `packages/domain`:Web 与服务端共用的领域类型与纯函数（移动端动机已作废,决策继续有效） | 5 |
 | [ADR-0016](./0016-remove-mobile-client.md) | 移除移动客户端:删 `apps/mobile`,平台回归 Web 单客户端;保留 `packages/domain` 与 body 双轨 | — |
 | [ADR-0017](./0017-remove-pantry-and-shopping-list.md) | 移除库存与购物清单：纯偏好排序、首页筛选入口、备份及历史 JSON 清理的一次性例外 | 7 |
+| [ADR-0018](./0018-ingredient-catalog-and-filtering.md) | 食材资料库、稳定身份与菜谱关联、别名共用、全部包含筛选及安全边界；整体设计已确认，未实施 | 8 |
 
 ## Phase 总览
 

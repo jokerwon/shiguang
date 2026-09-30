@@ -2,16 +2,22 @@
 // 工具 execute 内通过闭包捕获 userId，service 通过依赖注入——
 // 这样 createChatTools 是纯函数，单测可注入 fake service（参考 recommendation.scoring.spec.ts）。
 import type { Recipe } from 'generated/prisma/client';
+import type {
+  RecipeWithIngredientLinks,
+  RecipeSafetyService,
+} from '../../recipe/recipe-safety.service';
 
 /** 只读工具 + 写工具需要的 service 能力 */
 export interface ChatToolDeps {
-  /** 加载用户信号（blocked/healthGoal），search_recipes 硬过滤用 */
+  /** 加载用户信号（blocked/healthGoal），排序权重用 */
   loadSignals: (userId: string) => Promise<{
     blocked: string[];
     healthGoal: 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
   }>;
-  /** 全量菜谱（应用层排序，库量级 80-100 道） */
-  findRecipes: () => Promise<Recipe[]>;
+  /** 统一安全判断（身份/别名/过敏原关系/信息不足），与页面筛选同语义 */
+  safety: RecipeSafetyService;
+  /** 全量菜谱；带稳定身份关联时安全判断才能覆盖别名与过敏原关系 */
+  findRecipes: () => Promise<(Recipe & Partial<RecipeWithIngredientLinks>)[]>;
   /** 单道菜谱详情 */
   findRecipeById: (id: string) => Promise<Recipe | null>;
   /** 收藏列表 */

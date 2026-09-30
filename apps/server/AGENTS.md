@@ -47,6 +47,7 @@ pnpm seed:long-conversation -- --user <userId|email> # 长会话种子脚本（F
 ### 菜谱内容生产（ADR-0003）
 
 ```bash
+pnpm ingredients:import                   # 发布审核食材资料 → Ingredient 表 + 归一菜谱关联（ADR-0018）
 pnpm recipes:generate                     # AI 批量生成 → prisma/staging/recipes-staging.json
 pnpm recipes:generate --batches 2         # 每个菜系生成 2 批（每批默认 8 道）
 pnpm recipes:generate --only sichuan,home # 只生成指定菜系
@@ -92,12 +93,20 @@ src/
     jwt-auth.guard.ts         # 手写 CanActivate，验签后把 { sub, email } 挂 request.user
     current-user.decorator.ts # @CurrentUser() 取 userId（sub）
 
+  ingredient/
+    ingredient.controller.ts  # GET /ingredients（名称/别名 + 单层分类）、GET /ingredients/:id、GET /ingredients/:id/recipes
+    ingredient.service.ts     # 已发布资料读取（发布状态与资料来自数据库）
+    normalize.ts              # 纯函数：原料写法 → 稳定身份、括号说明剥离、歧义检出、关联去重
+    publish-review.ts         # 纯函数：发布闸门（名称/审核简介/来源；过敏原关系需依据）
+
   recipe/
-    recipe.controller.ts      # GET /recipes（分页筛选）、GET /recipes/personalized（需认证）、GET /recipes/:id
+    recipe.controller.ts      # GET /recipes（分页筛选，可选认证以应用安全设置）、GET /recipes/personalized（需认证）、GET /recipes/:id
     recipe.service.ts         # 查询 + 响应组装
     recipe.mapper.ts          # Prisma 枚举 ↔ 前端小写映射、toResponse、中文标签（CUISINE_ZH/TAG_ZH）
-    recommendation.service.ts # 个性化推荐（ADR-0005/0017）：首页与 AI search_recipes 共用的单一事实源
-    recommendation.scoring.ts # 纯函数：忌口/过敏原硬过滤 + 时间/目标/轮换加权（3/11、3/11、5/11）
+    recipe-safety.service.ts  # 统一安全判断（ADR-0018）：身份/别名共用、过敏原关系独立、信息不足保守排除
+    safety.ts                 # 纯函数：单个菜谱的安全判定与可解释原因
+    recommendation.service.ts # 个性化推荐（ADR-0005/0017/0018）：首页与 AI search_recipes 共用的单一事实源
+    recommendation.scoring.ts # 纯函数：时间/目标/轮换加权（3/11、3/11、5/11）；安全过滤在外层完成
     recipe-draft.ts           # AI 生成菜谱的校验纯函数（generate 脚本与 seed 共用）
 
   chat/
@@ -135,7 +144,8 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 使用 `@prisma/adapter-pg` 直接连接 PostgreSQL，不依赖连接池。
 
 数据模型（`prisma/schema.prisma`）：
-- **Recipe** — 菜谱（id, name, desc, cuisine, time, kcal, protein/carb/fat, img, tags, ingredients, steps）。ingredients 为 Json（`{name, amount}[]`），steps 为 Json（string[]）。索引：cuisine, time
+- **Recipe** — 菜谱（id, name, desc, cuisine, time, kcal, protein/carb/fat, img, tags, ingredients, steps）。ingredients 为 Json（`{name, amount}[]`，正文与用量），steps 为 Json（string[]）。索引：cuisine, time
+- **Ingredient / IngredientAlias / IngredientAllergen / RecipeIngredient** — 食材稳定身份、同物异名别名、过敏原关系与菜谱关联（ADR-0018）。`RecipeIngredient` 保留菜谱内用量与括号说明（note）；发布状态由 `Ingredient.published` 承载，审核资料文件是发布输入，`pnpm ingredients:import` 是唯一发布通道。过敏原关系无记录 = 信息未核查，不等于确认不含
 - **User** — 用户（id, email, passwordHash, displayName, avatarUrl）
 - **RefreshToken** — refresh token 轮换登记（ADR-0013；id, userId, tokenHash 唯一(bcrypt 哈希不落明文), expiresAt, createdAt；级联 FK；userId 索引）。一次一换，30 天滑动过期
 - **（已移除）PantryItem** — Phase 7 删除库存实体与表；Recipe.ingredients 仍是菜谱内容，不是库存。

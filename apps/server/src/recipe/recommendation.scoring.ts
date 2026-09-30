@@ -1,7 +1,9 @@
 // 个性化推荐打分（ADR-0005）：纯函数，可单测。
-// 硬过滤（isBlocked）+ 三维加权排序：
-//   时间适配 3/11 / 健康目标 3/11 / 新鲜度轮换 5/11
+// 三维加权排序：时间适配 3/11 / 健康目标 3/11 / 新鲜度轮换 5/11。
 // 所有信号确定性：同用户同天同库 → 同结果；dateKey 变化 → 轮换生效。
+//
+// 安全过滤不在这里：身份/别名/过敏原关系/信息不足的判断由 RecipeSafetyService
+// 在调用方完成（rankRecipes 只拿到已通过安全判断的候选），避免出现第二套语义。
 
 export type HealthGoalKey = 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
 
@@ -52,13 +54,6 @@ export function rankRecipes<
   limit: number,
 ): R[] {
   return recipes
-    .filter(
-      (r) =>
-        !isBlocked(
-          (r.ingredients as ScorableRecipe['ingredients']) ?? [],
-          signals.blocked,
-        ),
-    )
     .map((r) => ({
       r,
       score: scoreRecipe(

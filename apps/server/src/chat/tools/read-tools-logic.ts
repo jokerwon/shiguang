@@ -56,8 +56,21 @@ export async function runSearchRecipes(
     deps.findRecipes(),
   ]);
 
-  // 1. 硬过滤（忌口/过敏原，ADR-0006 安全红线）在末尾 rankRecipes 内完成
-  let filtered = recipes;
+  // 1. 统一安全过滤（ADR-0006/0018 安全红线）：与页面筛选、首页推荐同语义，
+  //    身份与别名共用、过敏原关系独立、信息不足保守排除。
+  const { signals: safetySignals, allergens } =
+    await deps.safety.loadSignals(userId);
+  let filtered = recipes.filter(
+    (r) =>
+      deps.safety.evaluate(
+        {
+          ingredients: r.ingredients,
+          ingredientLinks: r.ingredientLinks ?? [],
+        },
+        safetySignals,
+        allergens,
+      ).verdict === 'ok',
+  );
 
   // 2. 关键词
   if (input.keyword) {

@@ -15,6 +15,16 @@ export interface JwtPayload {
   type: 'access';
 }
 
+/** Express Request 上的已验签用户（JwtAuthGuard / OptionalJwtAuthGuard 写入） */
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
+}
+
 /**
  * JWT 认证守卫:不引入 passport,直接用 JwtService.verifyAsync 验签。
  * 成功后把 { sub, email } 挂到 request.user;失败抛 401。
@@ -39,7 +49,7 @@ export class JwtAuthGuard implements CanActivate {
       if (payload.type !== 'access') {
         throw new UnauthorizedException('无效或过期的认证凭据');
       }
-      (req as unknown as { user: JwtPayload }).user = payload;
+      req.user = payload;
       return true;
     } catch {
       throw new UnauthorizedException('无效或过期的认证凭据');

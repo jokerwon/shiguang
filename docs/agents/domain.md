@@ -6,9 +6,7 @@ How the engineering skills should consume this repo's domain documentation when 
 
 - **`docs/glossary.md`** — this repo's ubiquitous-language doc. It exists today and is authoritative for term semantics; field-level facts still come from `apps/server/prisma/schema.prisma`.
 - **`docs/adr/`** — read ADRs that touch the area you're about to work in (this repo keeps them here, not under `src/`).
-- **`CONTEXT.md`** at the repo root, or **`CONTEXT-MAP.md`** if it exists: it points at one `CONTEXT.md` per context. Read each one relevant to the topic.
-
-If `CONTEXT.md` / `CONTEXT-MAP.md` don't exist, **proceed silently** — `docs/glossary.md` + `docs/adr/` are the domain sources. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
+- **`CONTEXT.md`** at the repo root: confirmed ingredient-domain terms. Other domain terms remain in `docs/glossary.md`; each term has one definition, and the documents link rather than duplicate it.
 
 ## File structure
 
@@ -16,7 +14,7 @@ Single-context repo (this one):
 
 ```
 /
-├── CONTEXT.md                         ← does not exist yet; /domain-modeling creates it lazily
+├── CONTEXT.md                         ← confirmed ingredient-domain terms
 ├── docs/
 │   ├── glossary.md                    ← ubiquitous language, exists today
 │   └── adr/                           ← 0001…0016, decisions only, never edited in place

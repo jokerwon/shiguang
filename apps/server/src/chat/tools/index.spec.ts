@@ -2,14 +2,47 @@
 // 工具单测（W1.9）：execute 纯逻辑——硬过滤生效、set_favorite 幂等。
 // 零 DB 风格，注入 fake deps（参考 recommendation.scoring.spec.ts）。
 // 直接测抽出的纯函数（runXxx），避免导入 ai（ESM，ts-jest 不转换 node_modules）。
+// 安全判断调用真实 RecipeSafetyService（纯逻辑），只 fake 它的 PrismaService——
+// 避免测试自证一套与线上不同的安全语义。
+jest.mock('../../prisma/prisma.service', () => ({
+  PrismaService: class {},
+}));
 import { runSetFavorite, runUpdatePreferences } from './write-tools-logic';
 import { runSearchRecipes, runGetRecipe } from './read-tools-logic';
 import type { ChatToolDeps } from './types';
+import { RecipeSafetyService } from '../../recipe/recipe-safety.service';
 import type { Recipe } from 'generated/prisma/client';
 
 /* ---- fake 工厂 ---- */
 
-const recipe = (over: Partial<Recipe> = {}): Recipe => ({
+/** 原料写法与稳定身份一一对应（正式查询由 RecipeIngredient 关联提供） */
+const linksFor = (ingredients: { name: string }[], over: Partial<Recipe>) => {
+  const identity = (over as { identities?: Record<string, string[]> })
+    .identities;
+  return ingredients.map((i) => {
+    const names = identity?.[i.name] ?? [i.name];
+    return {
+      name: i.name,
+      ingredient: {
+        id: `id-${names[0]}`,
+        name: names[0],
+        category: 'VEGETABLE' as const,
+        aliases: names.slice(1).map((alias) => ({ alias })),
+        allergens: (
+          (over as { allergenMap?: Record<string, string[]> }).allergenMap?.[
+            names[0]
+          ] ?? []
+        ).map((allergen) => ({ allergen })),
+      },
+    };
+  });
+};
+
+const recipe = (
+  over: Partial<Recipe> = {},
+): Recipe & {
+  ingredientLinks: ReturnType<typeof linksFor>;
+} => ({
   id: 'r1',
   name: '番茄炒蛋',
   desc: '家常菜',
@@ -26,6 +59,13 @@ const recipe = (over: Partial<Recipe> = {}): Recipe => ({
   createdAt: new Date(),
   updatedAt: new Date(),
   ...over,
+  ingredientLinks: linksFor(
+    (over.ingredients as { name: string }[] | undefined) ?? [
+      { name: '番茄' },
+      { name: '鸡蛋' },
+    ],
+    over,
+  ),
 });
 
 /** 构造 fake deps，favorites 可初始化 */
@@ -34,6 +74,7 @@ function makeDeps(
     favorites?: string[];
     recipes?: Recipe[];
     blocked?: string[];
+    allergens?: string[];
     pref?: {
       dislikedIngredients: string[];
       allergens: string[];
@@ -45,11 +86,24 @@ function makeDeps(
     favorites: [...(opts.favorites ?? [])],
   };
   const recipes = opts.recipes ?? [recipe()];
+  // 安全判断用真实 service（纯函数 + fake prisma），避免测试自证一套假语义。
+  // blocked = 忌口（身份/别名命中即排除）；allergens = 过敏原（额外引入信息不足排除）。
+  const safety = new RecipeSafetyService({
+    userPreference: {
+      findUnique: async () => ({
+        dislikedIngredients: opts.blocked ?? [],
+        allergens: opts.allergens ?? [],
+        healthGoal: opts.pref?.healthGoal ?? 'BALANCED',
+      }),
+    },
+  } as never);
+
   const deps: ChatToolDeps = {
     loadSignals: async () => ({
       blocked: opts.blocked ?? [],
       healthGoal: opts.pref?.healthGoal ?? 'BALANCED',
     }),
+    safety,
     findRecipes: async () => recipes,
     findRecipeById: async (id) => recipes.find((r) => r.id === id) ?? null,
     favoriteFindAll: async () => [...state.favorites],
@@ -90,6 +144,41 @@ describe('chat tools', () => {
       const ids = result.recipes.map((r) => r.id);
       expect(ids).toContain('r1');
       expect(ids).not.toContain('r2');
+    });
+
+    it('别名命中忌口仍被剔除（忌口西红柿、原料写作番茄）', async () => {
+      const r1 = recipe({
+        id: 'r1',
+        ingredients: [{ name: '番茄' }, { name: '鸡蛋' }],
+        identities: { 番茄: ['番茄', '西红柿'] },
+      } as Partial<Recipe>);
+      const { deps } = makeDeps({ recipes: [r1], blocked: ['西红柿'] });
+      const result = await runSearchRecipes(deps, 'u1', { limit: 10 });
+      expect(result.recipes.map((r) => r.id)).toEqual([]);
+    });
+
+    it('过敏原关系命中即剔除（大豆过敏、原料为豆腐）', async () => {
+      const r1 = recipe({
+        id: 'r1',
+        ingredients: [{ name: '嫩豆腐' }, { name: '鸡蛋' }],
+        allergenMap: { 嫩豆腐: ['大豆'] },
+      } as Partial<Recipe>);
+      const { deps } = makeDeps({
+        recipes: [r1],
+        allergens: ['大豆'],
+      });
+      const result = await runSearchRecipes(deps, 'u1', { limit: 10 });
+      expect(result.recipes.map((r) => r.id)).toEqual([]);
+    });
+
+    it('有过敏设置且信息不足时剔除', async () => {
+      const r1 = recipe({
+        id: 'r1',
+        ingredients: [{ name: '魔芋丝' }, { name: '鸡蛋' }],
+      });
+      const { deps } = makeDeps({ recipes: [r1], allergens: ['花生'] });
+      const result = await runSearchRecipes(deps, 'u1', { limit: 10 });
+      expect(result.recipes.map((r) => r.id)).toEqual([]);
     });
 
     it('关键词筛选生效', async () => {

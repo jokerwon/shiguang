@@ -1,4 +1,9 @@
-import type { Recipe } from '@shiguang/domain';
+import type {
+  IngredientDetail,
+  IngredientListItem,
+  Recipe,
+  IngredientSummary,
+} from '@shiguang/domain';
 import { API_BASE, getToken } from './constants';
 import { refreshOnce } from './refresh';
 
@@ -69,6 +74,13 @@ export interface PaginatedRecipes {
     limit: number;
     totalPages: number;
   };
+  /** 因安全设置排除的数量与原因（未返回菜谱本身；食材资料仍可查阅） */
+  excluded: {
+    count: number;
+    reasons: string[];
+    /** 是否包含「成分信息不足，无法判断」的排除 */
+    hasUnknown: boolean;
+  };
 }
 
 /** 个性化首页响应（GET /recipes/personalized，需认证） */
@@ -84,6 +96,8 @@ export interface RecipeQuery {
   tags?: string;
   maxTime?: number;
   keyword?: string;
+  /** 逗号分隔的食材身份 id：全部包含语义（ADR-0018） */
+  ingredients?: string;
   page?: number;
   limit?: number;
 }
@@ -97,6 +111,7 @@ export function recipesUrl(query: RecipeQuery = {}): string {
   if (query.tags) params.set('tags', query.tags);
   if (query.maxTime) params.set('maxTime', String(query.maxTime));
   if (query.keyword) params.set('keyword', query.keyword);
+  if (query.ingredients) params.set('ingredients', query.ingredients);
   if (query.page) params.set('page', String(query.page));
   if (query.limit) params.set('limit', String(query.limit));
   const qs = params.toString();
@@ -111,6 +126,48 @@ export function fetchRecipeById(id: string): Promise<Recipe> {
   return request<Recipe>(`/recipes/${id}`);
 }
 
+
+/* ---- Ingredients API (ADR-0018) ---- */
+
+export interface IngredientListResult {
+  data: IngredientListItem[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+}
+
+/** 食材列表查询串（列表页与 SWR key 共用同一序列化） */
+export function ingredientsUrl(query: {
+  keyword?: string;
+  category?: string;
+  page?: number;
+  limit?: number;
+} = {}): string {
+  const params = new URLSearchParams();
+  if (query.keyword) params.set('keyword', query.keyword);
+  if (query.category) params.set('category', query.category);
+  if (query.page) params.set('page', String(query.page));
+  if (query.limit) params.set('limit', String(query.limit));
+  const qs = params.toString();
+  return `/ingredients${qs ? `?${qs}` : ''}`;
+}
+
+export function fetchIngredients(
+  query: Parameters<typeof ingredientsUrl>[0] = {},
+): Promise<IngredientListResult> {
+  return request<IngredientListResult>(ingredientsUrl(query));
+}
+
+export function fetchIngredientById(id: string): Promise<IngredientDetail> {
+  return request<IngredientDetail>(`/ingredients/${id}`);
+}
+
+/** 食材身份搜索候选（歧义返回多个候选，由用户确认） */
+export function fetchIngredientCandidates(
+  keyword: string,
+): Promise<IngredientListResult> {
+  return request<IngredientListResult>(ingredientsUrl({ keyword, limit: 20 }));
+}
+
+export type { IngredientSummary };
 
 /* ---- Favorites API ---- */
 
