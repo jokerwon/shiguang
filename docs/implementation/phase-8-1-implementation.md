@@ -7,7 +7,7 @@
 | 层面     | 交付物                                                                                              | 位置                                                                             |
 | -------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | 数据模型 | `Ingredient` / `IngredientAlias` / `IngredientAllergen` / `RecipeIngredient` + `IngredientCategory` | `apps/server/prisma/schema.prisma`，迁移 `20260930120000_add_ingredient_catalog` |
-| 审核资料 | 173 条经人工审核的食材资料（覆盖库内全部 221 个原料写法，另有 8 条无菜谱的独立条目）                | `apps/server/prisma/ingredients/published.ts`                                    |
+| 审核资料 | 173 条资料条目（AI 起草，**尚未经维护者逐条复核**）：覆盖库内全部 221 个原料写法，另有 8 条无菜谱的独立条目；`reviewedAt` 记录的是导入时间，不等于内容已复核 | `apps/server/prisma/ingredients/published.ts` |
 | 发布命令 | 校验最低标准 → 归一校验 → 幂等 upsert → 重建菜谱关联                                                | `apps/server/scripts/import-ingredients.ts`（`pnpm ingredients:import`）         |
 | 发布校验 | 纯函数发布闸门（名称 / 审核简介 / 可核查来源；过敏原关系需依据）                                    | `apps/server/src/ingredient/publish-review.ts`                                   |
 | 归一逻辑 | 括号说明剥离、身份索引、歧义检出、关联去重                                                          | `apps/server/src/ingredient/normalize.ts`                                        |
@@ -46,7 +46,8 @@
 | 别名搜索 | 输入「西红柿」→ 结果 1 种「番茄，又叫 西红柿」                                                                                                                          |
 | 详情     | 番茄详情含简介/挑选/保存/处理/参考来源/相关菜谱 8 道；来源链接 `USDA FoodData Central`、`中国食品安全风险评估中心` 实际可访问（HTTP 200；浏览器打开 USDA 站点标题正确） |
 | 空结果   | `苹果`（recipeCount=0）显示「目前没有使用这种食材的菜谱」；与错误态（`/ingredient/does-not-exist` → 「食材资料不存在或尚未发布」）可区分                                |
-| 键盘     | 详情页 Tab 顺序覆盖 导航 → 返回 → 两个来源链接 → 去筛选页 → 收藏按钮；列表页 Tab 顺序覆盖 搜索框 → 分类 → 食材卡                                                        |
+| 键盘     | 详情页 Tab 顺序覆盖 导航 → 返回 → 两个来源链接 → 去筛选页 → 收藏按钮；列表页 Tab 顺序覆盖 搜索框 → 分类 → 食材卡；Enter 可打开食材卡与来源链接                    |
+| 移动端   | 实测视口宽 390（`matchMedia('(min-width:768px)')=false`）：桌面导航 `display:none`、Tabbar `display:flex`（高 62px、每项 78×61px）；搜索框 334×40、分类 chip 56×34、食材卡 173×116 在窄屏可用；键盘可从搜索框走到详情与来源链接；`?ingredients=` 进入筛选页只选中该食材（8 道），再选鸡蛋得 3 道 |
 | 多选筛选 | 多选「番茄 + 鸡蛋」→ 3 道（均同时包含两者）；刷新后选择保留                                                                                                             |
 | 资料入口 | 从番茄资料进入筛选后 `localStorage` 的 `cuisine/pref/time` 被清空，只剩该食材，结果 8 道                                                                                |
 | 安全状态 | 设置大豆过敏后，筛选页显示「另有 3 道菜谱因你的忌口或过敏设置被排除（含成分信息不足、无法判断的菜谱）」；资料页仍可查阅并说明保守排除                                   |
@@ -60,6 +61,7 @@
 ## 遗留与边界
 
 - 后端已接入统一安全过滤（筛选、首页 today/quick、食材相关菜谱、AI `search_recipes`），但 **安全约束下的相关菜谱查询与 AI 侧完整验收属父票 #5**；本票只保证资料发布与读取链路。
+- **内容复核未完成**：173 条资料的简介/挑选/保存/处理措辞与 221 条归一判断由 AI 起草，维护者尚未逐条复核；`reviewedAt` 只是导入时间戳。`rawNames` 映射已用脚本核对「零缺失、零多余、零歧义」，但归并判断（例如把 `小番茄`/`樱桃番茄` 并入番茄）仍待人工确认；来源为通用可核查入口，需替换为逐条可核查的条目页。
 - 部分复合调味料（咖喱块、火锅底料、日式猪排酱、大阪烧酱、天妇罗蘸汁、凯撒酱、水浸金枪鱼罐头等）沿用商品级复合描述，过敏原按可核查分类登记；若后续采购具体品牌，应改用该品牌配料表核对。
 - 运行期配置问题：`apps/server/.env` 的 `JWT_SECRET` 带引号，而 `AuthModule` 在 `ConfigModule.forRoot` 之前读取环境变量，实际生效的是 `shiguang-dev-secret` 兜底值。本次验收改用 `POST /auth/register` + `/auth/login` 取得服务端签发 token 以绕开该既有问题；修复该配置不属本票范围。
 - 验收账号 `phase8-check@example.com` 为本次造数，验收完成后已从数据库删除（`User` 表仅剩既有账号），避免线上残留。
