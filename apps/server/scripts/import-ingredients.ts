@@ -5,6 +5,7 @@
 // - 归一：菜谱自由文本原料名必须命中唯一的食材身份；未收录或指向多个身份 → 报错列出，
 //   不静默猜测、不残缺发布。
 // - 幂等：按规范名与别名 upsert，重复运行不产生重复身份；菜谱关联按 (recipeId, ingredientId) 重建。
+// - 离场清理：不在审核文件里的身份按离场处理（改名/拆分不留残留），仍被菜谱引用的报出而不删。
 // - 资料发布与过敏原信息完整性分开：没有过敏原关系行表示「信息未核查」，不等于确认不含。
 //
 // 用法：pnpm ingredients:import
@@ -14,9 +15,9 @@ import { PrismaClient } from '../generated/prisma/client';
 import { REVIEWED_INGREDIENTS } from '../prisma/ingredients/published';
 import {
   buildRawIndex,
-  buildRecipeIngredientLinks,
-  dedupeIngredientLinks,
   findAmbiguousRawNames,
+  resolveRecipeLinks,
+  type RecipeIngredientLink,
 } from '../src/ingredient/normalize';
 import { validateReviewedIngredient } from '../src/ingredient/publish-review';
 
@@ -104,27 +105,68 @@ async function main() {
       select: { id: true, name: true, ingredients: true },
     });
     let links = 0;
+    const merged: string[] = [];
     for (const recipe of recipes) {
-      const raw = (recipe.ingredients ?? []) as { name: string; amount: string }[];
-      const { links: rawLinks, rejected: bad } = buildRecipeIngredientLinks(
-        raw,
+      const outcome = resolveRecipeLinks<RecipeIngredientLink>(
+        {
+          label: recipe.name,
+          ingredients: (recipe.ingredients ?? []) as { name: string; amount: string }[],
+        },
         byRaw,
         idByName,
-        recipe.id,
+        (built, ingredientId) => ({ recipeId: recipe.id, ingredientId, ...built }),
       );
-      const built = dedupeIngredientLinks(rawLinks);
-      if (bad.length) {
+      if (outcome.rejected.length) {
         throw new Error(
-          `菜谱「${recipe.name}」存在无法归一的原料，未写入任何关联：\n  ${bad.join('\n  ')}`,
+          `菜谱存在无法归一的原料，未写入任何关联：\n  ${outcome.rejected.join('\n  ')}`,
         );
       }
-      await prisma.recipeIngredient.deleteMany({ where: { recipeId: recipe.id } });
-      if (built.length) {
-        await prisma.recipeIngredient.createMany({ data: built });
-        links += built.length;
+      for (const m of outcome.merged) {
+        merged.push(
+          `「${recipe.name}」的「${m.name}」与「${m.into}」指向同一食材身份，已合并为一条关联（被合并项的用量不写进关联表）`,
+        );
       }
+      // 正文关联的重建放进同一事务：deleteMany 与 createMany 分开提交，
+      // 中断后会留下「正文有原料、关联表为空」的半套状态（与 seed 的既有口径一致）。
+      await prisma.$transaction(async (tx) => {
+        await tx.recipeIngredient.deleteMany({ where: { recipeId: recipe.id } });
+        if (outcome.links.length) {
+          await tx.recipeIngredient.createMany({ data: outcome.links });
+        }
+      });
+      links += outcome.links.length;
+    }
+    if (merged.length) {
+      console.warn(`⚠️ 同身份多写法合并 ${merged.length} 处：\n  ${merged.join('\n  ')}`);
     }
 
+    // 5. 离场清理：published.ts 是身份的唯一事实源，改名/拆分后不在文件里的
+    //    身份不继续以「已发布」残留。仍被菜谱引用的身份受 Restrict 保护，
+    //    删除失败会如实报出，不静默保留也不静默强删。
+    const fileNames = new Set(REVIEWED_INGREDIENTS.map((i) => i.name));
+    const stale = (await prisma.ingredient.findMany({ select: { id: true, name: true } }))
+      .filter((i) => !fileNames.has(i.name));
+    if (stale.length) {
+      const removed: string[] = [];
+      const blocked: string[] = [];
+      for (const s of stale) {
+        try {
+          await prisma.ingredient.delete({ where: { id: s.id } });
+          removed.push(s.name);
+        } catch (e) {
+          // P2003 = 外键约束（仍被 RecipeIngredient 引用）；其他错误原样抛出，
+          // 避免连接中断之类被误报成「仍被菜谱引用」。
+          if (!(e instanceof Error && 'code' in e && e.code === 'P2003')) throw e;
+          blocked.push(s.name);
+        }
+      }
+      if (removed.length) {
+        console.warn(`🗑️ 已清理离场身份 ${removed.length} 条：${removed.join('、')}`);
+      }
+      if (blocked.length) {
+        console.warn(`⚠️ 离场身份仍被菜谱引用，未删除：${blocked.join('、')}`);
+      }
+    }
     const published = await prisma.ingredient.count({
       where: { published: true },
     });

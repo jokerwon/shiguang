@@ -14,7 +14,7 @@
 | 发布闸门     | 未收录 / 未发布写法整体拒绝；同身份多写法保留第一条并逐条告警（不静默丢用量）               | `src/ingredient/normalize.ts`（`resolveRecipeLinks`）     |
 | seed 发布    | 导入菜谱时同步建立 `RecipeIngredient` 关联，重复运行不产生重复行；未归一即整批拒绝           | `prisma/seed.ts`（`pnpm db:seed`）                        |
 | 生成提示词   | 生成草稿的食材名限定在已发布选材白名单内；白名单外写法当场打印待处理                        | `scripts/generate-recipes.ts`                             |
-| 逐项核对材料 | 220 种正文写法 → 身份 的核对表 + 35 组合并项清单                                            | `scripts/ingredient-mapping-review.ts` → 核对表文档        |
+| 逐项核对材料 | 219 种正文写法 → 身份 的核对表 + 34 组合并项清单                                            | `scripts/ingredient-mapping-review.ts` → 核对表文档        |
 
 ## 关键前置发现（来自真实代码与 live 数据库）
 
@@ -49,7 +49,7 @@
 ### 真实表面走查
 
 - `GET /recipes?limit=3` 返回的每条原料均带 `ingredientId`；`GET /recipes/<id>`（夫妻肺片）逐项打印身份，除 `花椒粉` 外全部有 id。
-- 逐条反查 `GET /ingredients/<id>`：656 条已关联原料的身份全部能解析（脚本 `/tmp/detailcheck.js`），个别「写法 → 规范名」的差异（`糖 → 白糖`、`油 → 食用油`、`猪瘦肉 → 猪里脊`、`红酒醋 → 黑醋`）是归一表的既有审阅结果，已列入核对表待维护者确认。
+- 逐条反查 `GET /ingredients/<id>`：656 条已关联原料的身份全部能解析（脚本 `/tmp/detailcheck.js`），个别「写法 → 规范名」的差异（`糖 → 白糖`、`油 → 食用油`、`猪瘦肉 → 猪里脊`）是归一表的既有审阅结果，已列入核对表待维护者确认。
 
 ### 浏览器走查（真实 Chromium，验收账号 phase82-check@example.com）
 
@@ -70,9 +70,17 @@
 2. **seed 未校验发布状态**：原先仅 `findUnique({ name })`，未发布身份也会被写进关联，前端会拿到点开即 404 的链接（`IngredientService.findById` 按 `published: true` 查）。修复：改为 `findFirst({ name, published: true })`。
 3. **正文与关联分开提交**：`upsert`、`deleteMany`、`createMany` 各自提交，中断时会留下「新正文 + 空关联」，使身份链接与按食材筛选同时失效。修复：每道菜谱的三步放进同一个 `$transaction`。修复后重跑 `pnpm db:seed` 仍为 88 道 / 656 条 / 0 条重复关联行。
 
+### 核对轮修正（2026-09-30，维护者决策落地）
+
+1. **import 侧合并上报与事务补齐**：B3/B6 记录的「import 与 seed 行为一致」在此前并不成立——`import-ingredients.ts` 走 `buildRecipeIngredientLinks`+`dedupeIngredientLinks` 旁路，同身份多写法被静默合并，且关联重建的 delete/create 分开提交。修复：改走共用入口 `resolveRecipeLinks`（合并如实告警）、每道菜谱的关联重建包进 `$transaction`，并补 `src/ingredient/normalize.spec.ts` 3 例锁定 merged 上报。实跑：`⚠️ 同身份多写法合并 1 处：「夫妻肺片」的「花椒粉」与「花椒」…`。
+2. **离场清理**：改名/拆分后不在 `published.ts` 的身份此前会以「已发布」残留（本轮旧「面粉」即 1 条僵尸行）。import 增加第 5 步清理文件外身份，仍被菜谱引用的（`Restrict`）报出而不删。实跑：`🗑️ 已清理离场身份 1 条：面粉`。
+3. **核对表生成器确定性**：`orderBy` 仅按 position 时跨菜谱并列，「用量示例/括号说明」随物理行序漂移，说明统计还会漏项（意面）。修复：按菜谱名+position 排序、同一写法优先取带说明的用法（note 与 amount 同行）、用量示例附来源菜谱；双跑 diff 为空。
+4. **维护者三项拆分决策落地**：苹果醋、红酒醋 拆出「黑醋」独立身份；「面粉」拆为低筋面粉/中筋面粉（正文写「面粉」默认归中筋，日式煎饺 1 处）；staging 三道菜（鱼香肉丝、水煮鱼、干锅牛蛙）的「姜蒜」拆为「姜」「蒜」两行，并从 `生姜.rawNames` 移除「姜蒜」（后续草稿再用该写法会被显式拒绝，不再静默丢掉大蒜半边）。重跑 `pnpm db:seed` + `pnpm ingredients:import` 后：88 道菜谱、176 条已发布身份、659 条关联，核对表 219 行 / 34 组合并项；`pnpm --filter @shiguang/server test` 11 套件 113 例全过，`pnpm -r lint` 通过。写入前备份触及的五张表至 `/tmp/shiguang-backup/pre-phase8-2-split.json`。
+
 ## 遗留与边界
 
-- **内容复核未签字**：220 种写法 → 身份 的 220 行核对表与 35 组合并项仍未由维护者逐条确认（见核对表文档）；签字前 `reviewedAt` 只代表导入时间。
+- **内容复核未签字**：219 种写法 → 身份 的 219 行核对表与 34 组合并项仍未由维护者逐条确认（见核对表文档）；签字前 `reviewedAt` 只代表导入时间。
+- **「面粉」等值解析待 #11**：`ingredient.service.ts` 的 `resolveCandidates` 按 name/alias 精确匹配（当前全仓无调用方，不构成线上回归）；中筋面粉 改名后裸写「面粉」只走 rawNames 归一、不走等值解析。AI 侧食材解析接入（#11）时给 `中筋面粉` 补 `aliases: ['面粉']` 即可。
 - **花椒粉缺口**：按本轮确认的处理方式保持现状（不拆身份），已在上表 B3 与核对表中登记；若要拆成独立条目，需改 `published.ts` 后重跑 `pnpm ingredients:import` 与 `pnpm db:seed`。
 - **无 schema 变更**：本轮未新增迁移，`RecipeIngredient` 结构沿用 Phase 8-1。
 - 用户动作产生的数据（收藏、偏好会话）不受本轮影响；seed 只重建菜谱与原料关联，不触碰用户表。

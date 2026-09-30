@@ -15,6 +15,8 @@ interface Row {
   category: string;
   note: string | null;
   amount: string;
+  /** 用量示例取自哪道菜谱（示例需可定位核对） */
+  source: string;
   recipes: string[];
 }
 
@@ -33,7 +35,9 @@ async function main() {
       },
       recipe: { select: { name: true } },
     },
-    orderBy: [{ position: 'asc' }],
+    // 先按菜谱名再按 position 排序——只按 position 时跨菜谱并列，
+    // 同一写法的「用量示例」取决于物理行序，import 重写关联后示例列会漂移。
+    orderBy: [{ recipe: { name: 'asc' } }, { position: 'asc' }],
   });
 
   const byRaw = new Map<string, Row>();
@@ -41,6 +45,13 @@ async function main() {
     const existing = byRaw.get(r.name);
     if (existing) {
       existing.recipes.push(r.recipe.name);
+      // 同一写法可能只在个别菜谱带括号说明：首行没说明时补记带说明的用法，
+      // 否则「括号说明写法」统计会随取样顺序漏项（如意面）。
+      if (!existing.note && r.note) {
+        existing.note = r.note;
+        existing.amount = r.amount;
+        existing.source = r.recipe.name;
+      }
       continue;
     }
     byRaw.set(r.name, {
@@ -50,6 +61,7 @@ async function main() {
       category: r.ingredient.category,
       note: r.note,
       amount: r.amount,
+      source: r.recipe.name,
       recipes: [r.recipe.name],
     });
   }
@@ -90,7 +102,7 @@ async function main() {
   );
   sorted.forEach((r, i) => {
     lines.push(
-      `| [ ] | ${i + 1} | ${r.raw} | ${r.identity} | ${r.category} | ${r.note ?? '—'} | ${r.amount} | ${r.recipes.length} | ${r.aliases.join('、') || '—'} |`,
+      `| [ ] | ${i + 1} | ${r.raw} | ${r.identity} | ${r.category} | ${r.note ?? '—'} | ${r.amount} · ${r.source} | ${r.recipes.length} | ${r.aliases.join('、') || '—'} |`,
     );
   });
   console.log(lines.join('\n'));
