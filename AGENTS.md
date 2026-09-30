@@ -94,3 +94,17 @@ pnpm seed:long-conversation -- --user <userId|email> # 造 40+ 条长会话 + �
 
 - `apps/server/.env` — `DATABASE_URL`（运行时 PostgreSQL 连接串）、`DIRECT_URL`（Prisma CLI 迁移连接串，托管库须为会话池）、`JWT_SECRET`、`OPENAI_API_KEY` / `OPENAI_BASE_URL` / `MODEL_NAME`（AI 对话与菜谱生成共用）
 - `apps/web/` — `NEXT_PUBLIC_API_URL` 指向后端（默认 `http://localhost:3001`）
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub Issues in `jokerwon/shiguang`，用 `gh` CLI 操作。See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+五个默认角色标签名与角色名一致：`needs-triage` / `needs-info` / `ready-for-agent` / `ready-for-human` / `wontfix`。See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+single-context：域术语读 `docs/glossary.md`，决策读 `docs/adr/`；根 `CONTEXT.md` 暂缺，由 `/domain-modeling` 按需惰性创建。See `docs/agents/domain.md`.

@@ -8,6 +8,7 @@
 |------|------|------|
 | [glossary.md](./glossary.md) | 常驻 | 领域术语表（Ubiquitous Language）。⚠️ 字段级事实以 `apps/server/prisma/schema.prisma` 为准，本表只定义概念语义 |
 | 根 [AGENTS.md](../AGENTS.md) / [apps/web/AGENTS.md](../apps/web/AGENTS.md) / [apps/server/AGENTS.md](../apps/server/AGENTS.md) | 常驻 | Agent 工作指令。各层 `AGENTS.md` 是唯一事实源；同层 `CLAUDE.md` 均为 `@AGENTS.md` 指针文件 |
+| [agents/](./agents/) | 常驻 | 工程技能配置：`issue-tracker.md`（GitHub Issues）／`triage-labels.md`（五个 triage 角色标签）／`domain.md`（域文档消费规则，single-context）。由 setup-matt-pocock-skills 生成，可直接手改 |
 
 ## 决策层（ADR）
 
