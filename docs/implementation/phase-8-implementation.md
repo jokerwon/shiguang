@@ -1,6 +1,6 @@
 # Phase 8 实施清单：食材资料库与按食材筛选
 
-> **状态**：A–C 组已实施（食材身份与迁移、审核资料与导入发布、统一安全过滤，证据见 [Phase 8-1 交付记录](./phase-8-1-implementation.md)）；D–E 组（Web 交互收尾与全量回归证据）仍待补齐。依据 [ADR-0018](../adr/0018-ingredient-catalog-and-filtering.md#最终共识确认)，遵守 [ADR-0017](../adr/0017-remove-pantry-and-shopping-list.md)。验收见 [Phase 8 验收清单](../acceptance/phase-8-checklist.md)。
+> **状态**：A、B 组已实施（食材身份与迁移、审核资料与导入发布）；C 组部分实施——统一安全过滤已接入筛选／首页 today、quick／相关菜谱，但 AI 工具的多食材按稳定身份筛选**未交付**（#11）；D 组部分实施（列表／详情／筛选多选／状态说明），E 组待补。证据见 [Phase 8-1 交付记录](./phase-8-1-implementation.md)。依据 [ADR-0018](../adr/0018-ingredient-catalog-and-filtering.md#最终共识确认)，遵守 [ADR-0017](../adr/0017-remove-pantry-and-shopping-list.md)。验收见 [Phase 8 验收清单](../acceptance/phase-8-checklist.md)。
 
 **规格来源**：[GitHub Issue #5](https://github.com/jokerwon/shiguang/issues/5)（`ready-for-agent`）；用户已确认复用既有 Jest 与真实应用冒烟的测试边界。
 

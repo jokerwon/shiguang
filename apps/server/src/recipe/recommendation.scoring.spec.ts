@@ -2,8 +2,6 @@ import {
   dailySeed,
   dateKeyOf,
   goalBonus,
-  ingredientHit,
-  isBlocked,
   scoreRecipe,
   seededJitter,
   timeFit,
@@ -56,25 +54,6 @@ describe('dateKeyOf', () => {
   });
 });
 
-describe('ingredientHit / isBlocked', () => {
-  it('双向 includes 命中', () => {
-    expect(ingredientHit('鸡蛋', '鸡蛋')).toBe(true);
-    expect(ingredientHit('土鸡蛋', '鸡蛋')).toBe(true);
-    expect(ingredientHit('鸡蛋', '土鸡蛋')).toBe(true);
-    expect(ingredientHit('牛肉', '鸡蛋')).toBe(false);
-  });
-
-  it('空串不命中', () => {
-    expect(ingredientHit('', '鸡蛋')).toBe(false);
-    expect(ingredientHit('鸡蛋', '  ')).toBe(false);
-  });
-
-  it('含忌口食材被硬过滤', () => {
-    expect(isBlocked(recipe().ingredients, ['鸡蛋'])).toBe(true);
-    expect(isBlocked(recipe().ingredients, ['牛肉'])).toBe(false);
-    expect(isBlocked(recipe().ingredients, [])).toBe(false);
-  });
-});
 describe('timeFit', () => {
   it('晚间 ≤30min 满分', () => {
     expect(timeFit(15, 19)).toBe(1);

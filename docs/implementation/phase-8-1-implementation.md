@@ -54,7 +54,7 @@
 
 ### 自动化检查
 
-- `pnpm --filter @shiguang/server test`：9 个 suite、105 个用例全部通过（新增 `recipe-safety.service.spec.ts`：归一、全部包含、安全优先级、发布校验、工具行为）。
+- `pnpm --filter @shiguang/server test`：9 个 suite、102 个用例全部通过（新增 `recipe-safety.service.spec.ts`：归一、全部包含、安全优先级、发布校验、工具行为）。
 - `pnpm -r lint`：`@shiguang/server` 通过；`@shiguang/web` 失败 4 项，全部位于本次未改动的既有文件（`app/(screen)/chat/[[...slug]]/page.tsx` 的 `react-hooks/set-state-in-effect`、`app/(screen)/recipe/[id]/page.tsx` 的 try/catch JSX、`components/ai-elements/{prompt-input,shimmer}.tsx`），属 Phase 3.5 记录过的既有限制。
 - Web 类型检查：本次改动文件无新增错误；既有错误集中在 `components/ai-elements/prompt-input.tsx` 与 `@base-ui/react` 的类型不兼容。
 
@@ -64,4 +64,4 @@
 - **内容复核未完成**：173 条资料的简介/挑选/保存/处理措辞与 221 条归一判断由 AI 起草，维护者尚未逐条复核；`reviewedAt` 只是导入时间戳。`rawNames` 映射已用脚本核对「零缺失、零多余、零歧义」，但归并判断（例如把 `小番茄`/`樱桃番茄` 并入番茄）仍待人工确认；来源为通用可核查入口，需替换为逐条可核查的条目页。
 - 部分复合调味料（咖喱块、火锅底料、日式猪排酱、大阪烧酱、天妇罗蘸汁、凯撒酱、水浸金枪鱼罐头等）沿用商品级复合描述，过敏原按可核查分类登记；若后续采购具体品牌，应改用该品牌配料表核对。
 - 运行期配置问题：`apps/server/.env` 的 `JWT_SECRET` 带引号，而 `AuthModule` 在 `ConfigModule.forRoot` 之前读取环境变量，实际生效的是 `shiguang-dev-secret` 兜底值。本次验收改用 `POST /auth/register` + `/auth/login` 取得服务端签发 token 以绕开该既有问题；修复该配置不属本票范围。
-- 验收账号 `phase8-check@example.com` 为本次造数，验收完成后已从数据库删除（`User` 表仅剩既有账号），避免线上残留。
+- 验收账号 `phase8-check@example.com` 为本次造数，验收完成后已删除；复查 `User` 表只剩既有账号（`jokerwon26@gmail.com`、`phase4-smoke-…@test.local`、`jokerwon@gmail.com`、`review-tmp@example.com`），数据库中 `Ingredient=173 / RecipeIngredient=656 / Recipe=88`。

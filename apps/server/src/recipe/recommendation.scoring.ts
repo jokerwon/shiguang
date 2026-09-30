@@ -86,26 +86,6 @@ export function dailySeed(userId: string, dateKey: string): number {
   return h >>> 0;
 }
 
-const norm = (s: string) => s.trim().toLowerCase();
-
-/**
- * 食材命中：规范化后双向 includes。
- * 已知限制：「鸡蛋」会命中「鸡蛋干」——行为统一优先于精确。
- */
-export function ingredientHit(a: string, b: string): boolean {
-  const x = norm(a);
-  const y = norm(b);
-  return x.length > 0 && y.length > 0 && (x.includes(y) || y.includes(x));
-}
-
-/** 硬过滤：含任一忌口/过敏原食材 */
-export function isBlocked(
-  ingredients: { name: string }[],
-  blocked: string[],
-): boolean {
-  return ingredients.some((i) => blocked.some((b) => ingredientHit(i.name, b)));
-}
-
 /** 时间适配：晚间（≥17 点）优先 ≤30min 的快菜；非晚间中性 0.5 */
 export function timeFit(timeMin: number, hour: number): number {
   if (hour < 17) return 0.5;
