@@ -59,6 +59,25 @@ pnpm recipes:generate --only sichuan,home # 只生成指定菜系
 
 `pnpm seed:long-conversation -- --user <userId|email>` 直插 DB 构造一个 40+ 条消息的会话（话题：减脂餐 → 周末聚餐），随后**进程内直调** `src/chat/summary.ts` 纯函数预生成摘要并写回会话行——不走 HTTP、不烧多轮真实对话。幂等：重跑先删旧种子会话（固定 title 前缀）。缺模型配置（OPENAI_API_KEY/MODEL_NAME）则跳过摘要、仅造滑窗数据。
 
+### Jev 候选重排序离线实验（Phase 10，与线上隔离）
+
+```bash
+pnpm experiment:snapshot                    # 从数据库导出冻结菜谱快照（一次性，写入 experiments/phase-10/snapshot.json）
+pnpm experiment:run                         # 只跑完整候选与基线前 4（不调用 Jev）
+pnpm experiment:run -- --execute            # 真实调用 Jev（付费，须另行授权）
+pnpm experiment:run -- --execute --only dev-hot-rice-bowl
+pnpm experiment:blind -- --run <results.json>          # 生成匿名 A/B 材料 + 分离揭盲映射
+pnpm experiment:review -- --run <results.json> --blind <blind-material.json> --reveal <reveal.json> --reviews <reviews.json>
+```
+
+实验只模拟 AI 对话里菜谱搜索结果的排序，不改线上任何链路。纯逻辑在 `src/experiment/`（`scenarios.ts` 冻结场景、
+`candidates.ts` 候选与基线、`jev.ts` 判断与排序、`evaluation.ts` 盲评与统计），CLI 在 `scripts/experiment.ts`；
+候选构建直接调用在线 `runSearchRecipes`（`limit` 放大到全量），不复制第二套筛选或安全语义。
+凭证只从服务端环境变量读取（`TYPESAFE_API_KEY` / `TYPESAFE_BASE_URL` / `TYPESAFE_DEFAULT_MODEL`），
+`--execute` 才构造客户端；预算上界按 1 token/字符保守估算，SDK 重试关闭（`maxRetries: 0`），
+超预算即暂停（不自动加预算、减候选或删证据）。模型版本固定 `jev-1.13.0`，代理环境用 `--model` 显式指定并记录。
+运行工件在 `experiments/phase-10/`；用户盲评不能由代理代替，统计只消费真实运行记录与人工评审。
+
 ## 环境变量
 
 `.env` 文件位于 `apps/server/`。必须包含：
@@ -119,6 +138,7 @@ src/
   conversation/               # 会话持久化（ADR-0010）：Conversation/Message CRUD + 滑窗上下文 + UIMessage↔DB mapper
   favorite/                   # GET /favorites、POST /favorites/:recipeId（无 body=toggle，{saved} body=幂等 set）
   preference/                 # GET/PUT /preferences（忌口/过敏原/健康目标）；exports PreferenceService 供 chat 只读工具复用
+  experiment/                # Phase 10 离线实验纯逻辑（scenarios 冻结场景 / candidates 候选与基线 / jev 判断与排序 / evaluation 盲评与统计）；CLI 在 scripts/experiment.ts，不参与任何线上请求路径
 ```
 
 ### AI 对话（ADR-0006/0009/0010）

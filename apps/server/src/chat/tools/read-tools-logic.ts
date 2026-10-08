@@ -120,6 +120,8 @@ export async function runSearchRecipes(
   deps: ChatToolDeps,
   userId: string,
   input: SearchInput,
+  /** 冻结时间（离线重放用）；缺省取当前时间，线上行为不变 */
+  now: Date = new Date(),
 ): Promise<{
   count: number;
   recipes: RecipeSummary[];
@@ -231,7 +233,6 @@ export async function runSearchRecipes(
 
   // 6. 复用打分排序（单一事实源）：对安全后的候选排序，再换到食材交集取结果，
   //    保证同一批候选的排序与筛选条件无关。
-  const now = new Date();
   const ctx: ScoreContext = { hour: now.getHours(), dateKey: dateKeyOf(now) };
   const ranked = rankRecipes(
     safe,

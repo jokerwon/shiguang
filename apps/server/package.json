@@ -26,7 +26,11 @@
     "db:status": "prisma migrate status",
     "recipes:generate": "tsx scripts/generate-recipes.ts",
     "seed:long-conversation": "tsx scripts/seed-long-conversation.ts",
-    "ingredients:import": "tsx scripts/import-ingredients.ts"
+    "ingredients:import": "tsx scripts/import-ingredients.ts",
+    "experiment:snapshot": "tsx scripts/experiment.ts snapshot",
+    "experiment:run": "tsx scripts/experiment.ts run",
+    "experiment:blind": "tsx scripts/experiment.ts blind",
+    "experiment:review": "tsx scripts/experiment.ts review"
   },
   "engines": {
     "npm": ">=10.0.0",
@@ -58,6 +62,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
+    "@typesafe-ai/sdk": "^0.6.0",
     "dotenv": "^17.4.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
