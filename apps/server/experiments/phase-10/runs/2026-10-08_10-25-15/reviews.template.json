@@ -1,0 +1,122 @@
+[
+  {
+    "scenarioId": "home-tired",
+    "verdict": null
+  },
+  {
+    "scenarioId": "home-light-rice",
+    "verdict": null
+  },
+  {
+    "scenarioId": "home-priority",
+    "verdict": null
+  },
+  {
+    "scenarioId": "home-either",
+    "verdict": null
+  },
+  {
+    "scenarioId": "home-fat-loss",
+    "verdict": null
+  },
+  {
+    "scenarioId": "home-protein",
+    "verdict": null
+  },
+  {
+    "scenarioId": "sichuan-tired",
+    "verdict": null
+  },
+  {
+    "scenarioId": "sichuan-light-rice",
+    "verdict": null
+  },
+  {
+    "scenarioId": "sichuan-priority",
+    "verdict": null
+  },
+  {
+    "scenarioId": "sichuan-either",
+    "verdict": null
+  },
+  {
+    "scenarioId": "sichuan-fat-loss",
+    "verdict": null
+  },
+  {
+    "scenarioId": "sichuan-protein",
+    "verdict": null
+  },
+  {
+    "scenarioId": "japanese-tired",
+    "verdict": null
+  },
+  {
+    "scenarioId": "japanese-light-rice",
+    "verdict": null
+  },
+  {
+    "scenarioId": "japanese-priority",
+    "verdict": null
+  },
+  {
+    "scenarioId": "japanese-either",
+    "verdict": null
+  },
+  {
+    "scenarioId": "japanese-fat-loss",
+    "verdict": null
+  },
+  {
+    "scenarioId": "japanese-protein",
+    "verdict": null
+  },
+  {
+    "scenarioId": "western-tired",
+    "verdict": null
+  },
+  {
+    "scenarioId": "western-light",
+    "verdict": null
+  },
+  {
+    "scenarioId": "western-priority",
+    "verdict": null
+  },
+  {
+    "scenarioId": "western-either",
+    "verdict": null
+  },
+  {
+    "scenarioId": "western-fat-loss",
+    "verdict": null
+  },
+  {
+    "scenarioId": "western-protein",
+    "verdict": null
+  },
+  {
+    "scenarioId": "light-tired",
+    "verdict": null
+  },
+  {
+    "scenarioId": "light-rice",
+    "verdict": null
+  },
+  {
+    "scenarioId": "light-priority",
+    "verdict": null
+  },
+  {
+    "scenarioId": "light-either",
+    "verdict": null
+  },
+  {
+    "scenarioId": "light-fat-loss",
+    "verdict": null
+  },
+  {
+    "scenarioId": "light-protein",
+    "verdict": null
+  }
+]

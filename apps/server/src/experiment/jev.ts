@@ -22,11 +22,14 @@ export const MATCH_RUBRIC = [
   '高度匹配：已有事实支持满足主要及次要偏好，且没有明显冲突。',
 ] as const;
 
-/** 每次请求只包含一个候选，并列提出两个互不读取答案的问题 */
-export function buildQuestions(soft: Scenario['soft']): {
+/** 单候选请求的两个并列问题（类型别名以便直接用作 systemOne 的问题泛型参数） */
+export type JevQuestions = {
   adequacy: ChoiceQuestion;
   match: ScoreQuestion;
-} {
+};
+
+/** 每次请求只包含一个候选，并列提出两个互不读取答案的问题 */
+export function buildQuestions(soft: Scenario['soft']): JevQuestions {
   const scope = soft.secondary
     ? `主要偏好：${soft.primary}；次要偏好：${soft.secondary}。`
     : `主要偏好：${soft.primary}；本次没有次要偏好，不要求满足不存在的次要条件。`;

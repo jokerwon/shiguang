@@ -10,14 +10,15 @@
 //       --reveal <reveal.json> --reviews <reviews.json>
 //
 // 选项：`--execute` 才构造客户端并发起付费请求；`--model` 显式指定代理环境下的模型名（默认 jev-1.13.0）；
-//   `--budget-usd` 覆盖总预算上限（默认 US$10）；`--timeout` 单次请求超时毫秒；`--only` / `--out` 见上。
-//   预算暂停、空集/不足 4 道、矛盾需求三个边界由场景自身的固定期望驱动，不需要额外开关。
+//   `--budget-usd` 覆盖总预算上限（默认 US$10）；`--timeout` 单次请求超时毫秒；`--rpm` 主动限流（默认 90/分钟，
+//   代理限速 100/分钟）；`--only` / `--out` 见上。SDK 重试上限 1（仅网络错误/限速/5xx）。
 //
 // 边界：不修改共享排序、在线 search_recipes、首页、HTTP、聊天模型或 schema；
 // 凭证只从服务端环境变量读取，不写入任何工件；付费请求只在显式 --execute 下发生。
 import 'dotenv/config';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { TypeSafeClient } from '@typesafe-ai/sdk';
 import { PrismaClient } from '../generated/prisma/client';
@@ -232,6 +233,8 @@ async function run(): Promise<void> {
     process.env['PHASE10_INPUT_PRICE_PER_MTOK'] ?? DEFAULT_INPUT_PRICE_PER_MTOK,
   );
   const timeout = Number(arg('--timeout') ?? 20000);
+  /** 每分钟请求上限（代理公开限速 100/分钟，留出余量） */
+  const rpm = Number(arg('--rpm') ?? 90);
 
   const apiKey = process.env['TYPESAFE_API_KEY'];
   if (execute && !apiKey) {
@@ -255,6 +258,8 @@ async function run(): Promise<void> {
     estimatedCostUsd: 0,
   };
   const results: ScenarioRun[] = [];
+  /** 上次请求时刻，用于跨场景限流 */
+  let lastRequestAt = 0;
 
   for (const scenario of targets) {
     const usageBefore = { ...budget };
@@ -308,11 +313,17 @@ async function run(): Promise<void> {
           break;
         }
         try {
+          // 代理限速 100 次/分钟：按 --rpm 主动限流，避免用重试掩盖限速
+          const minIntervalMs = Math.ceil(60_000 / rpm);
+          const waitMs = minIntervalMs - (Date.now() - lastRequestAt);
+          if (waitMs > 0) await sleep(waitMs);
           modelCalled = true;
+          lastRequestAt = Date.now();
           const startedAt = Date.now();
+          // SDK 重试上限 1（仅网络错误/限速/5xx，最多多一次请求）；限速由上面的节流提前规避
           const result = await client!.systemOne(
             { state, questions: buildQuestions(scenario.soft), model },
-            { retry: { maxRetries: 0 }, timeout },
+            { retry: { maxRetries: 1, backoffMaxMs: 10_000 }, timeout },
           );
           const elapsedMs = Date.now() - startedAt;
           budget.requests += 1;

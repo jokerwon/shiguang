@@ -1,0 +1,122 @@
+{
+  "home-tired": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "home-light-rice": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "home-priority": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "home-either": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "home-fat-loss": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "home-protein": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "sichuan-tired": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "sichuan-light-rice": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "sichuan-priority": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "sichuan-either": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "sichuan-fat-loss": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "sichuan-protein": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "japanese-tired": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "japanese-light-rice": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "japanese-priority": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "japanese-either": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "japanese-fat-loss": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "japanese-protein": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "western-tired": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "western-light": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "western-priority": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "western-either": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "western-fat-loss": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "western-protein": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "light-tired": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "light-rice": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "light-priority": {
+    "A": "jev",
+    "B": "baseline"
+  },
+  "light-either": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "light-fat-loss": {
+    "A": "baseline",
+    "B": "jev"
+  },
+  "light-protein": {
+    "A": "baseline",
+    "B": "jev"
+  }
+}
