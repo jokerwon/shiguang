@@ -128,17 +128,21 @@ function makeDeps(
     },
   } as never);
 
+  // 身份解析与全部包含用真实 IngredientService（只 fake 其 Prisma），
+  // 与安全判断同一原则：避免测试自证一套与线上不同的语义。
+  const ingredientIdentities = identitiesFrom(recipes);
+  const ingredientService = new IngredientService({} as never);
+
   const deps: ChatToolDeps = {
-    // 身份解析与全部包含用真实 IngredientService 纯逻辑（只 fake 其 Prisma），
-    // 与安全判断同一原则：避免测试自证一套与线上不同的语义。
-    ingredientIdentities: async () => identitiesFrom(recipes),
-    recipeIdsContainingAll: (ids, links) =>
-      new IngredientService({} as never).recipeIdsContainingAll(ids, links),
     loadSignals: async () => ({
       blocked: opts.blocked ?? [],
       healthGoal: opts.pref?.healthGoal ?? 'BALANCED',
     }),
     safety,
+    identifyIngredient: async (term) =>
+      ingredientService.identifyIn(ingredientIdentities, term),
+    recipeIdsContainingAll: (ids, links) =>
+      ingredientService.recipeIdsContainingAll(ids, links),
     findRecipes: async () => recipes,
     findRecipeById: async (id) => recipes.find((r) => r.id === id) ?? null,
     favoriteFindAll: async () => [...state.favorites],
@@ -334,7 +338,7 @@ describe('chat tools', () => {
       expect(result.error).toContain('没有对应的已发布食材');
     });
 
-    it('安全排除与错误分开：全部命中身份但被安全设置排除时给 note 而非 error', async () => {
+    it('安全排除给出可区分说明，而不是「条件太严」：报排除条数与原因', async () => {
       const { deps } = makeDeps({
         recipes: threeRecipes(),
         blocked: ['鸡蛋'],
@@ -345,8 +349,51 @@ describe('chat tools', () => {
       });
       expect(result.recipes).toEqual([]);
       expect(result.error).toBeUndefined();
-      expect(result.note).toBeDefined();
+      expect(result.note).toContain('因安全设置被排除');
+      expect(result.note).toContain('忌口食材「鸡蛋」');
+      expect(result.note).toContain('番茄、鸡蛋');
+      expect(result.note).not.toContain('放宽条件');
       expect(result.ingredients).toEqual({ names: ['番茄', '鸡蛋'] });
+    });
+
+    it('成分信息不足的排除说明与忌口排除不同', async () => {
+      const { deps } = makeDeps({
+        recipes: threeRecipes(),
+        allergens: ['花生'],
+      });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['番茄', '鸡蛋'],
+        limit: 10,
+      });
+      expect(result.note).toContain('成分信息尚不完整');
+      expect(result.note).toContain('无法确认是否安全');
+    });
+
+    it('食材条件无匹配（非安全排除）时说明是食材问题，不引导放宽条件', async () => {
+      const cuke = recipe({
+        id: 'r-cuke',
+        name: '拍黄瓜',
+        ingredients: [{ name: '黄瓜' }],
+      });
+      const { deps } = makeDeps({ recipes: [...threeRecipes(), cuke] });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['番茄', '黄瓜'],
+        limit: 10,
+      });
+      expect(result.recipes).toEqual([]);
+      expect(result.error).toBeUndefined();
+      expect(result.note).toContain('没有同时包含番茄、黄瓜的菜谱');
+      expect(result.note).not.toContain('放宽条件');
+    });
+
+    it('ingredients 只含空白/空串时报错，不放行全部菜谱', async () => {
+      const { deps } = makeDeps({ recipes: threeRecipes() });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['  ', ''],
+        limit: 10,
+      });
+      expect(result.recipes).toEqual([]);
+      expect(result.error).toContain('没有有效的食材名称');
     });
 
     it('食材条件与菜系、时长取交集，且保留其他查询能力', async () => {

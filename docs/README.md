@@ -36,7 +36,7 @@
 | 8-1 发布并查阅食材资料 | [implementation/phase-8-1-implementation.md](./implementation/phase-8-1-implementation.md)（含验收证据与遗留边界） | 证据并入上方 phase-8 清单（A/B 组） | 已交付——[#6](https://github.com/jokerwon/shiguang/issues/6)：稳定身份入库、审核资料导入发布、已发布读取接口、食材列表与详情及真实浏览器走查 |
 | 8-2 菜谱关联稳定食材身份 | [implementation/phase-8-2-implementation.md](./implementation/phase-8-2-implementation.md)（含验收证据与遗留边界）；逐项核对材料见 [phase-8-2-ingredient-mapping-review.md](./implementation/phase-8-2-ingredient-mapping-review.md) | 证据并入上方 phase-8 清单（A 组） | 已交付（内容复核待签字）——[#7](https://github.com/jokerwon/shiguang/issues/7)：菜谱载荷携带身份 id、详情按 id 跳转、seed 发布共用归一校验、生成侧选材白名单；220 行逐项核对表待维护者确认 |
 | 8-3 按别名和分类发现食材 | [implementation/phase-8-3-implementation.md](./implementation/phase-8-3-implementation.md)（含验收证据与遗留边界） | 证据并入上方 phase-8 清单（B 组、E1） | 已交付——[#8](https://github.com/jokerwon/shiguang/issues/8)：身份优先搜索（整串相等才算命中，子串只作「相近候选」）、`GET /ingredients/identify` 名称解析与歧义候选、列表页直达/候选/无命中三态；真实浏览器与移动端、键盘走查与会话记录见实施清单 |
-| 8-5 AI 搜索复用多食材筛选 | [implementation/phase-8-5-implementation.md](./implementation/phase-8-5-implementation.md)（含验收证据与遗留边界） | 证据并入上方 phase-8 清单（F 组与 D1 仍**未勾选**） | 部分交付——[#11](https://github.com/jokerwon/shiguang/issues/11)：`search_recipes` 增 `ingredients`（名称/别名→稳定身份→全部包含）、歧义与未收录如实报错不扩大查询、确定性回归与真实 SSE 冒烟；**安全排除与真实无结果仍不可区分**，F2/C6/C7/D1 待补信号后再验 |
+| 8-7 AI 搜索复用多食材筛选 | [implementation/phase-8-7-implementation.md](./implementation/phase-8-7-implementation.md)（含验收证据与遗留边界） | 证据并入下方 phase-8 清单（F 组与 D1 仍**未勾选**，待与 #9 的逐入口核对一并复核） | 已交付——[#11](https://github.com/jokerwon/shiguang/issues/11)：`search_recipes` 增 `ingredients`（名称/别名→复用 `IngredientService.identify` 归一→`recipeIdsContainingAll` 全部包含）、歧义/未收录/空白如实报错不扩大查询、安全排除与无匹配给出可区分说明、确定性回归（11 例）与真实 SSE 冒烟（正向、忌口排除、信息不足、调味料、歧义） |
 
 ## 运行层
 

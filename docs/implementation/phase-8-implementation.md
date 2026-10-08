@@ -1,6 +1,6 @@
 # Phase 8 实施清单：食材资料库与按食材筛选
 
-> **状态**：A、B 组已实施（食材身份与迁移、审核资料与导入发布）；C 组部分实施——统一安全过滤已接入筛选／首页 today、quick／相关菜谱，但 AI 工具的多食材按稳定身份筛选**未交付**（#11）；D 组部分实施（列表／详情／筛选多选／状态说明），E 组待补。证据见 [Phase 8-1 交付记录](./phase-8-1-implementation.md)。依据 [ADR-0018](../adr/0018-ingredient-catalog-and-filtering.md#最终共识确认)，遵守 [ADR-0017](../adr/0017-remove-pantry-and-shopping-list.md)。验收见 [Phase 8 验收清单](../acceptance/phase-8-checklist.md)。
+> **状态**：A、B 组已实施（食材身份与迁移、审核资料与导入发布）；C 组已实施——统一安全过滤接入筛选／首页 today、quick／相关菜谱，AI 搜索的多食材按稳定身份全部包含由 [#11](https://github.com/jokerwon/shiguang/issues/11)（Phase 8-7）交付，见 [Phase 8-7 交付记录](./phase-8-7-implementation.md)；D 组部分实施（列表／详情／筛选多选／状态说明），E 组待补。证据见 [Phase 8-1 交付记录](./phase-8-1-implementation.md)。依据 [ADR-0018](../adr/0018-ingredient-catalog-and-filtering.md#最终共识确认)，遵守 [ADR-0017](../adr/0017-remove-pantry-and-shopping-list.md)。验收见 [Phase 8 验收清单](../acceptance/phase-8-checklist.md)。
 
 **规格来源**：[GitHub Issue #5](https://github.com/jokerwon/shiguang/issues/5)（`ready-for-agent`）；用户已确认复用既有 Jest 与真实应用冒烟的测试边界。
 
@@ -86,8 +86,10 @@
 
 本轮（#6 / Phase 8-1）记录见 [phase-8-1-implementation.md](./phase-8-1-implementation.md)：迁移与生成输出、备份与恢复演练、导入前后数据库数字、内容来源与人工审核依据、真实浏览器走查与键盘/移动端结果、测试与 lint 的真实输出（含既有失败归属）。
 
-尚未完成：D 组 Web 收尾（筛选交互细化与布局复核）与 E 组全量交付证据；C/D/F 的**安全约束下**验收细节，以及 AI 真实 SSE 冒烟，仍需在父票内补齐。
+尚未完成：D 组 Web 收尾（筛选交互细节复核——多选与安全说明已由 [#10](https://github.com/jokerwon/shiguang/issues/10) 交付，剩候选确认交互与移动端/键盘复核）与 E 组全量交付证据；C6/C7 的逐入口一致安全核对仍需在父票内补齐（AI 侧多食材与安全说明已由 #11 交付）。
 
 `#8`（按别名和分类发现食材）把食材发现收敛为**身份优先**：名称／别名整串相等才算身份命中，子串只作「相近候选」；新增 `GET /ingredients/identify` 供页面在搜索时解出唯一身份或候选。证据与遗留见 [phase-8-3-implementation.md](./phase-8-3-implementation.md)。
+
+`#11`（AI 搜索复用多食材筛选）把 AI 搜索的食材条件收敛为**稳定身份的全部包含**：逐词经 `IngredientService.identify` 归一，复用 `recipeIdsContainingAll` 取交集；歧义/未收录/空白名称如实报错不放宽条件，安全排除与「库里没有」给出可区分说明。证据与遗留见 [phase-8-7-implementation.md](./phase-8-7-implementation.md)。
 
 Phase 7 已记录 Web lint／类型检查的既有限制；本期按实际输出区分，不能把历史结果当成本期运行结果，也不能为消除文档上的失败而放宽检查。

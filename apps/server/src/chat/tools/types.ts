@@ -2,7 +2,7 @@
 // 工具 execute 内通过闭包捕获 userId，service 通过依赖注入——
 // 这样 createChatTools 是纯函数，单测可注入 fake service（参考 recommendation.scoring.spec.ts）。
 import type { Recipe } from 'generated/prisma/client';
-import type { IngredientIdentityView } from '../../ingredient/ingredient.service';
+import type { IngredientIdentifyResult } from '../../ingredient/ingredient.service';
 import type {
   RecipeWithIngredientLinks,
   RecipeSafetyService,
@@ -11,10 +11,11 @@ import type {
 /** 只读工具 + 写工具需要的 service 能力 */
 export interface ChatToolDeps {
   /**
-   * 已发布食材身份表（`IngredientService.identifyIn` 的输入）：AI 工具把自由文本
-   * 名称/别名归一为稳定身份，歧义时给出候选而不是擅自选一个（ADR-0018）。
+   * 身份解析（`IngredientService.identify`）：名称/别名整体解析为稳定身份，
+   * 命中多个身份只给候选，不擅自选一个（ADR-0018）。
+   * 工具侧逐词调用后自行区分命中/歧义/未收录，不另写一套名称匹配。
    */
-  ingredientIdentities: () => Promise<IngredientIdentityView[]>;
+  identifyIngredient: (term: string) => Promise<IngredientIdentifyResult>;
   /**
    * 全部包含语义（复用 `IngredientService.recipeIdsContainingAll`）：
    * 给定身份集合与菜谱关联，返回同时包含全部身份的菜谱 id。

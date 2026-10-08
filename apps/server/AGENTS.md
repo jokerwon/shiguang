@@ -123,7 +123,7 @@ src/
 
 ### AI 对话（ADR-0006/0009/0010）
 
-- **注入演进（ADR-0009/0017）**：保留偏好上下文；候选菜谱由 `search_recipes` 工具按需查询；库存上下文与库存工具已移除。`search_recipes` 先过忌口/过敏原硬过滤再排序。
+- **注入演进（ADR-0009/0017/0018）**：保留偏好上下文；候选菜谱由 `search_recipes` 工具按需查询；库存上下文与库存工具已移除。`search_recipes` 的参数化流程：食材条件（`ingredients`，名称/别名逐词经 `IngredientService.identify` 归一为稳定身份，复用 `recipeIdsContainingAll` 做全部包含）→ 关键词/菜系/标签/营养 → 统一安全过滤（保留排除条数与原因）→ 打分排序。歧义/未收录/空白食材返回 `error` 且不做筛选；安全排除与真实无结果给出可区分的 `note`（#11 / Phase 8-7）。
 - **tool-loop**：`streamText({ tools, stopWhen: stepCountIs(5) })`，工具经 `createChatTools(deps, userId)` 工厂闭包捕获 userId。按原料检索使用菜谱自身 `Recipe.ingredients`，不读取用户库存。
 - **写工具幂等**：`set_favorite` 用幂等 set 语义（`FavoriteService.set`，toggle 对 AI 危险）。库存写工具已由 ADR-0017 删除。
 - **偏好草稿（ADR-0012）**：`update_preferences` 工具**结构上不落库**——`execute` 只产出「操作集草稿」（`addDisliked`/`removeDisliked`/`addAllergens`/`removeAllergens`/`setHealthGoal`），读当前偏好仅作快照，不接触任何写 service；E4 红线（「你看着办直接改」不得绕过确认）由架构保证，确认只认前端按钮。prompt 规范禁止声称「已保存/已记住」。
@@ -135,7 +135,7 @@ src/
 
 - `RecommendationService` 只注入 PrismaService（PrismaModule 全局），硬过滤读取 UserPreference；不 import 已移除的 Pantry 模块。
 - 算法：硬过滤（忌口 ∪ 过敏原）→ 时间适配 3/11 + 健康目标 3/11 + 新鲜度轮换 5/11；轮换种子 = FNV-1a(userId + 当天日期)，无状态、当天稳定按天轮换（ADR-0017）。
-- **依赖方向**：ChatModule → RecipeModule / FavoriteModule / PreferenceModule / ConversationModule（单向，无循环）。推荐打分仍是首页与 `search_recipes` 工具的单一事实源。
+- **依赖方向**：ChatModule → RecipeModule / IngredientModule / FavoriteModule / PreferenceModule / ConversationModule（单向，无循环）。推荐打分仍是首页与 `search_recipes` 工具的单一事实源。
 
 ### 数据库 — PostgreSQL + Prisma
 
