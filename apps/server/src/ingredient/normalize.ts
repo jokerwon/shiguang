@@ -28,6 +28,17 @@ export function normalizeIngredientText(raw: string): string {
   return splitIngredientNote(raw).name;
 }
 
+/**
+ * 关联行 → 展示写法：`note` 已在展示名里时不重复补括号。
+ * 与 Web 详情的渲染规则一致（ADR-0019：正文只剩关联行一份）。
+ */
+export function displayIngredientName(
+  name: string,
+  note: string | null,
+): string {
+  return note && !name.includes(note) ? `${name}（${note}）` : name;
+}
+
 /** 资料条目提供的最小结构化形状（避免与 Prisma 类型耦合） */
 export interface IngredientCatalogEntry {
   name: string;
@@ -137,18 +148,14 @@ export interface RecipeLinkResolution<T> {
   links: T[];
   /** 未收录、未发布或缺少原料名的原料，逐条列出菜谱与写法 */
   rejected: string[];
-  /**
-   * 与已保留写法指向同一身份的项（同身份多写法，如「花椒」+「花椒粉」）：
-   * 合并为一条关联是既有语义，但被合并项的用量不在关联表里，需如实上报。
-   */
-  merged: { name: string; into: string }[];
 }
 
 /**
  * 把菜谱正文解析成「写法 → 稳定身份」的关联（发布链路的共同入口）。
- * - 未收录 / 未发布 / 缺原料名 → 进 `rejected`，调用方必须整体拒绝该菜谱；
- * - 同身份多写法 → 保留第一条（`dedupeIngredientLinks` 语义），其余记入 `merged`，
- *   不在这里猜该合并还是拆身份，也不把被合并项的用量当作已发布。
+ * 未收录 / 未发布 / 缺原料名 → 进 `rejected`，调用方必须整体拒绝该菜谱。
+ *
+ * 同一身份的多种写法（「花椒」+「花椒粉」）各保留一条关联行（ADR-0019）：
+ * 主键是 (recipeId, position)，用量与说明互不覆盖，不再合并丢弃。
  */
 export function resolveRecipeLinks<T>(
   recipe: RecipeIngredientsView,
@@ -165,21 +172,9 @@ export function resolveRecipeLinks<T>(
     idByName,
   );
   const rejectedAll = rejected.map((r) => `「${recipe.label}」${r}`);
+  if (rejectedAll.length) return { links: [], rejected: rejectedAll };
 
-  // 同身份多写法只保留第一条（与 dedupeIngredientLinks 同语义），其余条目记入 merged
-  const merged: { name: string; into: string }[] = [];
-  const keptByIdentity = new Map<string, RecipeIngredientLink>();
-  for (const item of built) {
-    const kept = keptByIdentity.get(item.ingredientId);
-    if (kept) {
-      merged.push({ name: item.name, into: kept.name });
-      continue;
-    }
-    keptByIdentity.set(item.ingredientId, item);
-  }
-  if (rejectedAll.length) return { links: [], rejected: rejectedAll, merged };
-
-  const links = [...keptByIdentity.values()]
+  const links = built
     .sort((a, b) => a.position - b.position)
     .map((item) =>
       link(
@@ -193,26 +188,7 @@ export function resolveRecipeLinks<T>(
       ),
     );
 
-  return { links, rejected: [], merged };
-}
-
-/**
- * 关联去重：同一身份的多种写法（「花椒」与「花椒粉」）只保留第一条，
- * 用量与说明按原顺序保留在正文 JSON 中，关联表每个身份至多一行。
- * 同时收录别名与主名时它俩指向同一身份，同样合并。
- */
-export function dedupeIngredientLinks<
-  T extends { ingredientId: string; position: number },
->(links: T[]): T[] {
-  const seen = new Set<string>();
-  return links
-    .slice()
-    .sort((a, b) => a.position - b.position)
-    .filter((link) => {
-      if (seen.has(link.ingredientId)) return false;
-      seen.add(link.ingredientId);
-      return true;
-    });
+  return { links, rejected: [] };
 }
 
 /** 全部包含语义：菜谱必须同时包含全部所选食材身份（允许还有其他原料） */

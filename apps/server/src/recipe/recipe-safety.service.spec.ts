@@ -13,7 +13,6 @@ import { evaluateRecipeSafety, type RecipeIngredientView } from './safety';
 import {
   buildRawIndex,
   buildRecipeIngredientLinks,
-  dedupeIngredientLinks,
   findAmbiguousRawNames,
 } from '../ingredient/normalize';
 
@@ -97,13 +96,21 @@ describe('归一：同物异名与环境差异', () => {
     expect(rejected[0]).toContain('不存在的原料');
   });
 
-  it('同一身份的多种写法在关联里去重，位置按原顺序', () => {
-    const links = dedupeIngredientLinks([
-      { ingredientId: 'a', position: 2 },
-      { ingredientId: 'b', position: 0 },
-      { ingredientId: 'a', position: 1 },
+  it('同一身份的多种写法各保留一行（ADR-0019），位置按原顺序', () => {
+    const { links, rejected } = buildRecipeIngredientLinks(
+      [
+        { name: '花椒', amount: '1小撮' },
+        { name: '花椒粉', amount: '1茶匙' },
+      ],
+      buildRawIndex([{ name: '花椒', rawNames: ['花椒', '花椒粉'] }]),
+      new Map([['花椒', 'id-huajiao']]),
+      'r1',
+    );
+    expect(rejected).toEqual([]);
+    expect(links.map((l) => [l.name, l.amount, l.position])).toEqual([
+      ['花椒', '1小撮', 0],
+      ['花椒粉', '1茶匙', 1],
     ]);
-    expect(links.map((l) => l.position)).toEqual([0, 1]);
   });
 });
 
@@ -157,10 +164,10 @@ describe('安全判断：安全设置优先与可解释排除', () => {
 
 describe('RecipeSafetyService：设置来自当前用户服务端上下文', () => {
   const recipe = {
-    ingredients: [{ name: '鸡蛋', amount: '2个' }],
     ingredientLinks: [
       {
         name: '鸡蛋',
+        amount: '2个',
         position: 0,
         note: null,
         ingredient: {

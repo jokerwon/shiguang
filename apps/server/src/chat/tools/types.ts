@@ -1,7 +1,6 @@
 // 工具依赖契约（W1.4）：定义工具集需要的 service 接口。
 // 工具 execute 内通过闭包捕获 userId，service 通过依赖注入——
 // 这样 createChatTools 是纯函数，单测可注入 fake service（参考 recommendation.scoring.spec.ts）。
-import type { Recipe } from 'generated/prisma/client';
 import type { IngredientIdentifyResult } from '../../ingredient/ingredient.service';
 import type {
   RecipeWithIngredientLinks,
@@ -31,10 +30,10 @@ export interface ChatToolDeps {
   }>;
   /** 统一安全判断（身份/别名/过敏原关系/信息不足），与页面筛选同语义 */
   safety: RecipeSafetyService;
-  /** 全量菜谱；带稳定身份关联时安全判断才能覆盖别名与过敏原关系 */
-  findRecipes: () => Promise<(Recipe & Partial<RecipeWithIngredientLinks>)[]>;
-  /** 单道菜谱详情 */
-  findRecipeById: (id: string) => Promise<Recipe | null>;
+  /** 全量菜谱；确定带稳定身份关联（ADR-0019：原料只此一份，安全与关键词都读它） */
+  findRecipes: () => Promise<RecipeWithIngredientLinks[]>;
+  /** 单道菜谱详情（同样带关联行，否则原料为空） */
+  findRecipeById: (id: string) => Promise<RecipeWithIngredientLinks | null>;
   /** 收藏列表 */
   favoriteFindAll: (userId: string) => Promise<string[]>;
   /** 幂等 set 收藏（ADR-0009 写工具语义） */

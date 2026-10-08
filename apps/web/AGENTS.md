@@ -56,7 +56,7 @@ app/
     ingredient/[id]/page.tsx # 食材详情 — 审核资料、参考来源、相关菜谱与保守安全排除说明
     favorite/page.tsx     # 收藏夹 — 已收藏菜谱列表
     settings/page.tsx     # 我的 — 偏好档案（忌口/过敏原/健康目标）
-    recipe/[id]/page.tsx  # 菜谱详情页 — 步骤/Recipe.ingredients 用量、营养；原料按接口携带的 ingredientId 链接资料页
+    recipe/[id]/page.tsx  # 菜谱详情页 — 步骤/原料用量（原料来自接口，ADR-0019 后不再有自由文本列）、营养；原料按接口携带的 ingredientId 链接资料页
 ```
 
 ## 认证机制（ADR-0013：双 token）
@@ -86,7 +86,7 @@ app/
 
 - **`lib/api.ts`** — `request<T>()` 自动拼 `API_BASE` + 附 Bearer；失败抛 `ApiError`（带 `status`，401 可识别 → logout）
 - **`lib/fetcher.ts`** — SWR fetcher 复用 `request()`，所有 SWR key 天然带鉴权
-- **`@shiguang/domain`** — 类型、分类常量与仍有消费者的领域函数；`Recipe.ingredients` 用量与按原料搜索不等同于用户库存（ADR-0015/0017）
+- **`@shiguang/domain`** — 类型、分类常量与仍有消费者的领域函数；菜谱原料（`RecipeIngredient`，含 `ingredientId`）与按原料搜索不等同于用户库存（ADR-0015/0017/0019）
 - **首页为何 client 端取数**：token 在 localStorage，RSC 服务端 fetch 拿不到 Bearer，个性化端点只能 client SWR（骨架屏兜底首屏）；详情页是公开端点，保留 RSC
 
 ## 共享组件

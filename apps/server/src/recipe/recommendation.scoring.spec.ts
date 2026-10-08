@@ -15,7 +15,6 @@ const recipe = (over: Partial<ScorableRecipe> = {}): ScorableRecipe => ({
   kcal: 400,
   carb: 40,
   protein: 20,
-  ingredients: [{ name: '鸡蛋' }, { name: '番茄' }, { name: '盐' }],
   ...over,
 });
 

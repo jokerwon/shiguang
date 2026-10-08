@@ -114,20 +114,16 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
             </div>
           ) : (
             <ul className="flex flex-col pt-4">
-              {r.ingredients.map((i) => (
+              {r.ingredients.map((i, idx) => (
                 <li
-                  key={i.name}
+                  key={idx}
                   className="flex justify-between border-b border-border py-2.5 text-sm last:border-b-0"
                 >
-                  {/* 身份由菜谱接口携带（ingredientId），不做客户端名称匹配（ADR-0018） */}
-                  {i.ingredientId ? (
-                    <Link href={`/ingredient/${i.ingredientId}`} className="underline">
-                      {i.name}
-                    </Link>
-                  ) : (
-                    <span>{i.name}</span>
-                  )}
-                  {/* 说明已写在正文名里时不再补括号，避免重复 */}
+                  {/* 身份由菜谱接口携带（ADR-0019：原料即关联行，必有 id），不做客户端名称匹配 */}
+                  <Link href={`/ingredient/${i.ingredientId}`} className="underline">
+                    {i.name}
+                  </Link>
+                  {/* note 是括号说明的原文，名称里没有时补括号 */}
                   <span className="font-mono text-muted-foreground">
                     {i.amount}
                     {i.note && !i.name.includes(i.note) ? `（${i.note}）` : ''}

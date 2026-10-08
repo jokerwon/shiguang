@@ -73,7 +73,6 @@ async function main() {
     }
 
     const rejected: string[] = [];
-    const merged: string[] = [];
     const linksByRecipe = new Map<string, RecipeIngredientLink[]>();
     for (const r of recipes) {
       const outcome = resolveRecipeLinks<RecipeIngredientLink>(
@@ -86,11 +85,6 @@ async function main() {
         rejected.push(...outcome.rejected);
         continue;
       }
-      for (const m of outcome.merged) {
-        merged.push(
-          `「${r.name}」的「${m.name}」与「${m.into}」指向同一食材身份，已合并为一条关联（被合并项的用量不写进关联表）`,
-        );
-      }
       linksByRecipe.set(r.name, outcome.links);
     }
     if (rejected.length) {
@@ -98,32 +92,25 @@ async function main() {
         `菜谱原料存在无法归一的写法，未写入任何数据：\n  ${rejected.join('\n  ')}`,
       );
     }
-    if (merged.length) {
-      console.warn(
-        `⚠️ 同身份多写法合并 ${merged.length} 处：\n  ${merged.join('\n  ')}`,
-      );
-    }
 
-    // 幂等：按 name upsert；update/create 同用校验过的 SeedRecipe，避免字段手抄漂移。
-    // 正文与关联同一事务提交：分开写会在中断/失败时留下「新正文 + 空关联」，
-    // 那会让按 position 的身份链接与按食材筛选同时失效。
+    // 幂等：按 name upsert；原料只写关联表（ADR-0019，唯一事实源），
+    // 菜谱行与关联同一事务提交：分开写会在中断/失败时留下「有菜谱、无原料」。
     for (const r of recipes) {
       const built = linksByRecipe.get(r.name) ?? [];
+      const { ingredients: _ingredients, ...row } = r;
       await prisma.$transaction(async (tx) => {
         const recipe = await tx.recipe.upsert({
           where: { name: r.name },
-          update: r,
-          create: r,
+          update: row,
+          create: row,
         });
-        // 关联按菜谱重建（身份与用量/说明来自同一份正文，重复运行不产生重复行）
+        // 关联按菜谱重建（重复运行不产生重复行）
         await tx.recipeIngredient.deleteMany({
           where: { recipeId: recipe.id },
         });
-        if (built.length) {
-          await tx.recipeIngredient.createMany({
-            data: built.map((link) => ({ ...link, recipeId: recipe.id })),
-          });
-        }
+        await tx.recipeIngredient.createMany({
+          data: built.map((link) => ({ ...link, recipeId: recipe.id })),
+        });
       });
     }
     console.log(

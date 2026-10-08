@@ -6,7 +6,7 @@
 
 | 文档 | 状态 | 说明 |
 |------|------|------|
-| 根 [CONTEXT.md](../CONTEXT.md) | 常驻 | 食材领域术语、别名、浏览分类与安全约束；已确认设计的实施状态见 ADR-0018，其他术语见 glossary.md |
+| 根 [CONTEXT.md](../CONTEXT.md) | 常驻 | 食材领域术语、别名、浏览分类与安全约束；已确认设计的实施状态见 ADR-0018，菜谱原料的形态见 ADR-0019，其他术语见 glossary.md |
 | [glossary.md](./glossary.md) | 常驻 | 领域术语表（Ubiquitous Language）。⚠️ 字段级事实以 `apps/server/prisma/schema.prisma` 为准，本表只定义概念语义 |
 | 根 [AGENTS.md](../AGENTS.md) / [apps/web/AGENTS.md](../apps/web/AGENTS.md) / [apps/server/AGENTS.md](../apps/server/AGENTS.md) | 常驻 | Agent 工作指令。各层 `AGENTS.md` 是唯一事实源；同层 `CLAUDE.md` 均为 `@AGENTS.md` 指针文件 |
 | [agents/](./agents/) | 常驻 | 工程技能配置：`issue-tracker.md`（GitHub Issues）／`triage-labels.md`（五个 triage 角色标签）／`domain.md`（域文档消费规则，single-context）。由 setup-matt-pocock-skills 生成，可直接手改 |
@@ -15,7 +15,7 @@
 
 | 文档 | 状态 | 说明 |
 |------|------|------|
-| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0018，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
+| [adr/](./adr/README.md) | 归档（只增不改） | ADR-0001 ~ 0019，含 Phase 总览；被取代的决策用 supersede 指针，不改原文 |
 
 ## 实施层（按 Phase）
 
@@ -37,6 +37,7 @@
 | 8-2 菜谱关联稳定食材身份 | [implementation/phase-8-2-implementation.md](./implementation/phase-8-2-implementation.md)（含验收证据与遗留边界）；逐项核对材料见 [phase-8-2-ingredient-mapping-review.md](./implementation/phase-8-2-ingredient-mapping-review.md) | 证据并入上方 phase-8 清单（A 组） | 已交付（内容复核待签字）——[#7](https://github.com/jokerwon/shiguang/issues/7)：菜谱载荷携带身份 id、详情按 id 跳转、seed 发布共用归一校验、生成侧选材白名单；220 行逐项核对表待维护者确认 |
 | 8-3 按别名和分类发现食材 | [implementation/phase-8-3-implementation.md](./implementation/phase-8-3-implementation.md)（含验收证据与遗留边界） | 证据并入上方 phase-8 清单（B 组、E1） | 已交付——[#8](https://github.com/jokerwon/shiguang/issues/8)：身份优先搜索（整串相等才算命中，子串只作「相近候选」）、`GET /ingredients/identify` 名称解析与歧义候选、列表页直达/候选/无命中三态；真实浏览器与移动端、键盘走查与会话记录见实施清单 |
 | 8-7 AI 搜索复用多食材筛选 | [implementation/phase-8-7-implementation.md](./implementation/phase-8-7-implementation.md)（含验收证据与遗留边界） | 证据并入下方 phase-8 清单（F 组与 D1 仍**未勾选**，待与 #9 的逐入口核对一并复核） | 已交付——[#11](https://github.com/jokerwon/shiguang/issues/11)：`search_recipes` 增 `ingredients`（名称/别名→复用 `IngredientService.identify` 归一→`recipeIdsContainingAll` 全部包含）、歧义/未收录/空白如实报错不扩大查询、安全排除与无匹配给出可区分说明、确定性回归（11 例）与真实 SSE 冒烟（正向、忌口排除、信息不足、调味料、歧义） |
+| 9 菜谱原料单一事实源 | [implementation/phase-9-implementation.md](./implementation/phase-9-implementation.md)（含迁移证据与遗留边界） | 无独立验收清单（证据见实施清单表格） | 已交付——[ADR-0019](./adr/0019-recipe-ingredient-single-source.md)：`RecipeIngredient` 主键改 `(recipeId, position)`、删除 `Recipe.ingredients`，读取/写入/归一/AI 工具全部改读关联行；live 库迁移后 88 道 / 660 项原料全部带身份，与迁移前备份逐行对账 0 差异 |
 
 ## 运行层
 

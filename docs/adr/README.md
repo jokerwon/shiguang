@@ -24,6 +24,7 @@
 | [ADR-0016](./0016-remove-mobile-client.md) | 移除移动客户端:删 `apps/mobile`,平台回归 Web 单客户端;保留 `packages/domain` 与 body 双轨 | — |
 | [ADR-0017](./0017-remove-pantry-and-shopping-list.md) | 移除库存与购物清单：纯偏好排序、首页筛选入口、备份及历史 JSON 清理的一次性例外 | 7 |
 | [ADR-0018](./0018-ingredient-catalog-and-filtering.md) | 食材资料库、稳定身份与菜谱关联、别名共用、全部包含筛选及安全边界；整体设计已确认，未实施 | 8 |
+| [ADR-0019](./0019-recipe-ingredient-single-source.md) | 菜谱原料以 `RecipeIngredient` 为唯一事实源：主键改 (recipeId, position)，下线 `Recipe.ingredients` | 9 |
 
 ## Phase 总览
 
@@ -72,5 +73,14 @@
 **Phase 7(库存与购物清单下线,已交付)** — ADR-0017
 - 实施清单:[implementation/phase-7-implementation.md](../implementation/phase-7-implementation.md)（含迁移、回滚、运行时与质量检查证据）
 - 验收清单:[acceptance/phase-7-checklist.md](../acceptance/phase-7-checklist.md)（已验收；既有 Web 质量限制如实记录）
+
+**Phase 8(食材资料库与按食材筛选,活跃)** — ADR-0018
+- 实施清单:[implementation/phase-8-implementation.md](../implementation/phase-8-implementation.md)（8-1/8-2/8-3/8-7 各自独立成篇）
+- 验收清单:[acceptance/phase-8-checklist.md](../acceptance/phase-8-checklist.md)
+
+**Phase 9(菜谱原料单一事实源,已交付)** — ADR-0019
+- 关联行 `(recipeId, position)` 成为原料唯一事实源，下线 `Recipe.ingredients` Json 列
+- 读取/写入/归一/AI 工具全部改读关联行；同身份多写法各保留一行，不再合并丢用量
+- 实施清单:[implementation/phase-9-implementation.md](../implementation/phase-9-implementation.md)（含迁移、备份对账与运行时证据）
 
 **术语**见 [glossary.md](../glossary.md)。

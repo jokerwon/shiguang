@@ -1,8 +1,11 @@
 // 只读工具的纯逻辑（W1.1）：从 tool() 包装中抽出，便于单测（无需导入 ai）。
 // search_recipes 先过 blocked 硬过滤再排序（ADR-0006 安全红线），
 // 复用 recommendation.scoring 的打分，单一事实源。返回精简字段控制 token。
-import type { Recipe } from 'generated/prisma/client';
-import { normalizeIngredientText } from '../../ingredient/normalize';
+import {
+  displayIngredientName,
+  normalizeIngredientText,
+} from '../../ingredient/normalize';
+import type { RecipeWithIngredientLinks } from '../../recipe/recipe-safety.service';
 import {
   CUISINE_LABELS,
   PREF_LABELS,
@@ -17,8 +20,8 @@ import {
 } from '../../recipe/recommendation.scoring';
 import type { ChatToolDeps, RecipeSummary } from './types';
 
-/** 将 Recipe 转为精简摘要（控制 tool result token） */
-export function toSummary(r: Recipe): RecipeSummary {
+/** 将菜谱转为精简摘要（控制 tool result token）；原料取自关联行（ADR-0019） */
+export function toSummary(r: RecipeWithIngredientLinks): RecipeSummary {
   const resp = toResponse(r);
   return {
     id: resp.id,
@@ -182,8 +185,8 @@ export async function runSearchRecipes(
     filtered = filtered.filter(
       (r) =>
         r.name.toLowerCase().includes(kw) ||
-        (r.ingredients as unknown as { name: string }[]).some((i) =>
-          i.name.toLowerCase().includes(kw),
+        (r.ingredientLinks ?? []).some((l) =>
+          displayIngredientName(l.name, l.note).toLowerCase().includes(kw),
         ),
     );
   }
@@ -218,10 +221,7 @@ export async function runSearchRecipes(
   const exclusions: { reason: string; kind: 'blocked' | 'unknown' }[] = [];
   for (const recipe of filtered) {
     const verdict = deps.safety.evaluate(
-      {
-        ingredients: recipe.ingredients,
-        ingredientLinks: recipe.ingredientLinks ?? [],
-      },
+      { ingredientLinks: recipe.ingredientLinks ?? [] },
       safetySignals,
       allergens,
     );

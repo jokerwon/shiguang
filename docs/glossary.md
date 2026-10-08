@@ -36,7 +36,7 @@ Phase 7 前曾表示用户“现有食材”的服务端持久化记录。该实
 ## 派生概念 (Derived Concepts)
 
 ### 匹配度 (Match Score)
-Phase 7 前曾表示菜谱与用户库存的食材重叠度；该派生概念、UI 与算法已由 [ADR-0017](./adr/0017-remove-pantry-and-shopping-list.md) 移除。不要与 Recipe.ingredients 的原料内容或按原料搜索混淆。
+Phase 7 前曾表示菜谱与用户库存的食材重叠度；该派生概念、UI 与算法已由 [ADR-0017](./adr/0017-remove-pantry-and-shopping-list.md) 移除。不要与菜谱自身的原料内容（`RecipeIngredient`，ADR-0019）或按原料搜索混淆。
 
 ### 缺料 (Missing Ingredients)
 Phase 7 前曾表示菜谱原料中未被用户库存覆盖的部分；库存移除后该派生概念不再存在。
@@ -66,7 +66,7 @@ Phase 7 前曾是基于缺料的详情页即时快照；该 UI 与纯函数已�
 - Phase 2 演进（ADR-0009）：候选菜谱不再每轮注入，改为 `search_recipes` 工具按需查询；库存上下文已由 ADR-0017 移除。
 
 ### 工具调用 (Tool Calling)
-Phase 2 起 AI 对话的架构（ADR-0009）。模型通过 function calling 主动调用后端工具：只读工具（`search_recipes` / `get_recipe` / `get_favorites` / `get_preferences`）与写工具（收藏直接执行；偏好档案走待确认草稿）。推荐算法仍是工具背后的单一事实源；按原料搜索使用菜谱自身的 `Recipe.ingredients`，不读取库存。
+Phase 2 起 AI 对话的架构（ADR-0009）。模型通过 function calling 主动调用后端工具：只读工具（`search_recipes` / `get_recipe` / `get_favorites` / `get_preferences`）与写工具（收藏直接执行；偏好档案走待确认草稿）。推荐算法仍是工具背后的单一事实源；按原料搜索使用菜谱自身的原料关联行（`RecipeIngredient`，ADR-0019），不读取库存。
 
 ### 分级确认 (Tiered Confirmation)
 写工具按误操作后果分两级处理（ADR-0009）：

@@ -26,7 +26,6 @@ export interface ScorableRecipe {
   kcal: number;
   carb: number;
   protein: number;
-  ingredients: { name: string }[];
 }
 
 /** 本地日期 → YYYY-MM-DD（部署要求 TZ=Asia/Shanghai） */
@@ -44,7 +43,6 @@ export function rankRecipes<
     kcal: number;
     carb: number;
     protein: number;
-    ingredients: unknown;
   },
 >(
   recipes: R[],
@@ -63,7 +61,6 @@ export function rankRecipes<
           kcal: r.kcal,
           carb: r.carb,
           protein: r.protein,
-          ingredients: (r.ingredients as ScorableRecipe['ingredients']) ?? [],
         },
         signals,
         ctx,

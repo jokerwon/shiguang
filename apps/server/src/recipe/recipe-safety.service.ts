@@ -3,16 +3,19 @@
 import { Injectable } from '@nestjs/common';
 import type { IngredientCategory, Recipe } from 'generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { displayIngredientName } from '../ingredient/normalize';
 import {
   evaluateRecipeSafety,
   type RecipeIngredientView,
   type UserSafetySignals,
 } from './safety';
 
-/** 带稳定身份的菜谱原料行（关联表 + 身份 + 过敏原关系） */
+/** 带稳定身份的菜谱原料行（关联表 + 身份 + 过敏原关系，ADR-0019 唯一事实源） */
 export interface RecipeIngredientLinkRow {
+  /** 展示名（剥离括号说明后的主体名） */
   name: string;
-  /** 正文数组下标（建立关联时写入）：详情按它把身份配回正文项 */
+  amount: string;
+  /** 菜谱内下标：决定展示顺序，同一菜谱内唯一 */
   position: number;
   /** 括号内的必要说明（如「西冷或眼肉」） */
   note: string | null;
@@ -32,7 +35,6 @@ export type RecipeWithIngredientLinks = Recipe & {
 
 /** 安全判断所需的最小输入（正式查询与单测 fake 都满足它） */
 export interface SafetyInput {
-  ingredients: unknown;
   ingredientLinks: RecipeIngredientLinkRow[];
 }
 
@@ -99,24 +101,16 @@ export class RecipeSafetyService {
   }
 }
 
-/** 菜谱原料正文与稳定身份成对展开：正文里出现的每条原料都要有一条身份视图 */
+/** 关联行 → 安全视图：每条关联行一个身份视图，没有「按名称配对 + 兜底取第一条」的旁路 */
 export function toIngredientViews(recipe: SafetyInput): RecipeIngredientView[] {
-  const links = recipe.ingredientLinks;
-  return (recipe.ingredients as { name: string; amount: string }[]).map(
-    (raw) => {
-      const link = links.find((l) => l.name === raw.name) ?? links[0];
-      return {
-        rawName: raw.name,
-        identity: link
-          ? {
-              ingredientId: link.ingredient.id,
-              name: link.ingredient.name,
-              aliases: link.ingredient.aliases.map((a) => a.alias),
-              category: link.ingredient.category,
-              allergens: link.ingredient.allergens.map((a) => a.allergen),
-            }
-          : null,
-      };
+  return recipe.ingredientLinks.map((link) => ({
+    rawName: displayIngredientName(link.name, link.note),
+    identity: {
+      ingredientId: link.ingredient.id,
+      name: link.ingredient.name,
+      aliases: link.ingredient.aliases.map((a) => a.alias),
+      category: link.ingredient.category,
+      allergens: link.ingredient.allergens.map((a) => a.allergen),
     },
-  );
+  }));
 }

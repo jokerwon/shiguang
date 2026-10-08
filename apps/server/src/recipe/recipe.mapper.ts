@@ -47,22 +47,12 @@ export const TAG_UP: Record<string, Tag> = {
 
 /**
  * 将 Prisma 返回的 Recipe 转为前端可用的格式（返回共享域层 Recipe 类型）。
- * 原料的稳定身份来自 `RecipeIngredient` 关联：调用方必须带 `ingredientLinks`
- * （含 `ingredient`）读取。这里不做按名称的二次猜测（ADR-0018）。
- * 未关联身份的原料（如同一身份的第二种写法被合并掉的那一项）保持无 id，
- * 前端只做「有 id 才可跳转」的降级展示——这属于内容侧待复核项，不在前端猜。
+ * 原料来自 `RecipeIngredient` 关联行（ADR-0019，唯一事实源）：按 `position`
+ * 升序派生正文，`name` 是展示名、`note` 是括号说明，不读第二份 Json 正文。
  */
 export function toResponse(
   recipe: Recipe & { ingredientLinks?: RecipeIngredientLinkRow[] },
 ): DomainRecipe {
-  const raw = (recipe.ingredients as { name: string; amount: string }[]) ?? [];
-  // 关联行的 `position` 是正文数组下标（normalize.ts 建立关联时写入），
-  // 必须按它配对：同一身份的多种写法合并后 position 会出现空洞，
-  // 用数组顺序会整体错位（如「夫妻肺片」的 花椒粉 被合并后，后续原料全部前移）。
-  const linkByPosition = new Map(
-    (recipe.ingredientLinks ?? []).map((l) => [l.position, l]),
-  );
-
   return {
     id: recipe.id,
     name: recipe.name,
@@ -75,16 +65,14 @@ export function toResponse(
     fat: recipe.fat,
     img: recipe.img,
     tags: recipe.tags.map((t) => TAG_DOWN[t] ?? t.toLowerCase()),
-    ingredients: raw.map((item, i) => {
-      const link = linkByPosition.get(i);
-      if (!link) return item;
-      return {
-        name: item.name,
-        amount: item.amount,
+    ingredients: [...(recipe.ingredientLinks ?? [])]
+      .sort((a, b) => a.position - b.position)
+      .map((link) => ({
+        name: link.name,
+        amount: link.amount,
         ingredientId: link.ingredient.id,
         ...(link.note ? { note: link.note } : {}),
-      };
-    }),
+      })),
     steps: recipe.steps as string[],
   };
 }

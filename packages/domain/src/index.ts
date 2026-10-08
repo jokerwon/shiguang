@@ -4,11 +4,8 @@
 export interface Ingredient {
   name: string;
   amount: string;
-  /**
-   * 稳定食材身份 id（ADR-0018）；菜谱详情据此跳转资料页。
-   * 缺失表示该写法尚未关联身份（历史数据或未归一原料），此时不生成链接。
-   */
-  ingredientId?: string;
+  /** 稳定食材身份 id（ADR-0019）：每条原料都来自关联行，必有身份，详情据此跳资料页 */
+  ingredientId: string;
   /** 括号内的必要说明（如「西冷或眼肉」）；身份只按主体名，说明不丢 */
   note?: string;
 }

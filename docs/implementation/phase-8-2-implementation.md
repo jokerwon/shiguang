@@ -81,6 +81,6 @@
 
 - **内容复核未签字**：219 种写法 → 身份 的 219 行核对表与 34 组合并项仍未由维护者逐条确认（见核对表文档）；签字前 `reviewedAt` 只代表导入时间。
 - **「面粉」等值解析待 #11**：`ingredient.service.ts` 的 `resolveCandidates` 按 name/alias 精确匹配（当前全仓无调用方，不构成线上回归）；中筋面粉 改名后裸写「面粉」只走 rawNames 归一、不走等值解析。AI 侧食材解析接入（#11）时给 `中筋面粉` 补 `aliases: ['面粉']` 即可。
-- **花椒粉缺口**：按本轮确认的处理方式保持现状（不拆身份），已在上表 B3 与核对表中登记；若要拆成独立条目，需改 `published.ts` 后重跑 `pnpm ingredients:import` 与 `pnpm db:seed`。
-- **无 schema 变更**：本轮未新增迁移，`RecipeIngredient` 结构沿用 Phase 8-1。
+- **花椒粉缺口（已由 Phase 9 关闭）**：本轮按「不拆身份」保持现状；[ADR-0019](../adr/0019-recipe-ingredient-single-source.md) 把 `RecipeIngredient` 主键改为 `(recipeId, position)` 后，同身份多写法各保留一行，该缺口消失（详见 [phase-9](./phase-9-implementation.md)）。
+- **无 schema 变更**：本轮未新增迁移，`RecipeIngredient` 结构沿用 Phase 8-1；结构变更见 Phase 9。
 - 用户动作产生的数据（收藏、偏好会话）不受本轮影响；seed 只重建菜谱与原料关联，不触碰用户表。

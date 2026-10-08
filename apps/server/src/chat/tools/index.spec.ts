@@ -10,20 +10,29 @@ jest.mock('../../prisma/prisma.service', () => ({
 import { runSetFavorite, runUpdatePreferences } from './write-tools-logic';
 import { runSearchRecipes, runGetRecipe } from './read-tools-logic';
 import type { ChatToolDeps } from './types';
-import { RecipeSafetyService } from '../../recipe/recipe-safety.service';
+import {
+  RecipeSafetyService,
+  type RecipeWithIngredientLinks,
+} from '../../recipe/recipe-safety.service';
 import type { Recipe } from 'generated/prisma/client';
 import { IngredientService } from '../../ingredient/ingredient.service';
 
 /* ---- fake 工厂 ---- */
 
-/** 原料写法与稳定身份一一对应（正式查询由 RecipeIngredient 关联提供） */
-const linksFor = (ingredients: { name: string }[], over: Partial<Recipe>) => {
+/** 原料写法与稳定身份一一对应（ADR-0019：关联行就是原料本身，含展示名与用量） */
+const linksFor = (
+  ingredients: { name: string; amount?: string }[],
+  over: Partial<Recipe>,
+) => {
   const identity = (over as { identities?: Record<string, string[]> })
     .identities;
-  return ingredients.map((i) => {
+  return ingredients.map((i, position) => {
     const names = identity?.[i.name] ?? [i.name];
     return {
-      name: i.name,
+      name: names[0],
+      amount: i.amount ?? '适量',
+      position,
+      note: null,
       ingredient: {
         id: `id-${names[0]}`,
         name: names[0],
@@ -39,36 +48,35 @@ const linksFor = (ingredients: { name: string }[], over: Partial<Recipe>) => {
   });
 };
 
+/** `ingredients` 只作为构造关联行的输入方言，不进入 Recipe 行（ADR-0019 已删该列） */
 const recipe = (
-  over: Partial<Recipe> = {},
-): Recipe & {
-  ingredientLinks: ReturnType<typeof linksFor>;
-} => ({
-  id: 'r1',
-  name: '番茄炒蛋',
-  desc: '家常菜',
-  cuisine: 'HOME',
-  time: 15,
-  kcal: 300,
-  protein: 12,
-  carb: 10,
-  fat: 18,
-  img: '',
-  tags: ['QUICK'],
-  ingredients: [{ name: '番茄' }, { name: '鸡蛋' }],
-  steps: ['炒'],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  ...over,
-  ingredientLinks: linksFor(
-    (over.ingredients as { name: string }[] | undefined) ?? [
-      { name: '番茄' },
-      { name: '鸡蛋' },
-    ],
-    over,
-  ),
-});
-/** 从菜谱关联里汇总已发布身份表（正式实现由 `Ingredient` 表提供） */
+  over: Partial<Recipe> & {
+    ingredients?: { name: string; amount?: string }[];
+  } = {},
+): RecipeWithIngredientLinks => {
+  const source = over.ingredients ?? [{ name: '番茄' }, { name: '鸡蛋' }];
+  const rest = { ...over } as Record<string, unknown>;
+  delete rest['ingredients'];
+  return {
+    id: 'r1',
+    name: '番茄炒蛋',
+    desc: '家常菜',
+    cuisine: 'HOME',
+    time: 15,
+    kcal: 300,
+    protein: 12,
+    carb: 10,
+    fat: 18,
+    img: '',
+    tags: ['QUICK'],
+    steps: ['炒'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...rest,
+    ingredientLinks: linksFor(source, over),
+  };
+};
+
 const identitiesFrom = (
   recipes: (Recipe & { ingredientLinks?: unknown })[],
 ): { id: string; name: string; category: 'VEGETABLE'; aliases: string[] }[] => {
@@ -102,7 +110,7 @@ const identitiesFrom = (
 function makeDeps(
   opts: {
     favorites?: string[];
-    recipes?: Recipe[];
+    recipes?: RecipeWithIngredientLinks[];
     blocked?: string[];
     allergens?: string[];
     pref?: {

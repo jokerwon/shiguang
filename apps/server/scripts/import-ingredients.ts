@@ -15,6 +15,7 @@ import { PrismaClient } from '../generated/prisma/client';
 import { REVIEWED_INGREDIENTS } from '../prisma/ingredients/published';
 import {
   buildRawIndex,
+  displayIngredientName,
   findAmbiguousRawNames,
   resolveRecipeLinks,
   type RecipeIngredientLink,
@@ -101,16 +102,27 @@ async function main() {
       idByName.set(item.name, row.id);
     }
 
+    // 原料现在只有关联表一份（ADR-0019）：重新归一以现存关联行的展示名为输入，
+    // 与 seed 写的内容同源，重复运行不依赖已下线的正文 JSON 列。
     const recipes = await prisma.recipe.findMany({
-      select: { id: true, name: true, ingredients: true },
+      select: {
+        id: true,
+        name: true,
+        ingredientLinks: {
+          select: { name: true, amount: true, note: true, position: true },
+          orderBy: { position: 'asc' },
+        },
+      },
     });
     let links = 0;
-    const merged: string[] = [];
     for (const recipe of recipes) {
       const outcome = resolveRecipeLinks<RecipeIngredientLink>(
         {
           label: recipe.name,
-          ingredients: (recipe.ingredients ?? []) as { name: string; amount: string }[],
+          ingredients: recipe.ingredientLinks.map((l) => ({
+            name: displayIngredientName(l.name, l.note),
+            amount: l.amount,
+          })),
         },
         byRaw,
         idByName,
@@ -121,13 +133,8 @@ async function main() {
           `菜谱存在无法归一的原料，未写入任何关联：\n  ${outcome.rejected.join('\n  ')}`,
         );
       }
-      for (const m of outcome.merged) {
-        merged.push(
-          `「${recipe.name}」的「${m.name}」与「${m.into}」指向同一食材身份，已合并为一条关联（被合并项的用量不写进关联表）`,
-        );
-      }
-      // 正文关联的重建放进同一事务：deleteMany 与 createMany 分开提交，
-      // 中断后会留下「正文有原料、关联表为空」的半套状态（与 seed 的既有口径一致）。
+      // 关联的整体重建放进同一事务：deleteMany 与 createMany 分开提交，
+      // 中断后会留下「有菜谱、无原料」的半套状态（与 seed 的既有口径一致）。
       await prisma.$transaction(async (tx) => {
         await tx.recipeIngredient.deleteMany({ where: { recipeId: recipe.id } });
         if (outcome.links.length) {
@@ -135,9 +142,6 @@ async function main() {
         }
       });
       links += outcome.links.length;
-    }
-    if (merged.length) {
-      console.warn(`⚠️ 同身份多写法合并 ${merged.length} 处：\n  ${merged.join('\n  ')}`);
     }
 
     // 5. 离场清理：published.ts 是身份的唯一事实源，改名/拆分后不在文件里的

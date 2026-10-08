@@ -53,7 +53,7 @@ pnpm recipes:generate --batches 2         # 每个菜系生成 2 批（每批默
 pnpm recipes:generate --only sichuan,home # 只生成指定菜系
 ```
 
-生成结果**先入 staging 待审区，不直接入库**：脚本做字段/营养/去重校验（`src/recipe/recipe-draft.ts`），提示词把食材名限定在已发布选材白名单内（白名单外写法当场打印待处理）；人工抽检 staging JSON 后，`pnpm db:seed` 合并「`prisma/recipes-curated.ts` 人工精选 + staging」upsert 入库，并**同步重建 `RecipeIngredient` 关联**——seed 与 `ingredients:import` 共用 `normalize.ts` 的归一校验：未收录/未发布写法整批拒绝，同身份多写法保留第一条并逐条告警。重复运行不产生重复关联。
+生成结果**先入 staging 待审区，不直接入库**：脚本做字段/营养/去重校验（`src/recipe/recipe-draft.ts`），提示词把食材名限定在已发布选材白名单内（白名单外写法当场打印待处理）；人工抽检 staging JSON 后，`pnpm db:seed` 合并「`prisma/recipes-curated.ts` 人工精选 + staging」，菜谱行与原料关联同一事务写入（ADR-0019：`RecipeIngredient` 是唯一事实源，`Recipe` 不再有 ingredients 列）。seed 与 `ingredients:import` 共用 `normalize.ts` 的归一校验：未收录/未发布写法整批拒绝，同一身份的不同写法各保留一行。重复运行不产生重复关联。
 
 ### 长会话种子（Phase 3 验收前置，ADR-0012）
 
@@ -96,7 +96,7 @@ src/
   ingredient/
     ingredient.controller.ts  # GET /ingredients（身份优先搜索 + 单层分类）、GET /ingredients/identify（名称→身份）、GET /ingredients/:id、GET /ingredients/:id/recipes
     ingredient.service.ts     # 已发布资料读取（发布状态与资料来自数据库）；整串相等才算身份命中，子串只作显式候选
-    normalize.ts              # 纯函数：原料写法 → 稳定身份、括号说明剥离、歧义检出、关联去重、发布链路共用的 resolveRecipeLinks
+    normalize.ts              # 纯函数：原料写法 → 稳定身份、括号说明剥离、歧义检出、展示名还原（displayIngredientName）、发布链路共用的 resolveRecipeLinks
     publish-review.ts         # 纯函数：发布闸门（名称/审核简介/来源；过敏原关系需依据）
 
   recipe/
@@ -123,8 +123,8 @@ src/
 
 ### AI 对话（ADR-0006/0009/0010）
 
-- **注入演进（ADR-0009/0017/0018）**：保留偏好上下文；候选菜谱由 `search_recipes` 工具按需查询；库存上下文与库存工具已移除。`search_recipes` 的参数化流程：食材条件（`ingredients`，名称/别名逐词经 `IngredientService.identify` 归一为稳定身份，复用 `recipeIdsContainingAll` 做全部包含）→ 关键词/菜系/标签/营养 → 统一安全过滤（保留排除条数与原因）→ 打分排序。歧义/未收录/空白食材返回 `error` 且不做筛选；安全排除与真实无结果给出可区分的 `note`（#11 / Phase 8-7）。
-- **tool-loop**：`streamText({ tools, stopWhen: stepCountIs(5) })`，工具经 `createChatTools(deps, userId)` 工厂闭包捕获 userId。按原料检索使用菜谱自身 `Recipe.ingredients`，不读取用户库存。
+- **注入演进（ADR-0009/0017/0018/0019）**：保留偏好上下文；候选菜谱由 `search_recipes` 工具按需查询；库存上下文与库存工具已移除。`search_recipes` 的参数化流程：食材条件（`ingredients`，名称/别名逐词经 `IngredientService.identify` 归一为稳定身份，复用 `recipeIdsContainingAll` 做全部包含）→ 关键词（菜名与关联行展示名）/菜系/标签/营养 → 统一安全过滤（保留排除条数与原因）→ 打分排序。歧义/未收录/空白食材返回 `error` 且不做筛选；安全排除与真实无结果给出可区分的 `note`（#11 / Phase 8-7）。
+- **tool-loop**：`streamText({ tools, stopWhen: stepCountIs(5) })`，工具经 `createChatTools(deps, userId)` 工厂闭包捕获 userId。按原料检索使用菜谱自身的 `RecipeIngredient` 关联行，不读取用户库存。
 - **写工具幂等**：`set_favorite` 用幂等 set 语义（`FavoriteService.set`，toggle 对 AI 危险）。库存写工具已由 ADR-0017 删除。
 - **偏好草稿（ADR-0012）**：`update_preferences` 工具**结构上不落库**——`execute` 只产出「操作集草稿」（`addDisliked`/`removeDisliked`/`addAllergens`/`removeAllergens`/`setHealthGoal`），读当前偏好仅作快照，不接触任何写 service；E4 红线（「你看着办直接改」不得绕过确认）由架构保证，确认只认前端按钮。prompt 规范禁止声称「已保存/已记住」。
 - **持久化（ADR-0010/0011）**：body 只带 `conversationId? + message`，后端从 DB 取最近 20 条组装上下文（不信客户端全量，按 `seq desc` 滑窗）。无 conversationId 则创建会话（title = 首条消息截断 ~20 字），id 经响应头 `x-conversation-id` 回传前端。`toUIMessageStream` 的 `onFinish` 落库 assistant 消息（含 tool parts）；`appendMessage` 由应用层算 `seq = max(seq)+1`，配 `@@unique` 冲突重试。
@@ -144,11 +144,11 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 使用 `@prisma/adapter-pg` 直接连接 PostgreSQL，不依赖连接池。
 
 数据模型（`prisma/schema.prisma`）：
-- **Recipe** — 菜谱（id, name, desc, cuisine, time, kcal, protein/carb/fat, img, tags, ingredients, steps）。ingredients 为 Json（`{name, amount}[]`，正文与用量），steps 为 Json（string[]）。索引：cuisine, time
-- **Ingredient / IngredientAlias / IngredientAllergen / RecipeIngredient** — 食材稳定身份、同物异名别名、过敏原关系与菜谱关联（ADR-0018）。`RecipeIngredient` 保留菜谱内用量与括号说明（note）；发布状态由 `Ingredient.published` 承载，审核资料文件是发布输入，`pnpm ingredients:import` 是唯一发布通道。过敏原关系无记录 = 信息未核查，不等于确认不含
+- **Recipe** — 菜谱（id, name, desc, cuisine, time, kcal, protein/carb/fat, img, tags, steps）。steps 为 Json（string[]）。原料不在本表（ADR-0019）。索引：cuisine, time
+- **Ingredient / IngredientAlias / IngredientAllergen / RecipeIngredient** — 食材稳定身份、同物异名别名、过敏原关系与菜谱原料（ADR-0018/0019）。`RecipeIngredient` 是菜谱原料的唯一事实源：主键 `(recipeId, position)`（position 决定展示顺序，同一道菜可为同一身份保留多行，如「花椒」与「花椒粉」）；字段 name(展示名，已剥离括号说明) / amount / note(括号说明) / ingredientId。发布状态由 `Ingredient.published` 承载，审核资料文件是发布输入，`pnpm ingredients:import` 是唯一发布通道。过敏原关系无记录 = 信息未核查，不等于确认不含
 - **User** — 用户（id, email, passwordHash, displayName, avatarUrl）
 - **RefreshToken** — refresh token 轮换登记（ADR-0013；id, userId, tokenHash 唯一(bcrypt 哈希不落明文), expiresAt, createdAt；级联 FK；userId 索引）。一次一换，30 天滑动过期
-- **（已移除）PantryItem** — Phase 7 删除库存实体与表；Recipe.ingredients 仍是菜谱内容，不是库存。
+- **（已移除）PantryItem** — Phase 7 删除库存实体与表；菜谱原料（`RecipeIngredient`）是菜谱内容，不是库存。
 - **Favorite** — 收藏（userId + recipeId 唯一）
 - **UserPreference** — 偏好档案（userId 唯一；dislikedIngredients/allergens/healthGoal）
 - **Conversation** — 会话（ADR-0010/0012；userId, title, summary, summaryUpToSeq, updatedAt。summary 为滑窗外消息的压缩摘要，summaryUpToSeq 为摘要已覆盖到的消息 seq）。索引：userId + updatedAt

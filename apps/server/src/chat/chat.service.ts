@@ -233,8 +233,23 @@ export class ChatService {
       identifyIngredient: (term) => this.ingredients.identify([term]),
       recipeIdsContainingAll: (ids, links) =>
         this.ingredients.recipeIdsContainingAll(ids, links),
+      // 详情必须带关联行（ADR-0019）：原料只此一份，缺 include 会返回空原料列表
       findRecipeById: async (id) =>
-        this.prisma.recipe.findUnique({ where: { id } }),
+        this.prisma.recipe.findUnique({
+          where: { id },
+          include: {
+            ingredientLinks: {
+              include: {
+                ingredient: {
+                  include: {
+                    aliases: { select: { alias: true } },
+                    allergens: { select: { allergen: true } },
+                  },
+                },
+              },
+            },
+          },
+        }),
       favoriteFindAll: (uid) => this.favorite.findAll(uid),
       favoriteSet: (uid, recipeId, saved) =>
         this.favorite.set(uid, recipeId, saved),

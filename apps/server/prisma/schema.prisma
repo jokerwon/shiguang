@@ -8,18 +8,22 @@ datasource db {
   provider = "postgresql"
 }
 
+/// 菜谱原料（ADR-0019）：菜谱原料的唯一事实源，展示正文与稳定身份同表。
+/// 主键为 (recipeId, position)，同一道菜可为同一身份保留多条原料行
+/// （「花椒」与「花椒粉」写法与用量不同，不再合并丢弃，也不需要第二份正文）。
 model RecipeIngredient {
   recipeId     String
   ingredientId String
-  // 菜谱内的用量与必要说明（如「1块(约150g)」「西冷或眼肉」），归一后原样保留
+  /// 展示名（剥离括号说明后的主体名），与原正文写法一致
   name         String
   amount       String
   note         String?
+  /// 菜谱内下标，决定展示顺序，同一菜谱内唯一
   position     Int
   recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
 
-  @@id([recipeId, ingredientId])
+  @@id([recipeId, position])
   @@index([ingredientId])
 }
 
@@ -35,7 +39,6 @@ model Recipe {
   fat         Int
   img         String     @default("")
   tags        Tag[]
-  ingredients Json
   steps       Json
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
