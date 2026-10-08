@@ -75,8 +75,8 @@ pnpm experiment:review -- --run <results.json> --blind <blind-material.json> --r
 候选构建直接调用在线 `runSearchRecipes`（`limit` 放大到全量），不复制第二套筛选或安全语义。
 凭证只从服务端环境变量读取（`TYPESAFE_API_KEY` / `TYPESAFE_BASE_URL` / `TYPESAFE_DEFAULT_MODEL`），
 `--execute` 才构造客户端；预算上界按 1 token/字符保守估算，SDK 重试关闭（`maxRetries: 0`），
-超预算即暂停（不自动加预算、减候选或删证据）。模型版本固定 `jev-1.13.0`，代理环境用 `--model` 显式指定并记录。
-运行工件在 `experiments/phase-10/`；用户盲评不能由代理代替，统计只消费真实运行记录与人工评审。
+超预算即暂停（不自动加预算、减候选或删证据）。模型版本固定 `jev-1.13.0`；走代理时用 `--model` 显式指定代理路由名（本机为 `g-jev-1.13`），实际版本以响应里的 `model` 字段为准并落盘。
+运行工件在 `experiments/phase-10/`：`runs/<runId>/results.json` 是运行证据（含原始答案、概率分布、用量与耗时）；`--execute` 的付费调用须先获用户授权。用户盲评不能由代理代替，统计只消费真实运行记录与人工评审。
 
 ## 环境变量
 

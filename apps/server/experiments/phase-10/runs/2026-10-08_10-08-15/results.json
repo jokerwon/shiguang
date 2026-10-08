@@ -1,0 +1,827 @@
+{
+  "runId": "2026-10-08_10-08-15",
+  "executed": true,
+  "model": "g-jev-1.13",
+  "frozenNow": "2026-10-08T11:30:00.000Z",
+  "snapshotFrozenAt": "2026-10-08T11:30:00.000Z",
+  "budgetUsd": 10,
+  "pricePerMTok": 0.042,
+  "priceSource": "官方 jev-1.13.0 输入价 US$0.042/百万 token（估算依据，非账单）",
+  "results": [
+    {
+      "scenarioId": "dev-hot-rice-bowl",
+      "kind": "dev",
+      "request": "今天特别累，想吃个二十分钟以内、热乎的日式盖饭",
+      "candidates": [
+        "cmsmlzcy6001mab9gs037q94p",
+        "cmsmlz6is0009ab9gpkrcl0hz",
+        "cmsmlzdc9001pab9gq486imfm",
+        "cmsmlz7u2000jab9gdkgwfca9",
+        "cmsmlzd2v001nab9gakoxoss0",
+        "cmsmlz83i000lab9g1ksz6lkd",
+        "cmsmlz7ys000kab9g051yrmbo",
+        "cmsmlzctg001lab9gs0liky7d"
+      ],
+      "facts": [
+        {
+          "id": "cmsmlzcy6001mab9gs037q94p",
+          "name": "盐烤青花鱼",
+          "desc": "简单盐烤，外焦里嫩，配萝卜泥。",
+          "cuisine": "日料",
+          "tags": [
+            "高蛋白",
+            "低碳",
+            "快手"
+          ],
+          "time": 15,
+          "kcal": 250,
+          "protein": 20,
+          "carb": 0,
+          "fat": 18,
+          "ingredients": [
+            {
+              "name": "青花鱼",
+              "amount": "1条(约250g)",
+              "ingredientId": "cmunmi4jh0031vs9gtrzrteyq"
+            },
+            {
+              "name": "盐",
+              "amount": "适量",
+              "ingredientId": "cmunmiao9005mvs9g660k4pjd"
+            },
+            {
+              "name": "白萝卜",
+              "amount": "1小块",
+              "ingredientId": "cmunmhzgd0012vs9gn0sukxr6"
+            },
+            {
+              "name": "柠檬",
+              "amount": "1/4个",
+              "ingredientId": "cmunmiizb009bvs9gofj642zt"
+            }
+          ],
+          "steps": [
+            "青花鱼去鳞去内脏，洗净擦干，两面均匀撒盐",
+            "烤箱预热200℃，烤盘铺锡纸，放入鱼烤12-15分钟",
+            "白萝卜磨成泥，挤去多余水分",
+            "鱼烤好后取出，配上萝卜泥和柠檬角即可"
+          ]
+        },
+        {
+          "id": "cmsmlz6is0009ab9gpkrcl0hz",
+          "name": "味噌汤",
+          "desc": "日料餐桌的暖场，三分钟。",
+          "cuisine": "日料",
+          "tags": [
+            "低卡",
+            "快手"
+          ],
+          "time": 12,
+          "kcal": 120,
+          "protein": 8,
+          "carb": 10,
+          "fat": 4,
+          "ingredients": [
+            {
+              "name": "味噌",
+              "amount": "2汤匙",
+              "ingredientId": "cmunmi7v6004gvs9gs55puw5z"
+            },
+            {
+              "name": "豆腐",
+              "amount": "半块",
+              "ingredientId": "cmunmi7af0044vs9gr281hndx"
+            },
+            {
+              "name": "海带",
+              "amount": "1片",
+              "ingredientId": "cmunmi6hq003tvs9gsgl9yybq"
+            },
+            {
+              "name": "葱花",
+              "amount": "适量",
+              "ingredientId": "cmunmhxox000cvs9gtkanckj8"
+            },
+            {
+              "name": "裙带菜",
+              "amount": "1把",
+              "ingredientId": "cmunmi6f6003svs9gwi9erfj5"
+            }
+          ],
+          "steps": [
+            "水烧开下裙带菜与豆腐",
+            "味噌用少量汤化开倒入",
+            "小火不再煮沸",
+            "撒葱花"
+          ]
+        },
+        {
+          "id": "cmsmlzdc9001pab9gq486imfm",
+          "name": "日式土豆沙拉",
+          "desc": "绵软土豆拌上黄瓜火腿，清凉开胃。",
+          "cuisine": "日料",
+          "tags": [
+            "治愈系"
+          ],
+          "time": 20,
+          "kcal": 300,
+          "protein": 10,
+          "carb": 30,
+          "fat": 15,
+          "ingredients": [
+            {
+              "name": "土豆",
+              "amount": "2个(约300g)",
+              "ingredientId": "cmunmhx6n0005vs9g0mwtqbla"
+            },
+            {
+              "name": "黄瓜",
+              "amount": "半根",
+              "ingredientId": "cmunmhypx000svs9g2m900tk7"
+            },
+            {
+              "name": "火腿片",
+              "amount": "2片",
+              "ingredientId": "cmunmi1kc001wvs9gmuinikzk"
+            },
+            {
+              "name": "鸡蛋",
+              "amount": "1个",
+              "ingredientId": "cmunmi33m002hvs9gg8cjdz4k"
+            },
+            {
+              "name": "蛋黄酱",
+              "amount": "2大勺",
+              "ingredientId": "cmunmiekr007cvs9gmd9thxj0"
+            },
+            {
+              "name": "盐",
+              "amount": "少许",
+              "ingredientId": "cmunmiao9005mvs9g660k4pjd"
+            },
+            {
+              "name": "黑胡椒",
+              "amount": "适量",
+              "ingredientId": "cmunmigds008avs9g4ilhqkp4"
+            }
+          ],
+          "steps": [
+            "土豆洗净切块，煮至软烂后压成泥",
+            "鸡蛋煮熟切碎，黄瓜切片用盐腌一下挤干",
+            "火腿切小丁，与土豆泥、鸡蛋、黄瓜混合",
+            "加入蛋黄酱、盐和黑胡椒拌匀即可"
+          ]
+        },
+        {
+          "id": "cmsmlz7u2000jab9gdkgwfca9",
+          "name": "亲子丼",
+          "desc": "鸡肉与蛋的温柔盖饭。",
+          "cuisine": "日料",
+          "tags": [
+            "治愈系"
+          ],
+          "time": 20,
+          "kcal": 550,
+          "protein": 30,
+          "carb": 60,
+          "fat": 18,
+          "ingredients": [
+            {
+              "name": "鸡腿肉",
+              "amount": "1只",
+              "ingredientId": "cmunmi2kx002avs9gxarn49bn"
+            },
+            {
+              "name": "鸡蛋",
+              "amount": "2个",
+              "ingredientId": "cmunmi33m002hvs9gg8cjdz4k"
+            },
+            {
+              "name": "洋葱",
+              "amount": "半个",
+              "ingredientId": "cmunmhxei0008vs9gaxem93jl"
+            },
+            {
+              "name": "酱油",
+              "amount": "2汤匙",
+              "ingredientId": "cmunmib3t005svs9g273vtv0u"
+            },
+            {
+              "name": "味醂",
+              "amount": "2汤匙",
+              "ingredientId": "cmunmick2006jvs9g3px09s2m"
+            },
+            {
+              "name": "米饭",
+              "amount": "1碗",
+              "ingredientId": "cmunmi87z004mvs9gtrazq0g8"
+            }
+          ],
+          "steps": [
+            "鸡腿去骨切块，洋葱切丝",
+            "酱油味醂加等量水煮开，下洋葱与鸡肉",
+            "中火煮6分钟至鸡肉熟透",
+            "蛋液淋面，半凝固即关火",
+            "整锅滑到热米饭上"
+          ]
+        },
+        {
+          "id": "cmsmlzd2v001nab9gakoxoss0",
+          "name": "日式炒乌冬面",
+          "desc": "弹牙乌冬与蔬菜肉片快炒，酱香十足。",
+          "cuisine": "日料",
+          "tags": [],
+          "time": 20,
+          "kcal": 520,
+          "protein": 22,
+          "carb": 70,
+          "fat": 16,
+          "ingredients": [
+            {
+              "name": "乌冬面",
+              "amount": "2包",
+              "ingredientId": "cmunmi9qm0059vs9g4tpsm12i"
+            },
+            {
+              "name": "牛肉片",
+              "amount": "100g",
+              "ingredientId": "cmunmi2020022vs9gfupclssk"
+            },
+            {
+              "name": "卷心菜",
+              "amount": "100g",
+              "ingredientId": "cmunmhyck000mvs9gnzbud9ze"
+            },
+            {
+              "name": "胡萝卜",
+              "amount": "半根",
+              "ingredientId": "cmunmhxbt0007vs9ga6v4buu3"
+            },
+            {
+              "name": "洋葱",
+              "amount": "半个",
+              "ingredientId": "cmunmhxei0008vs9gaxem93jl"
+            },
+            {
+              "name": "酱油",
+              "amount": "2汤匙",
+              "ingredientId": "cmunmib3t005svs9g273vtv0u"
+            },
+            {
+              "name": "味醂",
+              "amount": "1汤匙",
+              "ingredientId": "cmunmick2006jvs9g3px09s2m"
+            },
+            {
+              "name": "料酒",
+              "amount": "1汤匙",
+              "ingredientId": "cmunmicex006hvs9gnqw699vr"
+            },
+            {
+              "name": "糖",
+              "amount": "1茶匙",
+              "ingredientId": "cmunmiati005ovs9gfqajkkf4"
+            },
+            {
+              "name": "芝麻油",
+              "amount": "1汤匙",
+              "ingredientId": "cmunmidmx006zvs9g13ucykdx"
+            },
+            {
+              "name": "蒜末",
+              "amount": "1瓣",
+              "ingredientId": "cmunmhxzh000hvs9g2dy6ew44"
+            }
+          ],
+          "steps": [
+            "乌冬面用开水烫一下沥干，蔬菜切丝，牛肉片切小段。",
+            "热锅加芝麻油，爆香蒜末，下牛肉片炒至变色。",
+            "加入洋葱、胡萝卜、卷心菜炒软。",
+            "加入乌冬面，淋入酱油、味醂、料酒、糖，快速翻炒均匀即可。"
+          ]
+        },
+        {
+          "id": "cmsmlz83i000lab9g1ksz6lkd",
+          "name": "姜汁烧肉",
+          "desc": "日式定食店的人气王。",
+          "cuisine": "日料",
+          "tags": [
+            "快手",
+            "高蛋白"
+          ],
+          "time": 15,
+          "kcal": 400,
+          "protein": 26,
+          "carb": 12,
+          "fat": 27,
+          "ingredients": [
+            {
+              "name": "猪里脊片",
+              "amount": "200g",
+              "ingredientId": "cmunmi126001ovs9gm02dw6e1"
+            },
+            {
+              "name": "姜",
+              "amount": "1块",
+              "ingredientId": "cmunmhxu5000fvs9g5qjrqvuz"
+            },
+            {
+              "name": "酱油",
+              "amount": "2汤匙",
+              "ingredientId": "cmunmib3t005svs9g273vtv0u"
+            },
+            {
+              "name": "味醂",
+              "amount": "1汤匙",
+              "ingredientId": "cmunmick2006jvs9g3px09s2m"
+            },
+            {
+              "name": "洋葱",
+              "amount": "半个",
+              "ingredientId": "cmunmhxei0008vs9gaxem93jl"
+            },
+            {
+              "name": "食用油",
+              "amount": "1汤匙",
+              "ingredientId": "cmunmidf7006wvs9gko55o43s"
+            }
+          ],
+          "steps": [
+            "姜磨成泥，与酱油味醂调成姜汁",
+            "洋葱切丝炒软",
+            "肉片大火煎至两面微焦",
+            "淋姜汁翻炒裹匀即可"
+          ]
+        },
+        {
+          "id": "cmsmlz7ys000kab9g051yrmbo",
+          "name": "厚蛋烧",
+          "desc": "层层卷起的高汤蛋香。",
+          "cuisine": "日料",
+          "tags": [
+            "快手",
+            "素食"
+          ],
+          "time": 15,
+          "kcal": 280,
+          "protein": 15,
+          "carb": 6,
+          "fat": 22,
+          "ingredients": [
+            {
+              "name": "鸡蛋",
+              "amount": "4个",
+              "ingredientId": "cmunmi33m002hvs9gg8cjdz4k"
+            },
+            {
+              "name": "糖",
+              "amount": "1汤匙",
+              "ingredientId": "cmunmiati005ovs9gfqajkkf4"
+            },
+            {
+              "name": "酱油",
+              "amount": "1茶匙",
+              "ingredientId": "cmunmib3t005svs9g273vtv0u"
+            },
+            {
+              "name": "食用油",
+              "amount": "适量",
+              "ingredientId": "cmunmidf7006wvs9gko55o43s"
+            }
+          ],
+          "steps": [
+            "鸡蛋加糖酱油打散，过筛更细",
+            "方锅刷薄油，倒一层蛋液",
+            "半凝固时从一端卷起推至锅边",
+            "重复倒液卷起至蛋液用完",
+            "出锅切块"
+          ]
+        },
+        {
+          "id": "cmsmlzctg001lab9gs0liky7d",
+          "name": "茶碗蒸",
+          "desc": "嫩滑如丝，入口即化的日式蒸蛋。",
+          "cuisine": "日料",
+          "tags": [
+            "快手",
+            "低卡"
+          ],
+          "time": 15,
+          "kcal": 150,
+          "protein": 12,
+          "carb": 5,
+          "fat": 9,
+          "ingredients": [
+            {
+              "name": "鸡蛋",
+              "amount": "2个",
+              "ingredientId": "cmunmi33m002hvs9gg8cjdz4k"
+            },
+            {
+              "name": "高汤",
+              "amount": "200ml",
+              "ingredientId": "cmunmi6zx0040vs9gk5qnsqed"
+            },
+            {
+              "name": "虾仁",
+              "amount": "4只",
+              "ingredientId": "cmunmi5cz003cvs9gamthng7y"
+            },
+            {
+              "name": "香菇",
+              "amount": "2朵",
+              "ingredientId": "cmunmhzj00013vs9gl97qspsq"
+            },
+            {
+              "name": "鱼板",
+              "amount": "2片",
+              "ingredientId": "cmunmi67d003ovs9gome44jcn"
+            },
+            {
+              "name": "盐",
+              "amount": "少许",
+              "ingredientId": "cmunmiao9005mvs9g660k4pjd"
+            },
+            {
+              "name": "酱油",
+              "amount": "1茶匙",
+              "ingredientId": "cmunmib3t005svs9g273vtv0u"
+            },
+            {
+              "name": "料酒",
+              "amount": "1茶匙",
+              "ingredientId": "cmunmicex006hvs9gnqw699vr"
+            }
+          ],
+          "steps": [
+            "鸡蛋打散，加入高汤、盐、酱油、料酒搅匀，过滤去泡沫。",
+            "将虾仁、香菇、鱼板放入小碗中，倒入蛋液。",
+            "蒸锅水开后放入碗，盖上盖子，中小火蒸10分钟至凝固。",
+            "取出即可食用。"
+          ]
+        }
+      ],
+      "baselineTop4": [
+        "cmsmlzcy6001mab9gs037q94p",
+        "cmsmlz6is0009ab9gpkrcl0hz",
+        "cmsmlzdc9001pab9gq486imfm",
+        "cmsmlz7u2000jab9gdkgwfca9"
+      ],
+      "jevTop4": [
+        "cmsmlz7u2000jab9gdkgwfca9",
+        "cmsmlzd2v001nab9gakoxoss0",
+        "cmsmlzctg001lab9gs0liky7d",
+        "cmsmlzcy6001mab9gs037q94p"
+      ],
+      "jev": {
+        "model": "g-jev-1.13",
+        "judgements": [
+          {
+            "recipeId": "cmsmlzcy6001mab9gs037q94p",
+            "adequacy": "资料足够评价主要偏好",
+            "score": 0.91,
+            "elapsedMs": 953,
+            "raw": {
+              "model": "jev-1.13.0",
+              "answers": {
+                "adequacy": {
+                  "type": "choice",
+                  "choice": "资料足够评价主要偏好",
+                  "confidence": 0.64,
+                  "probabilities": {
+                    "无法确定": 0.03,
+                    "资料足够评价主要偏好": 0.76,
+                    "资料不足": 0.21
+                  }
+                },
+                "match": {
+                  "type": "score",
+                  "score": 0.91,
+                  "confidence": 0.75,
+                  "legend": {
+                    "0": "不匹配：已有事实明确支持这道菜谱与本次主要偏好冲突。",
+                    "1": "部分匹配：已有事实支持满足部分偏好，但主要偏好仍有明显不足，且不属于与主要偏好明确冲突的情形。",
+                    "2": "较匹配：已有事实支持满足主要偏好，但次要偏好有明确不足。",
+                    "3": "高度匹配：已有事实支持满足主要及次要偏好，且没有明显冲突。"
+                  },
+                  "probabilities": {
+                    "0": 0.17,
+                    "1": 0.77,
+                    "2": 0.04,
+                    "3": 0.02
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1136,
+                "output_tokens": 78
+              }
+            }
+          },
+          {
+            "recipeId": "cmsmlz6is0009ab9gpkrcl0hz",
+            "adequacy": "资料足够评价主要偏好",
+            "score": 0.87,
+            "elapsedMs": 756,
+            "raw": {
+              "model": "jev-1.13.0",
+              "answers": {
+                "adequacy": {
+                  "type": "choice",
+                  "choice": "资料足够评价主要偏好",
+                  "confidence": 0.92,
+                  "probabilities": {
+                    "资料不足": 0.05,
+                    "无法确定": 0,
+                    "资料足够评价主要偏好": 0.95
+                  }
+                },
+                "match": {
+                  "type": "score",
+                  "score": 0.87,
+                  "confidence": 0.83,
+                  "legend": {
+                    "0": "不匹配：已有事实明确支持这道菜谱与本次主要偏好冲突。",
+                    "1": "部分匹配：已有事实支持满足部分偏好，但主要偏好仍有明显不足，且不属于与主要偏好明确冲突的情形。",
+                    "2": "较匹配：已有事实支持满足主要偏好，但次要偏好有明确不足。",
+                    "3": "高度匹配：已有事实支持满足主要及次要偏好，且没有明显冲突。"
+                  },
+                  "probabilities": {
+                    "0": 0.15,
+                    "1": 0.84,
+                    "2": 0,
+                    "3": 0.01
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1067,
+                "output_tokens": 78
+              }
+            }
+          },
+          {
+            "recipeId": "cmsmlzdc9001pab9gq486imfm",
+            "adequacy": "资料足够评价主要偏好",
+            "score": 0.16,
+            "elapsedMs": 471,
+            "raw": {
+              "model": "jev-1.13.0",
+              "answers": {
+                "adequacy": {
+                  "type": "choice",
+                  "choice": "资料足够评价主要偏好",
+                  "confidence": 0.95,
+                  "probabilities": {
+                    "资料不足": 0.03,
+                    "资料足够评价主要偏好": 0.97,
+                    "无法确定": 0
+                  }
+                },
+                "match": {
+                  "type": "score",
+                  "score": 0.16,
+                  "confidence": 0.84,
+                  "legend": {
+                    "0": "不匹配：已有事实明确支持这道菜谱与本次主要偏好冲突。",
+                    "1": "部分匹配：已有事实支持满足部分偏好，但主要偏好仍有明显不足，且不属于与主要偏好明确冲突的情形。",
+                    "2": "较匹配：已有事实支持满足主要偏好，但次要偏好有明确不足。",
+                    "3": "高度匹配：已有事实支持满足主要及次要偏好，且没有明显冲突。"
+                  },
+                  "probabilities": {
+                    "0": 0.84,
+                    "1": 0.16,
+                    "2": 0,
+                    "3": 0
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1138,
+                "output_tokens": 78
+              }
+            }
+          },
+          {
+            "recipeId": "cmsmlz7u2000jab9gdkgwfca9",
+            "adequacy": "资料足够评价主要偏好",
+            "score": 2.44,
+            "elapsedMs": 436,
+            "raw": {
+              "model": "jev-1.13.0",
+              "answers": {
+                "adequacy": {
+                  "type": "choice",
+                  "choice": "资料足够评价主要偏好",
+                  "confidence": 0.77,
+                  "probabilities": {
+                    "资料足够评价主要偏好": 0.85,
+                    "无法确定": 0.01,
+                    "资料不足": 0.14
+                  }
+                },
+                "match": {
+                  "type": "score",
+                  "score": 2.44,
+                  "confidence": 0.45,
+                  "legend": {
+                    "0": "不匹配：已有事实明确支持这道菜谱与本次主要偏好冲突。",
+                    "1": "部分匹配：已有事实支持满足部分偏好，但主要偏好仍有明显不足，且不属于与主要偏好明确冲突的情形。",
+                    "2": "较匹配：已有事实支持满足主要偏好，但次要偏好有明确不足。",
+                    "3": "高度匹配：已有事实支持满足主要及次要偏好，且没有明显冲突。"
+                  },
+                  "probabilities": {
+                    "0": 0,
+                    "1": 0.14,
+                    "2": 0.27,
+                    "3": 0.59
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1110,
+                "output_tokens": 78
+              }
+            }
+          },
+          {
+            "recipeId": "cmsmlzd2v001nab9gakoxoss0",
+            "adequacy": "资料足够评价主要偏好",
+            "score": 1.35,
+            "elapsedMs": 421,
+            "raw": {
+              "model": "jev-1.13.0",
+              "answers": {
+                "adequacy": {
+                  "type": "choice",
+                  "choice": "资料足够评价主要偏好",
+                  "confidence": 0.43,
+                  "probabilities": {
+                    "资料不足": 0.36,
+                    "无法确定": 0.02,
+                    "资料足够评价主要偏好": 0.62
+                  }
+                },
+                "match": {
+                  "type": "score",
+                  "score": 1.35,
+                  "confidence": 0.54,
+                  "legend": {
+                    "0": "不匹配：已有事实明确支持这道菜谱与本次主要偏好冲突。",
+                    "1": "部分匹配：已有事实支持满足部分偏好，但主要偏好仍有明显不足，且不属于与主要偏好明确冲突的情形。",
+                    "2": "较匹配：已有事实支持满足主要偏好，但次要偏好有明确不足。",
+                    "3": "高度匹配：已有事实支持满足主要及次要偏好，且没有明显冲突。"
+                  },
+                  "probabilities": {
+                    "0": 0.05,
+                    "1": 0.64,
+                    "2": 0.21,
+                    "3": 0.1
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1189,
+                "output_tokens": 78
+              }
+            }
+          },
+          {
+            "recipeId": "cmsmlz83i000lab9g1ksz6lkd",
+            "adequacy": "资料不足",
+            "score": 1.65,
+            "elapsedMs": 431,
+            "raw": {
+              "model": "jev-1.13.0",
+              "answers": {
+                "adequacy": {
+                  "type": "choice",
+                  "choice": "资料不足",
+                  "confidence": 0.34,
+                  "probabilities": {
+                    "资料不足": 0.56,
+                    "无法确定": 0.05,
+                    "资料足够评价主要偏好": 0.39
+                  }
+                },
+                "match": {
+                  "type": "score",
+                  "score": 1.65,
+                  "confidence": 0.31,
+                  "legend": {
+                    "0": "不匹配：已有事实明确支持这道菜谱与本次主要偏好冲突。",
+                    "1": "部分匹配：已有事实支持满足部分偏好，但主要偏好仍有明显不足，且不属于与主要偏好明确冲突的情形。",
+                    "2": "较匹配：已有事实支持满足主要偏好，但次要偏好有明确不足。",
+                    "3": "高度匹配：已有事实支持满足主要及次要偏好，且没有明显冲突。"
+                  },
+                  "probabilities": {
+                    "0": 0.02,
+                    "1": 0.6,
+                    "2": 0.09,
+                    "3": 0.29
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1093,
+                "output_tokens": 72
+              }
+            }
+          },
+          {
+            "recipeId": "cmsmlz7ys000kab9g051yrmbo",
+            "adequacy": "资料不足",
+            "score": 1.22,
+            "elapsedMs": 469,
+            "raw": {
+              "model": "jev-1.13.0",
+              "answers": {
+                "adequacy": {
+                  "type": "choice",
+                  "choice": "资料不足",
+                  "confidence": 0.43,
+                  "probabilities": {
+                    "资料足够评价主要偏好": 0.33,
+                    "无法确定": 0.05,
+                    "资料不足": 0.62
+                  }
+                },
+                "match": {
+                  "type": "score",
+                  "score": 1.22,
+                  "confidence": 0.69,
+                  "legend": {
+                    "0": "不匹配：已有事实明确支持这道菜谱与本次主要偏好冲突。",
+                    "1": "部分匹配：已有事实支持满足部分偏好，但主要偏好仍有明显不足，且不属于与主要偏好明确冲突的情形。",
+                    "2": "较匹配：已有事实支持满足主要偏好，但次要偏好有明确不足。",
+                    "3": "高度匹配：已有事实支持满足主要及次要偏好，且没有明显冲突。"
+                  },
+                  "probabilities": {
+                    "0": 0.05,
+                    "1": 0.8,
+                    "2": 0.04,
+                    "3": 0.11
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1080,
+                "output_tokens": 72
+              }
+            }
+          },
+          {
+            "recipeId": "cmsmlzctg001lab9gs0liky7d",
+            "adequacy": "资料足够评价主要偏好",
+            "score": 1.01,
+            "elapsedMs": 498,
+            "raw": {
+              "model": "jev-1.13.0",
+              "answers": {
+                "adequacy": {
+                  "type": "choice",
+                  "choice": "资料足够评价主要偏好",
+                  "confidence": 0.69,
+                  "probabilities": {
+                    "资料足够评价主要偏好": 0.79,
+                    "资料不足": 0.19,
+                    "无法确定": 0.02
+                  }
+                },
+                "match": {
+                  "type": "score",
+                  "score": 1.01,
+                  "confidence": 0.77,
+                  "legend": {
+                    "0": "不匹配：已有事实明确支持这道菜谱与本次主要偏好冲突。",
+                    "1": "部分匹配：已有事实支持满足部分偏好，但主要偏好仍有明显不足，且不属于与主要偏好明确冲突的情形。",
+                    "2": "较匹配：已有事实支持满足主要偏好，但次要偏好有明确不足。",
+                    "3": "高度匹配：已有事实支持满足主要及次要偏好，且没有明显冲突。"
+                  },
+                  "probabilities": {
+                    "0": 0.11,
+                    "1": 0.82,
+                    "2": 0.02,
+                    "3": 0.05
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1147,
+                "output_tokens": 78
+              }
+            }
+          }
+        ],
+        "failures": [],
+        "violations": [],
+        "usage": {
+          "requests": 8,
+          "inputTokens": 8960,
+          "outputTokens": 612
+        },
+        "estimatedCostUsd": 0.00037632
+      }
+    }
+  ]
+}
