@@ -369,6 +369,23 @@ describe('chat tools', () => {
       expect(miss.recipes).toEqual([]);
       expect(miss.error).toBeUndefined();
     });
+
+    it('原料写法带括号说明时同样归一（与页面解析同一口径）', async () => {
+      const steak = recipe({
+        id: 'r-steak',
+        name: '香煎牛排',
+        ingredients: [{ name: '牛排（西冷或眼肉）' }],
+        identities: { '牛排（西冷或眼肉）': ['牛排'] },
+      } as Partial<Recipe>);
+      const { deps } = makeDeps({ recipes: [steak] });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['牛排（西冷或眼肉）'],
+        limit: 10,
+      });
+      expect(result.error).toBeUndefined();
+      expect(result.recipes.map((r) => r.id)).toEqual(['r-steak']);
+      expect(result.ingredients).toEqual({ names: ['牛排'] });
+    });
   });
 
   describe('get_recipe', () => {

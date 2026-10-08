@@ -3,6 +3,7 @@
 // 复用 recommendation.scoring 的打分，单一事实源。返回精简字段控制 token。
 import type { Recipe } from 'generated/prisma/client';
 import type { IngredientIdentityView } from '../../ingredient/ingredient.service';
+import { normalizeIngredientText } from '../../ingredient/normalize';
 import {
   CUISINE_LABELS,
   PREF_LABELS,
@@ -50,9 +51,9 @@ interface IdentifyOutcome {
   ambiguous: IngredientIdentityView[];
 }
 
-/** 与 `IngredientService` 的身份比较同口径：去空白 + 转小写 */
+/** 与 `IngredientService` 同口径的归一：剥离尾部括号说明、去空白、转小写 */
 function normalizeName(raw: string): string {
-  return raw.trim().toLowerCase();
+  return normalizeIngredientText(raw).trim().toLowerCase();
 }
 
 /** 整串相等才算命中（名称或别名）；命中多个身份只给候选，不擅自选一个 */
