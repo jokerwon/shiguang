@@ -58,11 +58,13 @@
 - `pnpm -r lint`：`@shiguang/server` 通过；`@shiguang/web` 失败 4 项，全部位于本次未改动的既有文件（`app/(screen)/chat/[[...slug]]/page.tsx` 的 `react-hooks/set-state-in-effect`、`app/(screen)/recipe/[id]/page.tsx` 的 try/catch JSX、`components/ai-elements/{prompt-input,shimmer}.tsx`），属 Phase 3.5 记录过的既有限制。
 - Web 类型检查：本次改动文件无新增错误；既有错误集中在 `components/ai-elements/prompt-input.tsx` 与 `@base-ui/react` 的类型不兼容。
 
+**2026-10-08（认证守卫与 JWT 配置修复）**：`OptionalJwtAuthGuard` 对无效/过期/类型不符凭据由 500 改为 401（回归 `optional-jwt-auth.guard.spec.ts` 5 例）；`AuthModule` 改 `registerAsync` 读取 `JWT_SECRET`。实跑 `pnpm --filter @shiguang/server test` 14 suite / 142 例全过、`pnpm -r lint` 通过、`tsc --noEmit` 无错误；真实 HTTP 复验：`.env` 密钥签发的 access → 200、`shiguang-dev-secret` 签发 → 401、过期 access → 401、`type:'refresh'` JWT → 401、畸形 token → 401、匿名 → 200；忌口鸡蛋下 `excluded.count=17 / hasUnknown=false`，同查询匿名 88 道，食材筛选 `?ingredients=<番茄 id>` 仍正常返回。
+
 ## 遗留与边界
 
 - 后端已接入统一安全过滤（筛选、首页 today/quick、食材相关菜谱、AI `search_recipes`），但 **安全约束下的相关菜谱查询与 AI 侧完整验收属父票 #5**；本票只保证资料发布与读取链路。
 - **内容复核已完成（2026-09-30）**：维护者对 173 条资料的措辞与 221 条归一判断逐条复核；复核时间写在条目（`reviewedAt`）并写入 `Ingredient.reviewedAt`，复查为同一时间戳 `2026-09-30T06:00:00Z`（本地 14:00）、173 条全部非空、无 `null`。新增条目**没有复核标记就无法发布**（闸门报「缺少维护者复核时间（reviewedAt）」）。
 - **来源即复核所用的入口页**（USDA FoodData Central / 中国食品安全风险评估中心）：维护者是以这两个入口页为来源完成复核的，条目里**没有**逐条具体条目页/标准号，不要读成「来源已逐条可核查」。后续替换为条目页时，保持同一条目级复核标记即可。
 - 部分复合调味料（咖喱块、火锅底料、日式猪排酱、大阪烧酱、天妇罗蘸汁、凯撒酱、水浸金枪鱼罐头等）沿用商品级复合描述，过敏原按可核查分类登记；若后续采购具体品牌，应改用该品牌配料表核对。
-- 运行期配置问题：`apps/server/.env` 的 `JWT_SECRET` 带引号，而 `AuthModule` 在 `ConfigModule.forRoot` 之前读取环境变量，实际生效的是 `shiguang-dev-secret` 兜底值。本次验收改用 `POST /auth/register` + `/auth/login` 取得服务端签发 token 以绕开该既有问题；修复该配置不属本票范围。
+- 运行期配置问题**已修复**：`AuthModule` 原用 `JwtModule.register`，其 secret 在装饰器求值时读取，早于 `ConfigModule.forRoot` 加载 `.env`，实际生效的一直是硬编码兜底值 `shiguang-dev-secret`。现改为 `registerAsync` + `ConfigService` 读取，缺失 `JWT_SECRET` 直接拒绝启动。验证：`.env` 密钥签发的 access token → 200，`shiguang-dev-secret` 签发的 → 401。
 - 验收账号 `phase8-check@example.com` 为本次造数，验收完成后已删除；复查 `User` 表只剩既有账号（`jokerwon26@gmail.com`、`phase4-smoke-…@test.local`、`jokerwon@gmail.com`、`review-tmp@example.com`），数据库中 `Ingredient=173 / RecipeIngredient=656 / Recipe=88`。

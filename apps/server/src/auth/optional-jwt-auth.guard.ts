@@ -1,17 +1,12 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import type { JwtPayload } from './jwt-auth.guard';
-
-/** Express Request 上的已验签用户（guard 写入，decorator 读取） */
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      user?: JwtPayload;
-    }
-  }
-}
 
 /**
  * 可选认证守卫（Phase 8-1）：菜谱列表是公开端点，但登录用户的安全设置
@@ -29,9 +24,17 @@ export class OptionalJwtAuthGuard implements CanActivate {
     const auth = req.headers['authorization'] ?? '';
     const m = /^Bearer\s+(.+)$/i.exec(auth);
     if (!m) return true;
-    const payload = await this.jwt.verifyAsync<JwtPayload>(m[1]);
-    if (payload.type !== 'access') return false;
-    req.user = payload;
-    return true;
+    try {
+      const payload = await this.jwt.verifyAsync<JwtPayload>(m[1]);
+      if (payload.type !== 'access') {
+        throw new UnauthorizedException('无效或过期的认证凭据');
+      }
+      req.user = payload;
+      return true;
+    } catch {
+      // 与 JwtAuthGuard 一致：验签失败给 401，让客户端走 refresh 重放；
+      // 未捕获的 JsonWebTokenError 会变成 500，公开端点（/recipes）同样中招。
+      throw new UnauthorizedException('无效或过期的认证凭据');
+    }
   }
 }

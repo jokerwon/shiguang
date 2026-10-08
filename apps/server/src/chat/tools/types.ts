@@ -23,7 +23,7 @@ export interface ChatToolDeps {
     selectedIds: string[],
     links: { recipeId: string; ingredientId: string }[],
   ) => string[];
-  /** 加载用户信号（blocked/healthGoal），排序权重用 */
+  /** 加载用户信号（blocked 供对话提示词、healthGoal 供排序权重） */
   loadSignals: (userId: string) => Promise<{
     blocked: string[];
     healthGoal: 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';

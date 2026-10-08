@@ -21,7 +21,7 @@
 2. 稳定身份与全部包含纯逻辑已存在且页面在用：`IngredientService.identify`/`identifyIn`、`recipeIdsContainingAll`（`recipe-safety.service.spec.ts` 有回归）。本票只接线，不复制第二套实现。
 3. live 库（2026-10-08 核对）：`番茄`（别名 `西红柿`）`cmunmhwsf…`、`鸡蛋`（过敏原 `蛋类`）`cmunmi33m…`；番茄 8 道，番茄+鸡蛋 3 道（`西红柿炒鸡蛋`/`番茄蛋花汤`/`水煮蛋蔬菜沙拉`）。别名唯一、无整串歧义（`油` 无身份）。
 4. `RecipeSafetyService` 的保守排除会连带「成分未核查」的常见原料（番茄、葱、盐、生菜叶等），有过敏设置时番茄+鸡蛋 3 道全判 `unknown`——这是既有安全语义，不是本票回归失败。
-5. `src/` 无 dotenv 加载，`auth.module.ts` 在模块定义时读 `process.env.JWT_SECRET`；本地冒烟用 `set -a && . ./.env && set +a` 后起进程，并用 `POST /auth/register` 拿服务端自签 token（不手工签 token）。
+5. `src/` 无 dotenv 加载，`auth.module.ts` 原先在模块定义时读 `process.env.JWT_SECRET`（`.env` 未生效，实际是硬编码兜底值）。本轮已改为 `JwtModule.registerAsync` + `ConfigService`，本地冒烟直接 `pnpm --filter @shiguang/server start` 即可，仍用 `POST /auth/register` 拿服务端自签 token（不手工签 token）。
 
 ## 验收证据
 

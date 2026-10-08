@@ -65,7 +65,7 @@ pnpm recipes:generate --only sichuan,home # 只生成指定菜系
 
 - `DATABASE_URL` — 运行时连接串（PrismaService 经 adapter 使用），格式：`postgresql://user:password@host:port/dbname`
 - `DIRECT_URL` — Prisma CLI 迁移连接串（`prisma.config.ts` 的 `datasource.url`）。本地与 `DATABASE_URL` 相同即可；迁移必须走直连或会话池，不能走事务池（PGbouncer 事务模式下 migrate 会挂起）
-- `JWT_SECRET` — JWT 签名密钥（开发环境默认值：`shiguang-dev-secret`）
+- `JWT_SECRET` — JWT 签名密钥，**必填**：缺失时后端拒绝启动，不再回退到硬编码默认值（`AuthModule` 经 `ConfigService` 读取）
 - `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `MODEL_NAME` — OpenAI-compatible 端点，`/chat` 与 `recipes:generate` 共用
 
 参见 `.env.example`。

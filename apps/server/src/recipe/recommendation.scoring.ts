@@ -8,7 +8,7 @@
 export type HealthGoalKey = 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
 
 export interface UserSignals {
-  /** 忌口食材 ∪ 过敏原（硬过滤） */
+  /** 忌口 ∪ 过敏原（供 AI 对话提示词使用）；排序不看它，安全过滤由 RecipeSafetyService 负责 */
   blocked: string[];
   healthGoal: HealthGoalKey;
 }

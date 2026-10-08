@@ -191,6 +191,9 @@ export class RecipeService {
     }
 
     // 食材条件：全部包含，别名归一后去重；无效身份不静默退化成无条件查询
+    // `?ingredients=`（空值）等同未传：客户端把「没有食材条件」也序列化成空串，
+    // 这与 AI 侧 `ingredients: ['']` 报错是两种输入形态，不是两套语义。
+    // 逗号分隔后一个身份都不剩（如 `,,`）则明确报错，不退化成无条件查询。
     if (query.ingredients) {
       const ids = [
         ...new Set(
