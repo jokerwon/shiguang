@@ -10,11 +10,17 @@ import type { ChatToolDeps } from './types';
 export function createReadTools(deps: ChatToolDeps, userId: string) {
   const search_recipes = tool({
     description:
-      '搜索菜谱库。可按关键词、菜系、标签、最大时长、最大热量、最低蛋白筛选。推荐具体菜谱前必须先调用此工具查库，禁止编造库中没有的菜。',
+      '搜索菜谱库。推荐具体菜谱前必须先调用此工具查库，禁止编造库中没有的菜。若用户要求同时具备多种食材（如番茄和鸡蛋），用 ingredients 参数表达全部包含；只用 keyword 会把条件退化成自由文本匹配。',
     inputSchema: jsonSchema<SearchInput>({
       type: 'object',
       properties: {
         keyword: { type: 'string', description: '菜名或食材关键词' },
+        ingredients: {
+          type: 'array',
+          items: { type: 'string' },
+          description:
+            '必须同时具备的食材（菜谱名称或别名，如「番茄」「西红柿」「鸡蛋」）。全部包含语义：返回的每道菜都含全部所选食材，允许还有其他原料。名称会归一为稳定身份；无法唯一确定时工具返回错误，须向用户确认后再试。只要关键词用 keyword。',
+        },
         cuisine: {
           type: 'string',
           description: '菜系（前端小写：home/western/japanese/sichuan/light）',

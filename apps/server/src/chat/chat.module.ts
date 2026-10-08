@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { RecipeModule } from '../recipe/recipe.module';
 import { FavoriteModule } from '../favorite/favorite.module';
 import { PreferenceModule } from '../preference/preference.module';
+import { IngredientModule } from '../ingredient/ingredient.module';
 import { ConversationModule } from '../conversation/conversation.module';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
@@ -12,6 +13,7 @@ import { ChatService } from './chat.service';
   imports: [
     AuthModule,
     RecipeModule, // RecommendationService（loadSignals 打分单一事实源）
+    IngredientModule, // IngredientService（AI 工具按稳定身份做全部包含）
     FavoriteModule, // FavoriteService（写工具 set）
     PreferenceModule, // PreferenceService（只读工具）
     ConversationModule, // ConversationService（消息持久化）

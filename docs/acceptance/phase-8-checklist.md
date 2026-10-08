@@ -1,5 +1,5 @@
 # Phase 8 验收清单：食材资料库与按食材筛选
-
+- **状态**：[#6](https://github.com/jokerwon/shiguang/issues/6)（发布并查阅食材资料）、[#8](https://github.com/jokerwon/shiguang/issues/8)（按别名和分类发现食材）已实施并记录证据；[#11](https://github.com/jokerwon/shiguang/issues/11)（AI 搜索复用多食材筛选）的工具契约已交付并有 SSE 冒烟，但 F 组仍因「安全排除与真实无结果不可区分」未勾选；其余条目待实施。**勾选表示已有可复核证据，未勾选表示尚未验证或依赖未交付能力。**
 - **依据**：[ADR-0018](../adr/0018-ingredient-catalog-and-filtering.md#最终共识确认)、[实施清单](../implementation/phase-8-implementation.md)。
 - **完整规格**：[GitHub Issue #5](https://github.com/jokerwon/shiguang/issues/5)。
 - **状态**：[#6](https://github.com/jokerwon/shiguang/issues/6)（发布并查阅食材资料）、[#8](https://github.com/jokerwon/shiguang/issues/8)（按别名和分类发现食材）已实施并记录证据；其余条目待实施。**勾选表示已有可复核证据，未勾选表示尚未验证或依赖未交付能力。**
@@ -74,17 +74,16 @@
 
 | #      | 场景                   | 通过条件                                                                                                  |
 | ------ | ---------------------- | --------------------------------------------------------------------------------------------------------- |
+
 | [ ] G1 | 永久回归审查与执行     | 复用 Jest 测关键安全、边界、状态、发布失败行为；删除旧实现细节测试，不建多套重复回归或新 e2e 框架         |
 | [ ] G2 | 后端测试与全库 lint    | 运行 `pnpm --filter @shiguang/server test`、`pnpm -r lint`，记录真实结果，区分既有 Web 失败，不误报全通过 |
 | [ ] G3 | 文档、消费者与范围检查 | 常驻文档、索引和调用方与实际行为一致，无被替代的自由文本筛选旁路；不恢复库存、匹配度、缺料或主辅料字段    |
-
-## 验收证据
 
 **2026-09-30（#6，发布并查阅食材资料）**：A1–A5、B1–B6 全部有可复核证据，见 [phase-8-1-implementation.md](../implementation/phase-8-1-implementation.md)（含迁移输出、导入数字、数据库事实核对、真实浏览器走查与自动化检查结果）。
 
 **2026-09-30（#7，菜谱关联稳定食材身份）**：A 组证据补充见 [phase-8-2-implementation.md](../implementation/phase-8-2-implementation.md)——菜谱载荷携带身份 id 后，`GET /recipes` 逐条详情的 656 条已关联原料全部能反查到正确资料，详情页按 id 跳转（含键盘与移动端走查），seed 发布共用归一校验且重复导入幂等。A2 的「逐条归一核对」材料为 [phase-8-2-ingredient-mapping-review.md](../implementation/phase-8-2-ingredient-mapping-review.md)（220 行写法 → 身份），**维护者签字前 A2 仍按「内容复核未完成」理解**。
 
-C6/C7（逐入口一致安全）、D 组全部包含与查询契约、E 组 Web 表面、F1–F3（AI 搜索）与 G1–G3 仍未勾选：安全判断与筛选已在真实浏览器核对，但 AI 侧多食材工具契约未交付（#11），Web 交互细节与全库质量门仍需在对应子票内补证据。G2 本轮实际结果：`pnpm --filter @shiguang/server test` 10 套件 109 例全过，`pnpm -r lint` server 与 web 均通过；Web 类型检查仍有 7 条错误，全部位于未改动的 `components/ai-elements/prompt-input.tsx`（Phase 3.5 记录的既有限制），不计作本票通过。
+**2026-10-08（#11，AI 搜索复用多食材筛选）**：见 [phase-8-5-implementation.md](../implementation/phase-8-5-implementation.md)。真实 SSE 冒烟：工具入参 `{"ingredients":["番茄","鸡蛋"]}` 返回 3 道都含两者的菜谱、别名 `西红柿` 归一到同一身份、歧义/未收录名称返回 `error` 且不做筛选、原有菜系/标签/时长参数照常受理。**F1–F3 与 D1 本轮仍未勾选**：AC 要求区分「安全排除 / 成分信息不足」与「真实无结果」，而工具对两者返回同一条 `note`（「没有匹配的菜谱，可尝试放宽条件」）——冒烟中川菜、番茄、豆腐+鸡蛋 均为安全排除，模型却向用户说「库里没有这道菜」，无法区分。`RecipeSafetyService.filter` 已能给出 `excluded` 数量与原因，工具侧尚未消费；补齐可区分信号后再验 F2/C6/C7/D1。G2 本轮实跑：`pnpm --filter @shiguang/server test` 13 套件 131 例全过，`pnpm -r lint` 通过；Web 类型检查仍 7 条错误，全在未改动的 `components/ai-elements/prompt-input.tsx`。
 
 **2026-09-30（#7 核对轮，身份拆分与 import 行为补齐）**：核对表复核落地三项维护者决策（苹果醋/红酒醋 独立身份、面粉拆为低筋/中筋、三道菜「姜蒜」拆为姜+蒜），并补齐 import 的合并如实上报、关联重建事务与离场清理（清掉旧「面粉」僵尸行）。重跑 seed+import 后库内 88 道菜谱 / 176 条已发布身份 / 659 条关联，核对表更新为 219 行 + 34 组；`pnpm --filter @shiguang/server test` 11 套件 113 例全过，`pnpm -r lint` 通过。证据与备份路径见实施清单「核对轮修正」。
 

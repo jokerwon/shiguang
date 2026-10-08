@@ -12,6 +12,7 @@ import { runSearchRecipes, runGetRecipe } from './read-tools-logic';
 import type { ChatToolDeps } from './types';
 import { RecipeSafetyService } from '../../recipe/recipe-safety.service';
 import type { Recipe } from 'generated/prisma/client';
+import { IngredientService } from '../../ingredient/ingredient.service';
 
 /* ---- fake 工厂 ---- */
 
@@ -67,6 +68,35 @@ const recipe = (
     over,
   ),
 });
+/** 从菜谱关联里汇总已发布身份表（正式实现由 `Ingredient` 表提供） */
+const identitiesFrom = (
+  recipes: (Recipe & { ingredientLinks?: unknown })[],
+): { id: string; name: string; category: 'VEGETABLE'; aliases: string[] }[] => {
+  const byId = new Map<
+    string,
+    { id: string; name: string; category: 'VEGETABLE'; aliases: string[] }
+  >();
+  for (const r of recipes) {
+    for (const link of (r.ingredientLinks ?? []) as {
+      ingredient: {
+        id: string;
+        name: string;
+        aliases: { alias: string }[];
+      };
+    }[]) {
+      const { id, name, aliases } = link.ingredient;
+      if (!byId.has(id)) {
+        byId.set(id, {
+          id,
+          name,
+          category: 'VEGETABLE',
+          aliases: aliases.map((a) => a.alias),
+        });
+      }
+    }
+  }
+  return [...byId.values()];
+};
 
 /** 构造 fake deps，favorites 可初始化 */
 function makeDeps(
@@ -99,6 +129,11 @@ function makeDeps(
   } as never);
 
   const deps: ChatToolDeps = {
+    // 身份解析与全部包含用真实 IngredientService 纯逻辑（只 fake 其 Prisma），
+    // 与安全判断同一原则：避免测试自证一套与线上不同的语义。
+    ingredientIdentities: async () => identitiesFrom(recipes),
+    recipeIdsContainingAll: (ids, links) =>
+      new IngredientService({} as never).recipeIdsContainingAll(ids, links),
     loadSignals: async () => ({
       blocked: opts.blocked ?? [],
       healthGoal: opts.pref?.healthGoal ?? 'BALANCED',
@@ -204,6 +239,135 @@ describe('chat tools', () => {
       });
       expect(result.count).toBe(0);
       expect(result.note).toBeDefined();
+    });
+  });
+  // #11 / ADR-0018 F1：多食材走稳定身份的全部包含，别名命中同一身份，歧义不擅自映射。
+  describe('search_recipes 食材全部包含', () => {
+    /** 番茄（别名西红柿）+ 鸡蛋 + 只有番茄的汤 + 只有鸡蛋的沙拉 */
+    const threeRecipes = () => [
+      recipe({
+        id: 'r-both',
+        name: '西红柿炒鸡蛋',
+        ingredients: [{ name: '番茄' }, { name: '鸡蛋' }],
+        identities: { 番茄: ['番茄', '西红柿'] },
+      } as Partial<Recipe>),
+      recipe({
+        id: 'r-tomato',
+        name: '番茄蛋花汤',
+        ingredients: [{ name: '番茄' }],
+        identities: { 番茄: ['番茄', '西红柿'] },
+      } as Partial<Recipe>),
+      recipe({
+        id: 'r-egg',
+        name: '水煮蛋沙拉',
+        ingredients: [{ name: '鸡蛋' }],
+      }),
+    ];
+
+    it('同时要求番茄与鸡蛋：只返回两者都含的菜谱，单个字符串不算 AND', async () => {
+      const { deps } = makeDeps({ recipes: threeRecipes() });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['番茄', '鸡蛋'],
+        limit: 10,
+      });
+      expect(result.recipes.map((r) => r.id)).toEqual(['r-both']);
+      expect(result.ingredients).toEqual({ names: ['番茄', '鸡蛋'] });
+    });
+
+    it('别名（西红柿）命中与规范名同一身份，不产生重复条件', async () => {
+      const { deps } = makeDeps({ recipes: threeRecipes() });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['西红柿', '番茄', '鸡蛋'],
+        limit: 10,
+      });
+      expect(result.recipes.map((r) => r.id)).toEqual(['r-both']);
+      expect(result.ingredients).toEqual({ names: ['番茄', '鸡蛋'] });
+    });
+
+    it('身份不同不混淆：要鸡蛋时不会把鸭蛋菜谱算进来', async () => {
+      const duck = recipe({
+        id: 'r-duck',
+        name: '鸭蛋炒饭',
+        ingredients: [{ name: '鸭蛋' }, { name: '番茄' }],
+      });
+      const { deps } = makeDeps({ recipes: [...threeRecipes(), duck] });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['鸭蛋'],
+        limit: 10,
+      });
+      expect(result.recipes.map((r) => r.id)).toEqual(['r-duck']);
+    });
+
+    it('歧义名称不擅自选择：给出候选并明确本次未筛选', async () => {
+      const oil = recipe({
+        id: 'r-oil',
+        name: '蒜香油菜',
+        ingredients: [{ name: '食用油' }, { name: '油菜' }],
+        identities: { 食用油: ['食用油', '油'] },
+      } as Partial<Recipe>);
+      const sesame = recipe({
+        id: 'r-sesame',
+        name: '麻油鸡',
+        ingredients: [{ name: '芝麻油' }, { name: '鸡胸' }],
+        identities: { 芝麻油: ['芝麻油', '油'] },
+      } as Partial<Recipe>);
+      const { deps } = makeDeps({ recipes: [oil, sesame] });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['油'],
+        limit: 10,
+      });
+      expect(result.recipes).toEqual([]);
+      expect(result.count).toBe(0);
+      expect(result.error).toContain('「油」可能指：');
+      expect(result.error).toContain('食用油');
+      expect(result.error).toContain('芝麻油');
+      expect(result.note).toBeUndefined();
+    });
+
+    it('未收录/无效名称如实报错，不静默去掉条件后返回更宽的结果', async () => {
+      const { deps } = makeDeps({ recipes: threeRecipes() });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['不存在的食材'],
+        limit: 10,
+      });
+      expect(result.recipes).toEqual([]);
+      expect(result.error).toContain('没有对应的已发布食材');
+    });
+
+    it('安全排除与错误分开：全部命中身份但被安全设置排除时给 note 而非 error', async () => {
+      const { deps } = makeDeps({
+        recipes: threeRecipes(),
+        blocked: ['鸡蛋'],
+      });
+      const result = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['番茄', '鸡蛋'],
+        limit: 10,
+      });
+      expect(result.recipes).toEqual([]);
+      expect(result.error).toBeUndefined();
+      expect(result.note).toBeDefined();
+      expect(result.ingredients).toEqual({ names: ['番茄', '鸡蛋'] });
+    });
+
+    it('食材条件与菜系、时长取交集，且保留其他查询能力', async () => {
+      const { deps } = makeDeps({ recipes: threeRecipes() });
+      const hit = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['番茄'],
+        cuisine: 'home',
+        maxTime: 20,
+        limit: 10,
+      });
+      expect(hit.recipes.map((r) => r.id).sort()).toEqual([
+        'r-both',
+        'r-tomato',
+      ]);
+      const miss = await runSearchRecipes(deps, 'u1', {
+        ingredients: ['番茄'],
+        cuisine: 'sichuan',
+        limit: 10,
+      });
+      expect(miss.recipes).toEqual([]);
+      expect(miss.error).toBeUndefined();
     });
   });
 

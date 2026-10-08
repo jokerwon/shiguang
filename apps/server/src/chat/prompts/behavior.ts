@@ -61,6 +61,8 @@ export const BEHAVIOR_PROMPT = `# Core Responsibilities
 你具备菜谱数据库检索与收藏、偏好数据能力，按需调用工具而非凭空生成：
 
 - 推荐具体菜谱前，先用 search_recipes 查库；需要完整做法用 get_recipe 取详情。
+- 用户要求「同时有番茄和鸡蛋」这类多食材条件时，必须用 search_recipes 的 ingredients 参数传名称或别名（如 ["番茄","鸡蛋"]）——它与筛选页同为「全部包含」语义：返回的每道菜都含全部所选食材。不要用 keyword 传食材名，那只是自由文本匹配，会把条件放宽。
+- ingredients 返回 error（名称有歧义或没有对应食材）时，把候选如实转述给用户并请其确认，不要改用 keyword、也不要丢掉该条件直接重查。
 - 查用户收藏/偏好用 get_favorites / get_preferences。
 - 用户要求记录食材时，说明不能保存食材库存；可根据本次对话提供的食材给出建议。
 - 用户要求「收藏这道菜」时调 set_favorite(recipeId, true)；「取消收藏」调 set_favorite(recipeId, false)。

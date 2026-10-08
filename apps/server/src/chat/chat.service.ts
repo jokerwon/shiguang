@@ -10,6 +10,7 @@ import {
   type UIMessage,
 } from 'ai';
 import { PrismaService } from '../prisma/prisma.service';
+import { IngredientService } from '../ingredient/ingredient.service';
 import { RecommendationService } from '../recipe/recommendation.service';
 import {
   RecipeSafetyService,
@@ -42,7 +43,6 @@ function currentSeason(): 'spring' | 'summer' | 'autumn' | 'winter' {
   if (month >= 9 && month <= 11) return 'autumn';
   return 'winter';
 }
-
 /** tool-loop 最大步数（ADR-0009：多轮 tool round-trip 上限） */
 const MAX_STEPS = 5;
 
@@ -57,6 +57,7 @@ export class ChatService {
     private readonly prisma: PrismaService,
     private readonly favorite: FavoriteService,
     private readonly preference: PreferenceService,
+    private readonly ingredients: IngredientService,
     private readonly conversation: ConversationService,
   ) {}
 
@@ -150,6 +151,29 @@ export class ChatService {
   }
 
   /**
+   * 已发布食材身份表（AI 工具把名称/别名归一为稳定身份）。
+   * 只取解析所需字段，与 `IngredientService.identify` 同形。
+   */
+  private async ingredientIdentities() {
+    const rows = await this.prisma.ingredient.findMany({
+      where: { published: true },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        aliases: { select: { alias: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      aliases: row.aliases.map((a) => a.alias),
+    }));
+  }
+
+  /**
    * 溢出摘要触发（ADR-0012 决策 4）。
    * 溢出区 = seq ≤ maxSeq − CONTEXT_WINDOW 且 seq > summaryUpToSeq；
    * 攒够 SUMMARY_TRIGGER_THRESHOLD 条才起摘要。失败由调用方捕获，降级 = 纯滑窗。
@@ -229,6 +253,9 @@ export class ChatService {
       loadSignals: (uid) => this.recommendation.loadSignals(uid),
       safety: this.safety,
       findRecipes: () => this.recipeSafetyRecipes(),
+      ingredientIdentities: () => this.ingredientIdentities(),
+      recipeIdsContainingAll: (ids, links) =>
+        this.ingredients.recipeIdsContainingAll(ids, links),
       findRecipeById: async (id) =>
         this.prisma.recipe.findUnique({ where: { id } }),
       favoriteFindAll: (uid) => this.favorite.findAll(uid),
