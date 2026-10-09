@@ -708,6 +708,24 @@ describe('chat tools', () => {
       expect(calls[0].demand).toEqual({ primary: '省事' });
     });
 
+    it('发给模型的事实视图是中文标签，不泄漏 HOME/QUICK 内部 key', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      const { client, calls } = fakeRerank((req) => ({
+        order: req.candidates.map((c) => c.id),
+        applied: true,
+      }));
+      deps.rerank = client;
+      await runSearchRecipes(deps, 'u1', {
+        limit: 10,
+        demand: { primary: '省事' },
+      });
+      const sent = calls[0].candidates;
+      expect(sent[0].cuisine).toBe('家常');
+      expect(sent[0].tags).toEqual(['快手']);
+      // 与实验路径（recipeFactView(toResponse(r))）同一份事实，禁止内部 key 外泄
+      expect(JSON.stringify(sent)).not.toMatch(/HOME|QUICK/);
+    });
+
     it('生效时只换序：集合、条数与 count 都不变', async () => {
       const { deps } = makeDeps({ recipes: three() });
       const { client } = fakeRerank((req) => ({
