@@ -16,7 +16,7 @@
 // 边界：不修改共享排序、在线 search_recipes、首页、HTTP、聊天模型或 schema；
 // 凭证只从服务端环境变量读取，不写入任何工件；付费请求只在显式 --execute 下发生。
 import 'dotenv/config';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -458,14 +458,30 @@ function blind(): void {
   writeJson(join(outDir, 'blind-material.json'), material);
   writeFileSync(join(outDir, 'blind-material.md'), renderBlindMarkdown(material));
   writeJson(join(outDir, 'reveal.json'), reveal);
-  writeJson(
-    join(outDir, 'reviews.template.json'),
-    material.map((m: BlindEntry) => ({ scenarioId: m.scenarioId, verdict: null })),
-  );
+  // 用户评审是唯一不能重新生成的工件：绝不覆盖，模板默认另写到 reviews.template.json
+  const reviewPath = join(outDir, 'reviews.json');
+  if (!existsSync(reviewPath)) {
+    writeJson(
+      reviewPath,
+      material.map((m: BlindEntry) => ({ scenarioId: m.scenarioId, verdict: null })),
+    );
+  }
+  const templatePath = join(outDir, 'reviews.template.json');
+  if (!existsSync(templatePath)) {
+    writeJson(
+      templatePath,
+      material.map((m: BlindEntry) => ({ scenarioId: m.scenarioId, verdict: null })),
+    );
+  }
   console.log(
-    `✅ 匿名材料 ${material.length} 个场景 → ${outDir}（blind-material.md / blind-material.json / reveal.json / reviews.template.json）`,
+    `✅ 匿名材料 ${material.length} 个场景 → ${outDir}（blind-material.md / blind-material.json / reveal.json）`,
   );
   console.log('   揭盲映射与评审材料分离：评审完成前不要把 reveal.json 交给评审者。');
+  console.log(
+    existsSync(reviewPath)
+      ? `   已有 ${reviewPath}：未覆盖，你的评审保持不变。`
+      : `   评审模板 → ${reviewPath}（也可参考 reviews.template.json；请另存为 reviews.json 再填写，避免被重新生成覆盖）`,
+  );
 }
 
 function review(): void {

@@ -1,0 +1,23 @@
+{
+  "complete": true,
+  "wins": 16,
+  "ties": 11,
+  "losses": 3,
+  "netWins": 13,
+  "missingRuns": [],
+  "failedRuns": [],
+  "missingReviews": [],
+  "invalidReviews": [],
+  "hardViolations": [],
+  "edgeFailures": [],
+  "edgeNotRun": [],
+  "exit": "continue",
+  "reasons": [
+    "完整评估且净胜 13 >= 6，建议继续接入设计（不自动上线）"
+  ],
+  "mainScenarios": 30,
+  "devScenarios": 1,
+  "edgeScenarios": 7,
+  "reviewedScenarios": 30,
+  "conclusionSource": "真实运行记录 + 用户人工盲评（不由代理代评）"
+}

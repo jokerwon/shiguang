@@ -98,28 +98,30 @@ describe('候选构建', () => {
     expect(ids(out)).toEqual(['r2']);
   });
 
-  it('有过敏设置时成分信息不足的菜谱保守排除', async () => {
+  it('有过敏设置时成分信息不足的菜谱保守排除，已知安全的菜谱仍保留', async () => {
+    // 大豆信息已核查且不命中用户过敏原「乳」，用来证明排除是定向的而非整批剔除
+    const soy = identity('i-soy', '大豆', ['大豆']);
     const snapshot = snapshotOf([
       recipe('r1', '含乳菜', {}, [link('牛奶', MILK, 0)]),
       recipe('r2', '成分未知菜', {}, [link('黄瓜', PLAIN, 0)]),
+      recipe('r3', '成分已核查菜', {}, [link('大豆', soy, 0)]),
     ]);
     const out = await buildCandidates(
       snapshot,
       scenarioOf({ profile: { ...scenarioOf().profile, allergens: ['乳'] } }),
       FROZEN_NOW,
     );
-    expect(ids(out)).toEqual([]);
-    expect(out.note).toContain('安全设置被排除');
+    expect(ids(out)).toEqual(['r3']);
   });
 
-  it('完整合格候选不按旧分数截断', async () => {
+  it('完整合格候选不按旧分数截断（超过 runSearchRecipes 的默认 6 道上限）', async () => {
     const snapshot = snapshotOf(
-      Array.from({ length: 6 }, (_, i) =>
+      Array.from({ length: 8 }, (_, i) =>
         recipe(`r${i}`, `菜${i}`, {}, [link('黄瓜', PLAIN, 0)]),
       ),
     );
     const out = await buildCandidates(snapshot, scenarioOf(), FROZEN_NOW);
-    expect(out.candidates).toHaveLength(6);
+    expect(out.candidates).toHaveLength(8);
     expect(out.baselineTop4).toHaveLength(4);
   });
 

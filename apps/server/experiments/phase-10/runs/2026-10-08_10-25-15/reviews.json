@@ -1,0 +1,122 @@
+[
+  {
+    "scenarioId": "home-tired",
+    "verdict": "B"
+  },
+  {
+    "scenarioId": "home-light-rice",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "home-priority",
+    "verdict": "B"
+  },
+  {
+    "scenarioId": "home-either",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "home-fat-loss",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "home-protein",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "sichuan-tired",
+    "verdict": "B"
+  },
+  {
+    "scenarioId": "sichuan-light-rice",
+    "verdict": "B"
+  },
+  {
+    "scenarioId": "sichuan-priority",
+    "verdict": "B"
+  },
+  {
+    "scenarioId": "sichuan-either",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "sichuan-fat-loss",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "sichuan-protein",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "japanese-tired",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "japanese-light-rice",
+    "verdict": "B"
+  },
+  {
+    "scenarioId": "japanese-priority",
+    "verdict": "B"
+  },
+  {
+    "scenarioId": "japanese-either",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "japanese-fat-loss",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "japanese-protein",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "western-tired",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "western-light",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "western-priority",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "western-either",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "western-fat-loss",
+    "verdict": "B"
+  },
+  {
+    "scenarioId": "western-protein",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "light-tired",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "light-rice",
+    "verdict": "A"
+  },
+  {
+    "scenarioId": "light-priority",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "light-either",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "light-fat-loss",
+    "verdict": "tie"
+  },
+  {
+    "scenarioId": "light-protein",
+    "verdict": "tie"
+  }
+]
