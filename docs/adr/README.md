@@ -25,6 +25,7 @@
 | [ADR-0017](./0017-remove-pantry-and-shopping-list.md) | 移除库存与购物清单：纯偏好排序、首页筛选入口、备份及历史 JSON 清理的一次性例外 | 7 |
 | [ADR-0018](./0018-ingredient-catalog-and-filtering.md) | 食材资料库、稳定身份与菜谱关联、别名共用、全部包含筛选及安全边界；整体设计已确认，未实施 | 8 |
 | [ADR-0019](./0019-recipe-ingredient-single-source.md) | 菜谱原料以 `RecipeIngredient` 为唯一事实源：主键改 (recipeId, position)，下线 `Recipe.ingredients` | 9 |
+| [ADR-0020](./0020-jev-rerank-online-integration.md) | Jev 候选重排序接入线上搜索：候选池上限、模型生成软偏好、默认关闭 + 基线回退、分阶段放量 | 11 |
 
 ## Phase 总览
 
@@ -82,5 +83,13 @@
 - 关联行 `(recipeId, position)` 成为原料唯一事实源，下线 `Recipe.ingredients` Json 列
 - 读取/写入/归一/AI 工具全部改读关联行；同身份多写法各保留一行，不再合并丢用量
 - 实施清单:[implementation/phase-9-implementation.md](../implementation/phase-9-implementation.md)（含迁移、备份对账与运行时证据）
+
+**Phase 11(Jev 候选重排序接入线上,设计定稿、实施未开始)** — ADR-0020
+- 接入位置:候选池(`rankRecipes` 之后、`slice` 之前)重排,只换序不改集合;候选池上限默认 12(工具 `limit` 上限)
+- 软偏好来源:聊天模型按用户原话填 `search_recipes` 的 `demand` 字段;填不出则不重排;保持实验已验证的单候选协议
+- 安全边界:默认关闭 + 总超时回退基线顺序;只发送菜谱事实与 `demand`,不发送用户标识与原始聊天
+- 放量:影子 → 灰度 → 全量;线上形态(候选池 ≤12 + 模型生成软偏好)收益未经盲评,未达门槛不得全量
+- 实施清单:[implementation/phase-11-implementation.md](../implementation/phase-11-implementation.md)(设计定稿,未实施)
+- 验收清单:[acceptance/phase-11-checklist.md](../acceptance/phase-11-checklist.md)(全部未勾选)
 
 **术语**见 [glossary.md](../glossary.md)。
