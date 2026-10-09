@@ -6,6 +6,7 @@ import type {
   RecipeWithIngredientLinks,
   RecipeSafetyService,
 } from '../../recipe/recipe-safety.service';
+import type { RerankClient } from '../../recipe/jev-rerank/client';
 
 /** 只读工具 + 写工具需要的 service 能力 */
 export interface ChatToolDeps {
@@ -48,6 +49,11 @@ export interface ChatToolDeps {
     allergens: string[];
     healthGoal: 'BALANCED' | 'FAT_LOSS' | 'MUSCLE_GAIN';
   } | null>;
+  /**
+   * 候选重排序客户端（ADR-0020）。缺失 = 未接入或未启用：搜索保持基线顺序。
+   * 接入点在这里，离线评估与线上接入注入不同实现，不新增其他 seam。
+   */
+  rerank?: RerankClient;
 }
 
 /** 精简菜谱字段（控制 tool result token） */

@@ -16,6 +16,11 @@ import {
 } from '../../recipe/recipe-safety.service';
 import type { Recipe } from 'generated/prisma/client';
 import { IngredientService } from '../../ingredient/ingredient.service';
+import type {
+  RerankClient,
+  RerankOutcome,
+  RerankRequest,
+} from '../../recipe/jev-rerank/client';
 
 /* ---- fake 工厂 ---- */
 
@@ -589,6 +594,216 @@ describe('chat tools', () => {
       });
       expect(result.draft).toEqual({});
       expect(result.note).toBeDefined();
+    });
+  });
+
+  describe('候选重排序（ADR-0020）', () => {
+    /** 假重排客户端：记录收到的请求，按给定结果作答 */
+    const fakeRerank = (
+      answer: (req: RerankRequest) => Partial<RerankOutcome>,
+    ): { client: RerankClient; calls: RerankRequest[] } => {
+      const calls: RerankRequest[] = [];
+      return {
+        calls,
+        client: {
+          rerank: async (req) => {
+            calls.push(req);
+            return {
+              order: req.candidates.map((c) => c.id),
+              applied: false,
+              candidates: req.candidates.length,
+              requests: 0,
+              durationMs: 0,
+              failures: 0,
+              ...answer(req),
+            };
+          },
+        },
+      };
+    };
+
+    const three = () => [
+      recipe({ id: 'r1', name: '甲菜' }),
+      recipe({ id: 'r2', name: '乙菜' }),
+      recipe({ id: 'r3', name: '丙菜' }),
+    ];
+
+    const demand = { primary: '省事' };
+
+    it('未注入客户端时保持基线顺序（关闭即等价）', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      const withoutDemand = await runSearchRecipes(deps, 'u1', { limit: 10 });
+      const withDemand = await runSearchRecipes(deps, 'u1', {
+        limit: 10,
+        demand,
+      });
+      expect(withDemand.recipes.map((r) => r.id)).toEqual(
+        withoutDemand.recipes.map((r) => r.id),
+      );
+    });
+
+    it('缺 demand 时不调用重排', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      const { client, calls } = fakeRerank((req) => ({
+        order: [...req.candidates.map((c) => c.id)].reverse(),
+        applied: true,
+        requests: 0,
+        durationMs: 0,
+        failures: 0,
+      }));
+      deps.rerank = client;
+      const result = await runSearchRecipes(deps, 'u1', { limit: 10 });
+      expect(calls).toEqual([]);
+      expect(result.recipes.map((r) => r.id)).toEqual(['r1', 'r2', 'r3']);
+    });
+
+    it('demand 只有空白主偏好时视为未提供', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      const { client, calls } = fakeRerank((req) => ({
+        order: req.candidates.map((c) => c.id),
+        applied: true,
+        requests: 0,
+        durationMs: 0,
+        failures: 0,
+      }));
+      deps.rerank = client;
+      await runSearchRecipes(deps, 'u1', {
+        limit: 10,
+        demand: { primary: '   ' },
+      });
+      expect(calls).toEqual([]);
+    });
+
+    it('demand 字段不是字符串时不抛错、不重排（工具入参无运行时校验）', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      const { client, calls } = fakeRerank(() => ({}));
+      deps.rerank = client;
+      const bad = { primary: 123, secondary: { x: 1 } } as unknown as {
+        primary: string;
+        secondary?: string;
+      };
+      const result = await runSearchRecipes(deps, 'u1', {
+        limit: 10,
+        demand: bad,
+      });
+      expect(calls).toEqual([]);
+      expect(result.recipes.map((r) => r.id)).toEqual(['r1', 'r2', 'r3']);
+    });
+
+    it('主偏好合法但次偏好非字符串时，只保留主偏好', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      const { client, calls } = fakeRerank((req) => ({
+        order: req.candidates.map((c) => c.id),
+        applied: true,
+      }));
+      deps.rerank = client;
+      await runSearchRecipes(deps, 'u1', {
+        limit: 10,
+        demand: { primary: '省事', secondary: 7 } as unknown as {
+          primary: string;
+          secondary?: string;
+        },
+      });
+      expect(calls).toHaveLength(1);
+      expect(calls[0].demand).toEqual({ primary: '省事' });
+    });
+
+    it('生效时只换序：集合、条数与 count 都不变', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      const { client } = fakeRerank((req) => ({
+        order: [...req.candidates.map((c) => c.id)].reverse(),
+        applied: true,
+        requests: 3,
+        durationMs: 5,
+        failures: 0,
+      }));
+      deps.rerank = client;
+      const result = await runSearchRecipes(deps, 'u1', { limit: 10, demand });
+      expect(result.recipes.map((r) => r.id)).toEqual(['r3', 'r2', 'r1']);
+      expect(result.count).toBe(3);
+    });
+
+    it('applied=false 时忽略返回的 order（影子/回退）', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      const { client } = fakeRerank((req) => ({
+        order: [...req.candidates.map((c) => c.id)].reverse(),
+        applied: false,
+        reason: 'shadow',
+        requests: 3,
+        durationMs: 5,
+        failures: 0,
+      }));
+      deps.rerank = client;
+      const result = await runSearchRecipes(deps, 'u1', { limit: 10, demand });
+      expect(result.recipes.map((r) => r.id)).toEqual(['r1', 'r2', 'r3']);
+    });
+
+    it('重排客户端抛错时不把故障变成搜索失败', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      deps.rerank = {
+        rerank: async () => {
+          throw new Error('boom');
+        },
+      };
+      const result = await runSearchRecipes(deps, 'u1', { limit: 10, demand });
+      expect(result.recipes.map((r) => r.id)).toEqual(['r1', 'r2', 'r3']);
+    });
+
+    it('候选池全量送交重排，不按 limit 截断', async () => {
+      const { deps } = makeDeps({ recipes: three() });
+      const { client, calls } = fakeRerank((req) => ({
+        order: req.candidates.map((c) => c.id),
+        applied: true,
+        requests: 0,
+        durationMs: 0,
+        failures: 0,
+      }));
+      deps.rerank = client;
+      const result = await runSearchRecipes(deps, 'u1', { limit: 1, demand });
+      expect(calls[0].candidates.map((c) => c.id)).toEqual(['r1', 'r2', 'r3']);
+      expect(result.recipes.map((r) => r.id)).toEqual(['r1']);
+    });
+
+    it('返回含被排除候选或重复 id 时，结果不增不减不重复', async () => {
+      const r1 = recipe({ id: 'r1', name: '甲菜' });
+      const r2 = recipe({
+        id: 'r2',
+        name: '乙菜',
+        ingredients: [{ name: '花生' }],
+      });
+      const { deps } = makeDeps({ recipes: [r1, r2], blocked: ['花生'] });
+      const { client } = fakeRerank(() => ({
+        // 池内只有 r1；这里故意塞进被安全排除的 r2，并重复 r1
+        order: ['r2', 'r1', 'r1'],
+        applied: true,
+        requests: 1,
+        durationMs: 1,
+        failures: 0,
+      }));
+      deps.rerank = client;
+      const result = await runSearchRecipes(deps, 'u1', { limit: 10, demand });
+      expect(result.recipes.map((r) => r.id)).toEqual(['r1']);
+    });
+
+    it('重排不改变安全过滤结果', async () => {
+      const r1 = recipe({ id: 'r1', name: '甲菜' });
+      const r2 = recipe({
+        id: 'r2',
+        name: '乙菜',
+        ingredients: [{ name: '花生' }],
+      });
+      const { deps } = makeDeps({ recipes: [r1, r2], blocked: ['花生'] });
+      const { client, calls } = fakeRerank((req) => ({
+        order: req.candidates.map((c) => c.id),
+        applied: true,
+        requests: 0,
+        durationMs: 0,
+        failures: 0,
+      }));
+      deps.rerank = client;
+      const result = await runSearchRecipes(deps, 'u1', { limit: 10, demand });
+      expect(result.recipes.map((r) => r.id)).toEqual(['r1']);
+      expect(calls[0].candidates.map((c) => c.id)).toEqual(['r1']);
     });
   });
 });

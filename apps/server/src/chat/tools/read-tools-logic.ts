@@ -18,6 +18,11 @@ import {
   rankRecipes,
   type ScoreContext,
 } from '../../recipe/recommendation.scoring';
+import {
+  toFactView,
+  type Demand,
+  type RecipeFactView,
+} from '../../recipe/jev-rerank/protocol';
 import type { ChatToolDeps, RecipeSummary } from './types';
 
 /** 将菜谱转为精简摘要（控制 tool result token）；原料取自关联行（ADR-0019） */
@@ -63,6 +68,49 @@ function restrictRanked<T extends { id: string }>(
 ): T[] {
   const allowed = new Set(subset.map((r) => r.id));
   return ranked.filter((r) => allowed.has(r.id));
+}
+
+/**
+ * 工具入参的 `demand` → 可用的软偏好。空白或缺少主偏好一律视为「未提供」：
+ * 宁可不重排，也不拿半个需求去问模型（ADR-0020 决策 3）。
+ */
+function normalizeDemand(demand: SearchInput['demand']): Demand | undefined {
+  // 工具入参由对话模型生成，jsonSchema 不产生运行时校验：非字符串必须挡住，
+  // 否则 .trim() 抛错会冒泡成整个搜索失败，而不是「不重排」
+  const primary =
+    typeof demand?.primary === 'string' ? demand.primary.trim() : '';
+  if (!primary) return undefined;
+  const secondary =
+    typeof demand?.secondary === 'string' ? demand.secondary.trim() : '';
+  return secondary ? { primary, secondary } : { primary };
+}
+
+/**
+ * 菜谱 → 模型与人工评审共用的同一份事实视图（只含已有资料，不补写推测信息）。
+ * 经 `toResponse` 取共享域层形态：菜系/标签要在这里换成中文标签，
+ * 与 `toSummary` 用同一套映射，否则模型会看到 `HOME`/`QUICK` 这类内部 key。
+ */
+function factViewOf(r: RecipeWithIngredientLinks): RecipeFactView {
+  return toFactView(toResponse(r));
+}
+
+/**
+ * 按重排结果置换候选池。只认池内 id、只做置换：缺失的 id 被忽略，顺序里没有的候选
+ * 按基线顺序补在后面——即使客户端违反不变量，结果也不会增删或重复候选。
+ */
+function applyOrder<T extends { id: string }>(pool: T[], order: string[]): T[] {
+  const byId = new Map(pool.map((r) => [r.id, r]));
+  const out: T[] = [];
+  const seen = new Set<string>();
+  for (const id of order) {
+    const hit = byId.get(id);
+    if (hit && !seen.has(id)) {
+      out.push(hit);
+      seen.add(id);
+    }
+  }
+  for (const r of pool) if (!seen.has(r.id)) out.push(r);
+  return out;
 }
 
 /**
@@ -112,6 +160,11 @@ export interface SearchInput {
   maxTime?: number;
   maxKcal?: number;
   minProtein?: number;
+  /**
+   * 本次需求的软偏好及优先级（主偏好必填、次偏好可选），由对话模型按用户原话填写。
+   * 填不出或用户未表达偏好时**不要填**：缺失即不重排，宁可不猜（ADR-0020）。
+   */
+  demand?: { primary: string; secondary?: string };
   limit?: number;
 }
 
@@ -241,7 +294,25 @@ export async function runSearchRecipes(
     dailySeed(userId, ctx.dateKey),
     safe.length,
   );
-  const sorted = restrictRanked(ranked, filtered).slice(0, input.limit ?? 6);
+  // 7. 候选重排序（ADR-0020）：在候选池上只改顺序，不增删候选、不碰安全与硬条件。
+  //    客户端缺失（未接入/未启用）、缺 demand、或任何回退条件（关闭/影子/限速/超时/
+  //    失败/不变量违规）都保持基线顺序——重排是增强，不是正确性依赖。
+  let pool = restrictRanked(ranked, filtered);
+  const demand = normalizeDemand(input.demand);
+  if (deps.rerank && demand) {
+    try {
+      const outcome = await deps.rerank.rerank({
+        userId,
+        demand,
+        candidates: pool.map(factViewOf),
+        limit: input.limit ?? 6,
+      });
+      if (outcome.applied) pool = applyOrder(pool, outcome.order);
+    } catch {
+      // 重排是增强、不是正确性依赖：客户端抛错也回退基线顺序，不把故障变成搜索失败
+    }
+  }
+  const sorted = pool.slice(0, input.limit ?? 6);
 
   return {
     count: sorted.length,

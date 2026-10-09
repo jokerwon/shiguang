@@ -84,12 +84,13 @@
 - 读取/写入/归一/AI 工具全部改读关联行；同身份多写法各保留一行，不再合并丢用量
 - 实施清单:[implementation/phase-9-implementation.md](../implementation/phase-9-implementation.md)（含迁移、备份对账与运行时证据）
 
-**Phase 11(Jev 候选重排序接入线上,设计定稿、实施未开始)** — ADR-0020
+**Phase 11(Jev 候选重排序接入线上,接入实现已交付、未放量)** — ADR-0020
 - 接入位置:候选池(`rankRecipes` 之后、`slice` 之前)重排,只换序不改集合;候选池上限默认 12(工具 `limit` 上限)
-- 软偏好来源:聊天模型按用户原话填 `search_recipes` 的 `demand` 字段;填不出则不重排;保持实验已验证的单候选协议
-- 安全边界:默认关闭 + 总超时回退基线顺序;只发送菜谱事实与 `demand`,不发送用户标识与原始聊天
-- 放量:影子 → 灰度 → 全量;线上形态(候选池 ≤12 + 模型生成软偏好)收益未经盲评,未达门槛不得全量
-- 实施清单:[implementation/phase-11-implementation.md](../implementation/phase-11-implementation.md)(设计定稿,未实施)
-- 验收清单:[acceptance/phase-11-checklist.md](../acceptance/phase-11-checklist.md)(全部未勾选)
+- 软偏好来源:聊天模型按用户原话填 `search_recipes` 的 `demand` 字段;填不出则不重排
+- 协议与派发:保持实验已验证的单候选协议,同一次搜索内**并行**派发并由全局令牌桶限流(串行 + 账号限速会让秒级超时必然失败)
+- 安全边界:默认 `JEV_RERANK_MODE=off` + 总超时回退基线顺序;只发送菜谱事实与 `demand`,不发送用户标识与原始聊天
+- 放量:影子(算但不生效,且付出同样的延迟与费用) → 灰度 → 全量;线上形态收益与呈现层均未验证,未达门槛不得全量
+- 实施清单:[implementation/phase-11-implementation.md](../implementation/phase-11-implementation.md)(含 2026-10-09 实施与验证记录)
+- 验收清单:[acceptance/phase-11-checklist.md](../acceptance/phase-11-checklist.md)(G2–G4 未勾选:需付费授权/真实流量/人工评审)
 
 **术语**见 [glossary.md](../glossary.md)。

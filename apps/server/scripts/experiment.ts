@@ -298,7 +298,10 @@ async function run(): Promise<void> {
           failures.push(`快照缺少候选事实：${candidate.id}`);
           break;
         }
-        const state = buildState(scenario, fact);
+        const state = buildState(
+          { request: scenario.request, demand: scenario.soft },
+          fact,
+        );
         // 保守上界：按 1 token/字符估算本次请求，超出预算即暂停
         const estimate = (state.length / 1_000_000) * pricePerMTok;
         if (budget.estimatedCostUsd + estimate > scenarioBudgetUsd) {

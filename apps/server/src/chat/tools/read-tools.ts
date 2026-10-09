@@ -45,6 +45,19 @@ export function createReadTools(deps: ChatToolDeps, userId: string) {
         maxTime: { type: 'integer', description: '最大制作时长（分钟）' },
         maxKcal: { type: 'integer', description: '最大热量（kcal）' },
         minProtein: { type: 'integer', description: '最低蛋白（g）' },
+        demand: {
+          type: 'object',
+          description:
+            '本次需求的软偏好及优先级：按用户原话概括主要偏好（primary，必填）与次要偏好（secondary，可选），如 primary「省事、步骤少」+ secondary「咸香下饭」。只在用户确实表达了这类偏好时填写；**填不出就不要填**——缺失时不会重排，宁可不猜。这里只写偏好，不要写成筛选条件。',
+          properties: {
+            primary: {
+              type: 'string',
+              description: '主要偏好（用户这次最在意的点）',
+            },
+            secondary: { type: 'string', description: '次要偏好（可选）' },
+          },
+          required: ['primary'],
+        },
         limit: {
           type: 'integer',
           description: '返回数量上限，默认 6',

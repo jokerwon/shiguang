@@ -107,7 +107,10 @@ describe('Jev 排序', () => {
   });
 
   it('state 同时给出本次请求与候选事实', () => {
-    const state = buildState(scenario, facts('r1', '西红柿炒鸡蛋'));
+    const state = buildState(
+      { request: scenario.request, demand: scenario.soft },
+      facts('r1', '西红柿炒鸡蛋'),
+    );
     expect(state).toContain('今天很累，想吃点省事的');
     expect(state).toContain('省事');
     expect(state).toContain('下饭');

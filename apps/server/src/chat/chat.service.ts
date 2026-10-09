@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import {
   convertToModelMessages,
   generateId,
@@ -29,6 +29,7 @@ import {
 } from '../conversation/conversation.mapper';
 import { buildSystemPrompt } from './prompts';
 import { createChatTools, type ChatToolDeps } from './tools';
+import type { RerankClient } from '../recipe/jev-rerank/client';
 import {
   summarizeOverflow,
   SUMMARY_TRIGGER_THRESHOLD,
@@ -59,6 +60,10 @@ export class ChatService {
     private readonly preference: PreferenceService,
     private readonly ingredients: IngredientService,
     private readonly conversation: ConversationService,
+    // 候选重排序（ADR-0020）：未接入/未启用时由工厂注入 undefined，搜索保持基线顺序
+    @Optional()
+    @Inject('CHAT_RERANK')
+    private readonly rerank?: RerankClient,
   ) {}
 
   /**
@@ -261,6 +266,7 @@ export class ChatService {
           healthGoal: p.healthGoal,
         };
       },
+      rerank: this.rerank,
     };
   }
 }

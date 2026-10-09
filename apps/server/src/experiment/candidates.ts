@@ -14,11 +14,7 @@ import {
   RecipeSafetyService,
   type RecipeWithIngredientLinks,
 } from '../recipe/recipe-safety.service';
-import {
-  CUISINE_LABELS,
-  PREF_LABELS,
-  type Recipe as DomainRecipe,
-} from '@shiguang/domain';
+import type { Recipe as DomainRecipe } from '@shiguang/domain';
 import { toResponse } from '../recipe/recipe.mapper';
 import type { ChatToolDeps } from '../chat/tools/types';
 import {
@@ -26,6 +22,7 @@ import {
   type SearchInput,
 } from '../chat/tools/read-tools-logic';
 import type { RecipeSummary } from '../chat/tools/types';
+import { toFactView, type RecipeFactView } from '../recipe/jev-rerank/protocol';
 import type { FictionalProfile, Scenario } from './scenarios';
 
 /** 冻结快照：菜谱完整事实 + 原料稳定身份/别名/过敏原关系（ADR-0018/0019） */
@@ -113,36 +110,11 @@ export function buildDeps(
 }
 
 /** 模型与人工评审看到的同一份菜谱事实（只含已有资料，不补写推测信息） */
-export interface RecipeFactView {
-  id: string;
-  name: string;
-  desc: string;
-  cuisine: string;
-  tags: string[];
-  time: number;
-  kcal: number;
-  protein: number;
-  carb: number;
-  fat: number;
-  ingredients: { name: string; amount: string; note?: string }[];
-  steps: string[];
-}
+export type { RecipeFactView };
 
+/** 冻结快照的域层菜谱 → 事实视图（映射实现在生产模块，离线与线上共用一份） */
 export function recipeFactView(recipe: DomainRecipe): RecipeFactView {
-  return {
-    id: recipe.id,
-    name: recipe.name,
-    desc: recipe.desc,
-    cuisine: CUISINE_LABELS[recipe.cuisine] ?? recipe.cuisine,
-    tags: recipe.tags.map((t) => PREF_LABELS[t] ?? t),
-    time: recipe.time,
-    kcal: recipe.kcal,
-    protein: recipe.protein,
-    carb: recipe.carb,
-    fat: recipe.fat,
-    ingredients: recipe.ingredients,
-    steps: recipe.steps,
-  };
+  return toFactView(recipe);
 }
 
 export function factsOf(
