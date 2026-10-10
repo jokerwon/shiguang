@@ -50,7 +50,7 @@ app/
   (screen)/               # 路由组 — 需要认证的页面（AuthGuard 包裹）
     layout.tsx            # 共享布局：顶部导航 + TabBar + AuthGuard
     page.tsx              # 发现页（首页）— 为你推荐、菜系探索、15 分钟快手
-    chat/[[...slug]]/page.tsx  # 对话 Agent — AI tool-calling + 持久化多会话（ADR-0009/0010/0011/0012）：会话状态由 URL 拥有（/chat/new、/chat/:id），可选 catch-all 命中 /chat；历史消息只读（拉历史时记录 id 集合，偏好确认/收藏操作入口锁定）
+    chat/[[...slug]]/page.tsx  # 对话 Agent — AI tool-calling + 持久化多会话（ADR-0009/0010/0011/0012）：会话状态由 URL 拥有（/chat/new、/chat/:id）；首条响应经 history.replaceState 回填 URL，usePathname 读取 id，保留在飞消息且不重新拉历史；历史消息只读（拉历史时记录 id 集合，偏好确认/收藏操作入口锁定）
     filter/page.tsx       # 筛选页 — 按菜系/偏好/时间 + 食材多选（全部包含）；?ingredients=… 清除旧条件
     ingredient/page.tsx   # 食材列表 — 一层分类 + 名称/别名搜索（ADR-0018）
     ingredient/[id]/page.tsx # 食材详情 — 审核资料、参考来源、相关菜谱与保守安全排除说明

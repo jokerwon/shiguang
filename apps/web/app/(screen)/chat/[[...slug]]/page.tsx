@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation'
@@ -33,20 +33,20 @@ function isToolPart(p: { type: string }): boolean {
 }
 
 /**
- * 从路由 params 推导当前会话状态。
- * - slug 缺省 / ['new'] → 新会话态（conversationId = undefined）
- * - [id] → 已有会话（conversationId = id）
+ * 从 URL 推导当前会话状态，包含原生 history.replaceState 的首条回填。
+ * - /chat 或 /chat/new → 新会话态
+ * - /chat/:id → 已有会话
  */
 function useRouteConversationId(): string | undefined {
-  const params = useParams<{ slug?: string[] }>()
-  const slug = params?.slug
-  if (!slug || slug.length === 0 || slug[0] === 'new') return undefined
-  return slug[0]
+  const pathname = usePathname()
+  const id = pathname.split('/')[2]
+  return id && id !== 'new' ? id : undefined
 }
 
 export default function ChatScreen() {
   const router = useRouter()
   const routeId = useRouteConversationId()
+  const [adoptedRouteId, setAdoptedRouteId] = React.useState<string | undefined>(undefined)
   const [field, setField] = React.useState('')
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
   // 切换会话时的「正在加载历史」状态：直接由 routeId 派生（routeId 变化 → 自动回到 true），
@@ -60,14 +60,10 @@ export default function ChatScreen() {
   const [readOnlyIds, setReadOnlyIds] = React.useState<Set<string>>(new Set())
   const { mutate: globalMutate } = useSWRConfig()
 
-  // ADR-0011：useChat 常量 id（'chat'），切换会话不切 id，流式不中断。
-  // conversationId 从路由 routeId 读取。transport 依赖 routeId 重建：
-  // URL 方案下 router.replace（首条消息响应头到达时触发）发生在流式请求已发出之后，
-  // transport 引用变化不影响在飞请求，下次 sendMessage 才用新 transport，流式不中断。
-  // （未用 ref 实时读取：本项目 React Compiler 禁止 render 期 ref.current 访问。）
+  // ADR-0011：useChat 常量 id（'chat'）。transport 随 URL 更新，下次发送读取真实会话 id。
 
   // 自定义 fetch：拦截响应头 x-conversation-id（新建会话时后端回传）
-  // 首条消息后 router.replace 到真实 id（非 push，不污染历史）。
+  // 首条消息仅回填 URL，不导航重建聊天页，也不覆盖正在生成的消息。
   // 401 处理（ADR-0013 决策 4）：响应头读到 401 → 单飞 refresh → 换新 Bearer 重发一次。
   // 与 lib/api.ts 共用 refreshOnce 的模块级 inflight，不会互相作废 refresh token。
   // 已在飞的流式响应不经过这里（流是已建立的连接），只有新发请求会撞 401。
@@ -88,15 +84,16 @@ export default function ChatScreen() {
       }
       const cid = res.headers.get('x-conversation-id')
       if (cid) {
-        // 仅当当前仍是新会话态时 replace，避免重复跳转
         if (!routeId) {
-          router.replace(`/chat/${cid}`)
+          setAdoptedRouteId(cid)
+          setLoadedRouteId(cid)
+          window.history.replaceState(null, '', `/chat/${cid}`)
         }
         refreshConversations()
       }
       return res
     },
-    [router, routeId],
+    [routeId],
   )
 
   const transport = React.useMemo(
@@ -144,6 +141,7 @@ export default function ChatScreen() {
 
   // ADR-0011：切换会话由路由驱动。routeId 变化 → 拉历史或清空。
   React.useEffect(() => {
+    if (adoptedRouteId && (!routeId || adoptedRouteId === routeId)) return
     if (!routeId) {
       // 新会话态：清空消息（避免上一会话闪现）。
       // readOnlyIds 不同步清空：它只对「当前渲染的消息 id」生效，消息已清空则旧 id 天然惰性；
@@ -175,7 +173,7 @@ export default function ChatScreen() {
     return () => {
       cancelled = true
     }
-  }, [routeId, setMessages, router])
+  }, [routeId, adoptedRouteId, setMessages, router])
 
   const handleSend = (text: string) => {
     if (!text.trim() || isStreaming) return
@@ -190,10 +188,12 @@ export default function ChatScreen() {
 
   // 侧栏切换/新建/删除均经路由驱动（ADR-0011：URL 是事实源）
   const handleSelect = React.useCallback((id: string) => {
+    setAdoptedRouteId(undefined)
     router.push(`/chat/${id}`)
   }, [router])
 
   const handleNew = React.useCallback(() => {
+    setAdoptedRouteId(undefined)
     router.push('/chat/new')
     setSidebarOpen(false)
   }, [router])

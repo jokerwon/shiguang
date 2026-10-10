@@ -103,3 +103,10 @@
 - **迁移数据折算**:W0.2 是最关键一步,旧行 `parts IS NULL` 的折算必须全覆盖。建议迁移前 `SELECT count(*) FROM "Message" WHERE "parts" IS NULL` 确认量级,迁移后再次确认 0 行。本地 dev 数据可 `db:reset` 重来,生产需谨慎(本项目目前无生产)。
 - **`prepareSendMessagesRequest` 闭包陷阱**:若不通过 ref 实时读路由 id,transport 构造时的快照会导致 `conversationId` 错误。W2.3 必须用 ref。
 - **`useChat` 切换载入闪烁**:常量 id 下,切换会话前若不先清空,上一会话消息会闪现。W2.4 需处理(先 `setMessages([])` 或在 loadingHistory 期间不渲染消息列表)。
+
+## 2026-10-10 会话连续性回归修复
+
+- 根因：`apps/server/src/main.ts` 的 CORS 未暴露 `x-conversation-id`，浏览器无法读取首条响应的会话 id，后续请求持续创建会话。配置 `exposedHeaders` 后，浏览器可读取该响应头。
+- 配套缺陷：首条响应触发 `router.replace` 后，聊天页重置/拉历史，首条 assistant 回复虽已落库却未显示。首条回填改用 Next.js 支持的 `history.replaceState`，路由 id 经 `usePathname` 读取；记录首条回填的 id 跳过该次历史加载，侧栏选择/新建时清除该标记。主动切换与刷新仍从服务端加载历史。
+- 真实浏览器最终回归：从 `/chat/new` 连续发送两条消息，两次响应及第二次请求均使用 `cmv21d7ke0006ox9gmxuv521r`；首轮「暗号是青苹果」回复「收到」，第二轮询问暗号回复「青苹果」。首轮与第二轮消息均显示；刷新及「新对话 → 选择原会话」恢复四条消息。覆盖回填标记先于 URL 更新时不清空用户消息；对应验收 A1/A6。未以纯文本冒烟替代工具卡片/越权场景验收。测试会话已清理。
+- 质量门：后端 19 套件 / 194 例、后端 lint、前端 lint 通过。前端 `tsc --noEmit` 被未修改的 `components/ai-elements/prompt-input.tsx` 阻塞：Base UI 事件类型与 `openDelay`/`closeDelay` 属性不兼容（432、453、477、1241、1317、1318、1321 行）；未将该组件升级扩入会话连续性修复。

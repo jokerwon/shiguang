@@ -195,7 +195,7 @@ Prisma Client 生成到 `generated/prisma/client/`（非默认路径）。`impor
 
 ### CORS
 
-允许 `http://localhost:3000`（前端开发服务器），支持 credentials。
+允许 `http://localhost:3000`（前端开发服务器），支持 credentials；`exposedHeaders` 暴露 `x-conversation-id`，浏览器才能读取首条消息创建的会话 id。
 
 ## 关键技术决策
 
